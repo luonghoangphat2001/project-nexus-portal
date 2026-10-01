@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .status(HttpStatus.NOT_FOUND.value())
                 .error("Resource Not Found")
-                .message("Không tìm thấy dữ liệu (404 Not Found): " + ex.getMessage())
+                .message("Data not found (404 Not Found): " + ex.getMessage())
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -41,7 +41,7 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .status(HttpStatus.NOT_FOUND.value())
                 .error("Not Found")
-                .message("Đường dẫn API hoặc tài nguyên không tồn tại (404 Not Found): " + request.getRequestURI())
+                .message("API route or resource not found (404 Not Found): " + request.getRequestURI())
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .status(HttpStatus.NOT_FOUND.value())
                 .error("Not Found")
-                .message("Không tìm thấy bản ghi trong hệ thống: " + (ex.getMessage() != null ? ex.getMessage() : "Dữ liệu không tồn tại"))
+                .message("Record not found in system: " + (ex.getMessage() != null ? ex.getMessage() : "Resource does not exist"))
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -67,7 +67,7 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .status(HttpStatus.FORBIDDEN.value())
                 .error("Forbidden")
-                .message("Truy cập bị từ chối (403 Forbidden): Tài khoản của bạn không có đủ quyền hạn (Role) để thực hiện thao tác này.")
+                .message("Access Denied (403 Forbidden): Your account does not have sufficient role permissions to perform this operation.")
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex, HttpServletRequest request) {
         Map<String, String> errors = new LinkedHashMap<>();
-        StringBuilder summary = new StringBuilder("Dữ liệu không hợp lệ (422 Unprocessable Entity): ");
+        StringBuilder summary = new StringBuilder("Invalid data payload (422 Unprocessable Entity): ");
         java.util.List<FieldError> fieldErrors = ex.getBindingResult().getFieldErrors();
         for (int i = 0; i < fieldErrors.size(); i++) {
             FieldError fe = fieldErrors.get(i);
@@ -103,7 +103,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
         Map<String, String> errors = new LinkedHashMap<>();
-        StringBuilder summary = new StringBuilder("Dữ liệu vi phạm ràng buộc (422 Unprocessable Entity): ");
+        StringBuilder summary = new StringBuilder("Constraint violation (422 Unprocessable Entity): ");
         int count = 0;
         for (ConstraintViolation<?> cv : ex.getConstraintViolations()) {
             String property = cv.getPropertyPath() != null ? cv.getPropertyPath().toString() : "param";
@@ -131,7 +131,7 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
                 .error("Missing Required Parameter")
-                .message(String.format("Thiếu tham số bắt buộc trong yêu cầu (422): Tham số '%s' (kiểu %s) không được để trống.", ex.getParameterName(), ex.getParameterType()))
+                .message(String.format("Missing required parameter (422): Parameter '%s' (%s) must not be blank.", ex.getParameterName(), ex.getParameterType()))
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -144,7 +144,7 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("Bad Request")
-                .message("Yêu cầu không hợp lệ (400 Bad Request): " + ex.getMessage())
+                .message("Invalid request (400 Bad Request): " + ex.getMessage())
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -157,7 +157,7 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("Bad Request")
-                .message("Đối số không hợp lệ (400 Bad Request): " + ex.getMessage())
+                .message("Invalid argument (400 Bad Request): " + ex.getMessage())
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -183,7 +183,7 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .error("Unauthorized")
-                .message("Xác thực thất bại (401 Unauthorized): Tên đăng nhập hoặc mật khẩu không chính xác.")
+                .message("Authentication failed (401 Unauthorized): Invalid username or password.")
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -196,7 +196,7 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error("Internal Server Error")
-                .message(ex.getMessage() != null ? ex.getMessage() : "Đã xảy ra lỗi hệ thống bất ngờ. Vui lòng thử lại sau.")
+                .message(ex.getMessage() != null ? ex.getMessage() : "An unexpected system error occurred. Please try again later.")
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();

@@ -12,6 +12,9 @@ import { TopicsPage } from './pages/TopicsPage';
 import { TeamsPage } from './pages/TeamsPage';
 import { RegistrationsPage } from './pages/RegistrationsPage';
 import { MatchmakingPage } from './pages/MatchmakingPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { SystemAdminPage } from './pages/SystemAdminPage';
+import { SecurityPage } from './pages/SecurityPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 export const App = () => {
@@ -34,13 +37,16 @@ export const App = () => {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
 
+            {/* User Profile & Security Settings */}
+            <Route path="profile" element={<ProfilePage />} />
+
             {/* Academic & Thesis Management */}
             <Route path="topics" element={<TopicsPage />} />
             <Route path="teams" element={<TeamsPage />} />
             <Route path="registrations" element={<RegistrationsPage />} />
             <Route path="matchmaking" element={<MatchmakingPage />} />
 
-            {/* Admin & Faculty Staff Management */}
+            {/* Module 1: Admin & Faculty Staff Management */}
             <Route
               path="users"
               element={
@@ -52,8 +58,28 @@ export const App = () => {
             <Route
               path="roles"
               element={
-                <RoleBasedRoute requiredRole="ROLE_ADMIN">
+                <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_PRINCIPAL', 'ROLE_TEACHER']}>
                   <RolesPage />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Module 17: System Administration */}
+            <Route
+              path="admin/system"
+              element={
+                <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_PRINCIPAL']}>
+                  <SystemAdminPage />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Module 18: Security & Audit Logs */}
+            <Route
+              path="admin/security"
+              element={
+                <RoleBasedRoute requiredRole="ROLE_ADMIN">
+                  <SecurityPage />
                 </RoleBasedRoute>
               }
             />

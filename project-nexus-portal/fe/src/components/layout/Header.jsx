@@ -68,11 +68,14 @@ export const Header = ({ onToggleSidebar }) => {
 
               <div className="py-1">
                 <button
-                  onClick={() => setDropdownOpen(false)}
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    window.location.href = '/profile';
+                  }}
                   className="w-full text-left px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 flex items-center space-x-2 transition-colors"
                 >
                   <UserIcon className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Account Settings</span>
+                  <span>Profile & Settings</span>
                 </button>
               </div>
 

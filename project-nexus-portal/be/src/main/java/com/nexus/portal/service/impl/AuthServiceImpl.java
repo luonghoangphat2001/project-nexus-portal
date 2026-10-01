@@ -1,20 +1,23 @@
 package com.nexus.portal.service.impl;
 
+import com.nexus.portal.dto.request.ChangePasswordRequest;
 import com.nexus.portal.dto.request.LoginRequest;
 import com.nexus.portal.dto.request.RegisterRequest;
 import com.nexus.portal.dto.response.AuthResponse;
 import com.nexus.portal.dto.response.UserResponse;
 import com.nexus.portal.enums.RoleName;
-import com.nexus.portal.model.Role;
-import com.nexus.portal.model.User;
 import com.nexus.portal.exception.BadRequestException;
 import com.nexus.portal.exception.ResourceNotFoundException;
+import com.nexus.portal.model.Role;
+import com.nexus.portal.model.User;
 import com.nexus.portal.repository.RoleRepository;
 import com.nexus.portal.repository.UserRepository;
 import com.nexus.portal.security.JwtTokenProvider;
 import com.nexus.portal.security.UserPrincipal;
+import com.nexus.portal.service.AuditLogService;
 import com.nexus.portal.service.AuthService;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,41 +37,57 @@ public class AuthServiceImpl implements AuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final AuditLogService auditLogService;
 
     public AuthServiceImpl(AuthenticationManager authenticationManager,
                            UserRepository userRepository,
                            RoleRepository roleRepository,
                            PasswordEncoder passwordEncoder,
-                           JwtTokenProvider tokenProvider) {
+                           JwtTokenProvider tokenProvider,
+                           AuditLogService auditLogService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
+        this.auditLogService = auditLogService;
     }
 
     @Override
     public AuthResponse login(LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsernameOrEmail(),
-                        loginRequest.getPassword()
-                )
-        );
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsernameOrEmail(),
+                            loginRequest.getPassword()
+                    )
+            );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = tokenProvider.generateToken(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = tokenProvider.generateToken(authentication);
 
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        User user = userRepository.findById(userPrincipal.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userPrincipal.getId()));
+            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+            User user = userRepository.findById(userPrincipal.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User", "id", userPrincipal.getId()));
 
-        return AuthResponse.builder()
-                .accessToken(jwt)
-                .tokenType("Bearer")
-                .expiresIn(tokenProvider.getExpirationMs())
-                .user(mapToUserResponse(user))
-                .build();
+            auditLogService.log(user.getId(), user.getUsername(), "AUTH_LOGIN_SUCCESS", "Auth",
+                    "User logged in successfully", "127.0.0.1", "NexusPortal", "SUCCESS");
+
+            return AuthResponse.builder()
+                    .accessToken(jwt)
+                    .tokenType("Bearer")
+                    .expiresIn(tokenProvider.getExpirationMs())
+                    .user(mapToUserResponse(user))
+                    .build();
+        } catch (BadCredentialsException ex) {
+            auditLogService.log(null, loginRequest.getUsernameOrEmail(), "AUTH_LOGIN_FAILED", "Auth",
+                    "Login failed: Invalid username or password", "127.0.0.1", "NexusPortal", "FAILED");
+            throw new BadRequestException("Invalid username or password!");
+        } catch (Exception ex) {
+            auditLogService.log(null, loginRequest.getUsernameOrEmail(), "AUTH_LOGIN_ERROR", "Auth",
+                    "Login error: " + ex.getMessage(), "127.0.0.1", "NexusPortal", "FAILED");
+            throw ex;
+        }
     }
 
     @Override
@@ -107,6 +126,10 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
+
+        auditLogService.log(savedUser.getId(), savedUser.getUsername(), "AUTH_REGISTER", "User",
+                "New user account registered successfully", "127.0.0.1", "NexusPortal", "SUCCESS");
+
         return mapToUserResponse(savedUser);
     }
 
@@ -122,6 +145,33 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", principal.getId()));
 
         return mapToUserResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(String username, ChangePasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BadRequestException("New password and confirmation password do not match!");
+        }
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            auditLogService.log(user.getId(), username, "AUTH_CHANGE_PASSWORD_FAILED", "User",
+                    "Password change failed: Current password is incorrect", "127.0.0.1", "NexusPortal", "FAILED");
+            throw new BadRequestException("Current password is incorrect!");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new BadRequestException("New password cannot be the same as current password!");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        auditLogService.log(user.getId(), username, "AUTH_CHANGE_PASSWORD_SUCCESS", "User",
+                "Password changed successfully", "127.0.0.1", "NexusPortal", "SUCCESS");
     }
 
     private UserResponse mapToUserResponse(User user) {
