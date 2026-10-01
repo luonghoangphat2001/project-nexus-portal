@@ -11,4 +11,6 @@ public interface AuthService {
     UserResponse register(RegisterRequest registerRequest);
 
     UserResponse getCurrentUser();
+
+    void changePassword(String username, com.nexus.portal.dto.request.ChangePasswordRequest request);
 }

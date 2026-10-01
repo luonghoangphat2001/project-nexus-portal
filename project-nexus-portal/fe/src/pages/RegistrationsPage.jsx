@@ -259,7 +259,7 @@ export const RegistrationsPage = () => {
                     {reg.members && reg.members.length > 0 && (
                       <div className="mt-2.5 pt-2 border-t border-slate-100">
                         <span className="text-[11px] font-semibold text-slate-500 block mb-1">
-                          Sinh viên đăng ký ({reg.members.length}):
+                          Registered Members ({reg.members.length}):
                         </span>
                         <div className="flex flex-wrap gap-1.5">
                           {reg.members.map((m) => (

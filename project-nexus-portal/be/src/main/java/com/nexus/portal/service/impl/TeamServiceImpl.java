@@ -51,7 +51,7 @@ public class TeamServiceImpl implements TeamService {
         boolean isStudent = leader.getRoles().stream()
                 .anyMatch(r -> r.getName() == RoleName.ROLE_USER);
         if (!isStudent) {
-            throw new AccessDeniedException("Chỉ sinh viên (Student) mới được phép tạo nhóm và làm trưởng nhóm.");
+            throw new AccessDeniedException("Only students are permitted to create and lead a team.");
         }
 
         RegistrationPeriod period = registrationPeriodRepository.findById(request.getPeriodId())
@@ -163,7 +163,7 @@ public class TeamServiceImpl implements TeamService {
         boolean isInviteeStudent = invitee.getRoles().stream()
                 .anyMatch(r -> r.getName() == RoleName.ROLE_USER);
         if (!isInviteeStudent) {
-            throw new BadRequestException("Chỉ sinh viên mới được phép gia nhập nhóm. Người dùng được mời không phải sinh viên.");
+            throw new BadRequestException("Only students are permitted to join a team. The invited user is not a student.");
         }
 
         // Check if invitee already belongs to a team in this period
@@ -249,7 +249,7 @@ public class TeamServiceImpl implements TeamService {
         boolean isStudent = user.getRoles().stream()
                 .anyMatch(r -> r.getName() == RoleName.ROLE_USER);
         if (!isStudent) {
-            throw new AccessDeniedException("Chỉ sinh viên mới được phép gia nhập nhóm.");
+            throw new AccessDeniedException("Only students are permitted to join a team.");
         }
 
         TeamMember member = TeamMember.builder()

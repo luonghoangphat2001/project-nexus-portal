@@ -50,4 +50,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "  SELECT tl2.topic.id FROM TopicLecturer tl2 WHERE tl2.lecturer.id = :lecturerId" +
            ")")
     List<User> findAssociatedLecturers(@Param("lecturerId") Long lecturerId);
+
+    long countByActiveTrue();
+
+    long countByRolesContaining(com.nexus.portal.model.Role role);
 }

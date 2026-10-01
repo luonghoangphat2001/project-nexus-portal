@@ -48,7 +48,7 @@ public class TopicRegistrationServiceImpl implements TopicRegistrationService {
         boolean isStudent = currentUser.getRoles().stream()
                 .anyMatch(r -> r.getName() == RoleName.ROLE_USER);
         if (!isStudent) {
-            throw new AccessDeniedException("Chỉ sinh viên (Student) mới có quyền đăng ký đề tài.");
+            throw new AccessDeniedException("Only students are permitted to register for topics.");
         }
 
         TeamMember leaderMember = teamMemberRepository.findByUserIdAndRoleInTeam(currentUser.getId(), TeamRole.LEADER)
@@ -126,10 +126,10 @@ public class TopicRegistrationServiceImpl implements TopicRegistrationService {
             boolean inDepartment = reviewer.getDepartments().stream()
                     .anyMatch(d -> d.getId().equals(topic.getDepartment().getId()));
             if (!inDepartment) {
-                throw new AccessDeniedException("Trưởng bộ môn chỉ có quyền duyệt đề tài trong phạm vi bộ môn của mình");
+                throw new AccessDeniedException("Department heads can only approve topics within their own department.");
             }
         } else if (!isAdmin && !isAdvisor) {
-            throw new AccessDeniedException("Chỉ giảng viên hướng dẫn của đề tài, trưởng bộ môn phụ trách, hoặc quản trị viên mới có quyền duyệt đăng ký");
+            throw new AccessDeniedException("Only the topic advisor, managing department head, or administrator can approve registrations.");
         }
 
         if (request.getStatus() != RegistrationStatus.APPROVED && request.getStatus() != RegistrationStatus.REJECTED) {
@@ -194,10 +194,10 @@ public class TopicRegistrationServiceImpl implements TopicRegistrationService {
             boolean inDepartment = currentUser.getDepartments().stream()
                     .anyMatch(d -> d.getId().equals(topic.getDepartment().getId()));
             if (!inDepartment) {
-                throw new AccessDeniedException("Trưởng bộ môn chỉ có quyền xem các đề tài và danh sách sinh viên đăng ký trong phạm vi bộ môn của mình.");
+                throw new AccessDeniedException("Department heads can only view topics and applicant lists within their own department.");
             }
         } else if (!isAdvisor) {
-            throw new AccessDeniedException("Bạn không có quyền xem danh sách sinh viên đăng ký của đề tài này.");
+            throw new AccessDeniedException("You do not have permission to view applicants for this topic.");
         }
 
         return topicRegistrationRepository.findByTopicId(topicId).stream()

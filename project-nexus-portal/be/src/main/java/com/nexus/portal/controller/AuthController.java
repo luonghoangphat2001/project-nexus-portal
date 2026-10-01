@@ -89,5 +89,18 @@ public class AuthController {
         UserResponse response = authService.getCurrentUser();
         return ResponseEntity.ok(ApiResponse.success(response, "Retrieved current user profile"));
     }
+
+    @PostMapping("/change-password")
+    @Operation(summary = "Change password", description = "Change the password of the currently authenticated user")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @Valid @RequestBody com.nexus.portal.dto.request.ChangePasswordRequest request,
+            org.springframework.security.core.Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : null;
+        if (username == null) {
+            throw new com.nexus.portal.exception.BadRequestException("Authentication required to change password!");
+        }
+        authService.changePassword(username, request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Password changed successfully"));
+    }
 }
 

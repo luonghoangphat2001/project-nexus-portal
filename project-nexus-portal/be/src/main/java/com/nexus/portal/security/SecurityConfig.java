@@ -71,7 +71,7 @@ public class SecurityConfig {
                                     .success(false)
                                     .status(HttpStatus.UNAUTHORIZED.value())
                                     .error("Unauthorized")
-                                    .message("Yêu cầu xác thực: Bạn chưa đăng nhập hoặc Token JWT không hợp lệ/hết hạn. Vui lòng gửi kèm 'Authorization: Bearer <token>' hợp lệ.")
+                                    .message("Authentication required: Missing, invalid, or expired JWT access token. Please provide a valid 'Authorization: Bearer <token>' header.")
                                     .path(request.getRequestURI())
                                     .timestamp(LocalDateTime.now())
                                     .build();
@@ -85,7 +85,7 @@ public class SecurityConfig {
                                     .success(false)
                                     .status(HttpStatus.FORBIDDEN.value())
                                     .error("Forbidden")
-                                    .message("Truy cập bị từ chối (403 Forbidden): Tài khoản của bạn không có đủ quyền hạn (Role) để thực hiện thao tác trên tài nguyên này.")
+                                    .message("Access Denied (403 Forbidden): Your account does not have sufficient role permissions to perform this operation on this resource.")
                                     .path(request.getRequestURI())
                                     .timestamp(LocalDateTime.now())
                                     .build();

@@ -254,14 +254,14 @@ public class TopicServiceImpl implements TopicService {
                     .anyMatch(d -> d.getId().equals(departmentId));
             if (!inDepartment) {
                 throw new AccessDeniedException(
-                        "Trưởng bộ môn chỉ có quyền xem trong phạm vi bộ môn của mình (Bộ môn ID " + departmentId + " không thuộc quyền quản lý)");
+                        "Department heads can only view topics within their own department (Department ID " + departmentId + " is outside managed scope)");
             }
             return topicRepository.findByDepartmentId(departmentId).stream()
                     .map(this::mapToResponse)
                     .collect(Collectors.toList());
         }
 
-        throw new AccessDeniedException("Bạn không có quyền truy cập đề tài theo bộ môn");
+        throw new AccessDeniedException("You do not have permission to access topics by department");
     }
 
     @Override
