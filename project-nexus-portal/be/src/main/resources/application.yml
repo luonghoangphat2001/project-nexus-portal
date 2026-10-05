@@ -6,6 +6,10 @@ server:
 spring:
   application:
     name: nexus-portal-backend
+  servlet:
+    multipart:
+      max-file-size: ${REPORT_MAX_FILE_BYTES:10485760}B
+      max-request-size: ${REPORT_MAX_REQUEST_BYTES:12582912}B
   datasource:
     url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: ${DB_USER}
@@ -23,6 +27,7 @@ spring:
   sql:
     init:
       mode: ${SQL_INIT_MODE}
+      encoding: UTF-8
       continue-on-error: true
       data-locations:
         - classpath:data.sql
@@ -33,6 +38,8 @@ spring:
         - classpath:data/05_teams_matchmaking.sql
 
 app:
+  reports:
+    max-file-bytes: ${REPORT_MAX_FILE_BYTES:10485760}
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS}

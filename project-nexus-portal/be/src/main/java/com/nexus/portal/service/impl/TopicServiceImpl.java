@@ -86,8 +86,7 @@ public class TopicServiceImpl implements TopicService {
 
         // Add Primary Advisor
         TopicLecturer primaryAdvisor = new TopicLecturer(savedTopic, primaryLecturer, AdvisorRole.PRIMARY);
-        topicLecturerRepository.save(primaryAdvisor);
-        savedTopic.getTopicLecturers().add(primaryAdvisor);
+        savedTopic.getTopicLecturers().add(topicLecturerRepository.save(primaryAdvisor));
 
         // Optional Co-Advisor (max 2 advisors rule)
         if (request.getCoAdvisorId() != null) {
@@ -97,8 +96,7 @@ public class TopicServiceImpl implements TopicService {
             User coAdvisor = userRepository.findById(request.getCoAdvisorId())
                     .orElseThrow(() -> new ResourceNotFoundException("Co-Advisor User", "id", request.getCoAdvisorId()));
             TopicLecturer secondaryAdvisor = new TopicLecturer(savedTopic, coAdvisor, AdvisorRole.CO_ADVISOR);
-            topicLecturerRepository.save(secondaryAdvisor);
-            savedTopic.getTopicLecturers().add(secondaryAdvisor);
+            savedTopic.getTopicLecturers().add(topicLecturerRepository.save(secondaryAdvisor));
         }
 
         return mapToResponse(savedTopic);

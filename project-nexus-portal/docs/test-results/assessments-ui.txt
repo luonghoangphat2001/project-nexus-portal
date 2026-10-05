@@ -1,0 +1,129 @@
+- complementary:
+  - generic: Nexus
+  - generic: Portal
+  - generic: S
+  - paragraph: System Administrator (Super Admin)
+  - paragraph: ADMIN
+  - link "Dashboard":
+    - /url: /dashboard
+    - generic: Dashboard
+  - link "Capstone Topics":
+    - /url: /topics
+    - generic: Capstone Topics
+  - link "My Team":
+    - /url: /teams
+    - generic: My Team
+  - link "Matchmaking Board":
+    - /url: /matchmaking
+    - generic: Matchmaking Board
+  - link "Topic Registrations":
+    - /url: /registrations
+    - generic: Topic Registrations
+  - link "Reports & Documents":
+    - /url: /reports
+    - generic: Reports & Documents
+  - link "Council Assignments":
+    - /url: /councils
+    - generic: Council Assignments
+  - link "Reviews & Grading":
+    - /url: /assessments
+    - generic: Reviews & Grading
+  - link "User Profile":
+    - /url: /profile
+    - generic: User Profile
+  - link "User Management":
+    - /url: /users
+    - generic: User Management
+  - link "Roles & Permissions":
+    - /url: /roles
+    - generic: Roles & Permissions
+  - link "System Administration":
+    - /url: /admin/system
+    - generic: System Administration
+  - link "Security & Audit Logs":
+    - /url: /admin/security
+    - generic: Security & Audit Logs
+- banner:
+  - button "Toggle Navigation Menu":
+  - textbox "Search projects, topics, users..."
+  - button:
+  - button:
+  - button "S System Administrator (Super Admin)":
+    - generic: S
+    - paragraph: System Administrator (Super Admin)
+- main:
+  - heading "Reviews & Grading" [level=1]
+  - paragraph: Module 13 · Assess individual students in your assigned councils.
+  - button "Refresh":
+    - text: Refresh
+  - text: Council / Team / Project
+  - combobox "Council / Team / Project":
+    - option "QA UI Council 20261005_151214 Updated · QA Defense Team 20261005_151214 · QA Defense Workflow 20261005_151214" [selected]
+    - option "QA API Council 20261005_150751 Updated · QA Defense Team 20261005_150751 · QA Defense Workflow 20261005_150751"
+  - generic: Completed
+  - generic: QA-UI-151214 · 05/10/2026, 15:38 (Vietnam time, UTC+7)
+  - link "View Team Documents":
+    - /url: /reports?registrationId=3
+  - heading "Assessments" [level=2]
+  - paragraph: You can view your own drafts and submitted assessments. Scores have not been published to students.
+  - article:
+    - heading "QA Leader 20261005_151214 · Defense Assessment" [level=3]
+    - paragraph: "Evaluator: QA Chair 20261005_151214 · 05/10/2026, 15:47"
+    - generic: Submitted & Locked
+    - text: "Content:"
+    - strong: 8.75/10
+    - text: "Implementation:"
+    - strong: 9/10
+    - text: "Documentation / Presentation:"
+    - strong: 8.5/10
+    - paragraph:
+      - strong: "Comments:"
+      - text: QA UI Chair Defense; synthetic scores only
+  - article:
+    - heading "QA Leader 20261005_151214 · Defense Assessment" [level=3]
+    - paragraph: "Evaluator: QA Secretary 20261005_151214 · 05/10/2026, 15:47"
+    - generic: Submitted & Locked
+    - text: "Content:"
+    - strong: 9/10
+    - text: "Implementation:"
+    - strong: 8.5/10
+    - text: "Documentation / Presentation:"
+    - strong: 8.75/10
+    - paragraph:
+      - strong: "Comments:"
+      - text: QA UI Secretary Defense; synthetic scores only
+  - article:
+    - heading "QA Leader 20261005_151214 · Defense Assessment" [level=3]
+    - paragraph: "Evaluator: QA Reviewer 20261005_151214 · 05/10/2026, 15:46"
+    - generic: Submitted & Locked
+    - text: "Content:"
+    - strong: 8/10
+    - text: "Implementation:"
+    - strong: 8.5/10
+    - text: "Documentation / Presentation:"
+    - strong: 9/10
+    - paragraph:
+      - strong: "Comments:"
+      - text: QA UI Defense; synthetic scores only
+  - article:
+    - heading "QA Leader 20261005_151214 · Review" [level=3]
+    - paragraph: "Evaluator: QA Reviewer 20261005_151214 · 05/10/2026, 15:46"
+    - generic: Submitted & Locked
+    - text: "Content:"
+    - strong: 9/10
+    - text: "Implementation:"
+    - strong: 9/10
+    - text: "Documentation / Presentation:"
+    - strong: 8/10
+    - paragraph:
+      - strong: "Strengths:"
+      - text: Clear architecture and documented test flow
+    - paragraph:
+      - strong: "Limitations:"
+      - text: Synthetic QA data only
+    - paragraph:
+      - strong: "Questions:"
+      - text: Explain the document versioning rules
+    - paragraph:
+      - strong: "Comments:"
+      - text: QA UI Review; synthetic scores for functional testing only
