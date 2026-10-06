@@ -1,0 +1,8 @@
+[
+  {
+    "level": "error",
+    "message": "TypeError: Failed to fetch\n    at http://localhost:3000/councils:20:3585\n    at http://localhost:3000/councils:20:3016\n    at Object.next (http://localhost:3000/councils:20:3121)\n    at http://localhost:3000/councils:20:3406\n    at new Promise (<anonymous>)\n    at http://localhost:3000/councils:20:3151\n    at http://localhost:3000/councils:20:3418\n    at func (http://localhost:3000/councils:20:3813)\n    at http://localhost:3000/councils:22:4505\n    at http://localhost:3000/councils:22:4643",
+    "timestamp": "2026-10-05T08:53:53.236Z",
+    "url": "http://localhost:3000/councils"
+  }
+]

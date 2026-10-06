@@ -16,6 +16,9 @@ import { ProfilePage } from './pages/ProfilePage';
 import { SystemAdminPage } from './pages/SystemAdminPage';
 import { SecurityPage } from './pages/SecurityPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { ReportsPage } from './pages/ReportsPage';
+import { CouncilsPage } from './pages/CouncilsPage';
+import { AssessmentsPage } from './pages/AssessmentsPage';
 
 export const App = () => {
   return (
@@ -45,6 +48,13 @@ export const App = () => {
             <Route path="teams" element={<TeamsPage />} />
             <Route path="registrations" element={<RegistrationsPage />} />
             <Route path="matchmaking" element={<MatchmakingPage />} />
+            <Route path="reports" element={<ReportsPage />} />
+            <Route path="councils" element={<CouncilsPage />} />
+            <Route path="assessments" element={
+              <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_PRINCIPAL', 'ROLE_TEACHER', 'ROLE_COUNCIL']}>
+                <AssessmentsPage />
+              </RoleBasedRoute>
+            } />
 
             {/* Module 1: Admin & Faculty Staff Management */}
             <Route

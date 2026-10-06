@@ -1,0 +1,83 @@
+- complementary:
+  - generic: Nexus
+  - generic: Portal
+  - generic: S
+  - paragraph: System Administrator (Super Admin)
+  - paragraph: ADMIN
+  - link "Dashboard":
+    - /url: /dashboard
+    - generic: Dashboard
+  - link "Capstone Topics":
+    - /url: /topics
+    - generic: Capstone Topics
+  - link "My Team":
+    - /url: /teams
+    - generic: My Team
+  - link "Matchmaking Board":
+    - /url: /matchmaking
+    - generic: Matchmaking Board
+  - link "Topic Registrations":
+    - /url: /registrations
+    - generic: Topic Registrations
+  - link "Reports & Documents":
+    - /url: /reports
+    - generic: Reports & Documents
+  - link "Council Assignments":
+    - /url: /councils
+    - generic: Council Assignments
+  - link "Reviews & Grading":
+    - /url: /assessments
+    - generic: Reviews & Grading
+  - link "User Profile":
+    - /url: /profile
+    - generic: User Profile
+  - link "User Management":
+    - /url: /users
+    - generic: User Management
+  - link "Roles & Permissions":
+    - /url: /roles
+    - generic: Roles & Permissions
+  - link "System Administration":
+    - /url: /admin/system
+    - generic: System Administration
+  - link "Security & Audit Logs":
+    - /url: /admin/security
+    - generic: Security & Audit Logs
+- banner:
+  - button "Toggle Navigation Menu":
+  - textbox "Search projects, topics, users..."
+  - button:
+  - button:
+  - button "S System Administrator (Super Admin)":
+    - generic: S
+    - paragraph: System Administrator (Super Admin)
+- main:
+  - heading "Reports & Documents" [level=1]
+  - paragraph: Module 11 · Submit and manage documents for approved team projects.
+  - button "Refresh":
+    - text: Refresh
+  - text: Team / Project
+  - combobox "Team / Project":
+    - option "QA Defense Team 20261005_150751 · QA Defense Workflow 20261005_150751 · Graduation Thesis Period Term 1 2026-2027"
+    - option "QA Defense Team 20261005_151214 · QA Defense Workflow 20261005_151214 · Graduation Thesis Period Term 1 2026-2027" [selected]
+  - paragraph:
+    - text: "Submission deadline:"
+    - strong: 16/01/2027, 00:00
+    - text: (Vietnam time, UTC+7). Only team leaders can submit documents.
+  - heading "Submission History" [level=2]
+  - paragraph:
+    - text: QA UI Fixture Report Version 2
+    - generic: v2 · Report
+  - paragraph: ui-report.txt · 0.00 MB
+  - paragraph: QA Leader 20261005_151214 · 05/10/2026, 15:43
+  - paragraph: Localhost functional QA
+  - button "Download":
+    - text: Download
+  - paragraph:
+    - text: QA UI Fixture Report Version 1
+    - generic: v1 · Report
+  - paragraph: ui-report.txt · 0.00 MB
+  - paragraph: QA Leader 20261005_151214 · 05/10/2026, 15:43
+  - paragraph: Localhost functional QA
+  - button "Download":
+    - text: Download

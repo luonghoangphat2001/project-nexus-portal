@@ -1,0 +1,935 @@
+{
+  "fixture": {
+    "runId": "20261005_150751",
+    "users": {
+      "leader": {
+        "id": 13,
+        "username": "qa_leader_20261005_150751"
+      },
+      "chair": {
+        "id": 14,
+        "username": "qa_chair_20261005_150751"
+      },
+      "secretary": {
+        "id": 15,
+        "username": "qa_secretary_20261005_150751"
+      },
+      "reviewer": {
+        "id": 16,
+        "username": "qa_reviewer_20261005_150751"
+      },
+      "outsider": {
+        "id": 17,
+        "username": "qa_outsider_20261005_150751"
+      }
+    },
+    "teamId": 4,
+    "topicId": 5,
+    "registrationId": 2,
+    "frontend": "http://localhost:3000",
+    "backend": "http://localhost:8080/api",
+    "environment": "MySQL 8 / Java 17 / production Vite preview",
+    "councilId": 1,
+    "startsAt": "2026-10-05T15:10:22",
+    "endsAt": "2026-10-05T15:11:22",
+    "assignmentId": 2,
+    "finalStatus": "COMPLETED"
+  },
+  "results": [
+    {
+      "id": "AUTH-01",
+      "description": "Reports require JWT",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:06.020721+07:00",
+      "detail": {
+        "success": false,
+        "status": 401,
+        "error": "Unauthorized",
+        "message": "Authentication required: Missing, invalid, or expired JWT access token. Please provide a valid 'Authorization: Bearer <token>' header.",
+        "path": "/api/reports/registrations",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:08.1210152"
+      }
+    },
+    {
+      "id": "M11-01",
+      "description": "Approved QA registration is visible to leader",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:08.126092+07:00",
+      "detail": "Visible and canSubmit=true"
+    },
+    {
+      "id": "M11-02",
+      "description": "Upload first report",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:08.205883+07:00",
+      "detail": {
+        "id": 1,
+        "registrationId": 2,
+        "type": "REPORT",
+        "title": "QA Report",
+        "note": "Localhost functional QA",
+        "fileName": "qa-report.txt",
+        "contentType": "text/plain",
+        "fileSize": 10,
+        "version": 1,
+        "submittedByName": "QA Leader 20261005_150751",
+        "submittedAt": "2026-10-05T15:08:08.3819056"
+      }
+    },
+    {
+      "id": "M11-03",
+      "description": "Upload preserves versions",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:08.400706+07:00",
+      "detail": "Second report version=2"
+    },
+    {
+      "id": "M11-04",
+      "description": "Download matches original bytes",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:08.499154+07:00",
+      "detail": "Downloaded content matches fixture"
+    },
+    {
+      "id": "M11-05",
+      "description": "Other document types have independent versions",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:08.542113+07:00",
+      "detail": "Each type version=1"
+    },
+    {
+      "id": "M11-06",
+      "description": "Reject unsupported file extension",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:08.881249+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): Only valid PDF, DOCX, PPTX, ZIP or TXT files are accepted",
+        "path": "/api/reports/registrations/2/documents",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:08.9524528"
+      }
+    },
+    {
+      "id": "M11-07",
+      "description": "Reject PDF with incorrect signature",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:08.956711+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): Only valid PDF, DOCX, PPTX, ZIP or TXT files are accepted",
+        "path": "/api/reports/registrations/2/documents",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:11.1114888"
+      }
+    },
+    {
+      "id": "M11-08",
+      "description": "Reject empty file",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:11.113355+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): The file must not be empty and must not exceed 10 MB",
+        "path": "/api/reports/registrations/2/documents",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:13.2927513"
+      }
+    },
+    {
+      "id": "M11-09",
+      "description": "Reject file larger than 10 MiB",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:13.294326+07:00",
+      "detail": {
+        "success": false,
+        "status": 413,
+        "error": "Payload Too Large",
+        "message": "The uploaded file exceeds the maximum allowed size",
+        "path": "/api/reports/registrations/2/documents",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:15.4268999"
+      }
+    },
+    {
+      "id": "M11-10",
+      "description": "Reject blank document title",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:15.429913+07:00",
+      "detail": {
+        "success": false,
+        "status": 422,
+        "error": "Unprocessable Entity",
+        "message": "Invalid data payload (422 Unprocessable Entity): [title: must not be blank]",
+        "path": "/api/reports/registrations/2/documents",
+        "validationErrors": {
+          "title": "must not be blank"
+        },
+        "timestamp": "2026-10-05T15:08:17.5524924"
+      }
+    },
+    {
+      "id": "M11-11",
+      "description": "Unrelated student cannot read QA documents",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:19.760488+07:00",
+      "detail": {
+        "success": false,
+        "status": 403,
+        "error": "Forbidden",
+        "message": "Access Denied (403 Forbidden): Your account does not have sufficient role permissions to perform this operation.",
+        "path": "/api/reports/registrations/2/documents",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:19.8001928"
+      }
+    },
+    {
+      "id": "M11-12",
+      "description": "Other department principal cannot read QA report",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:19.801853+07:00",
+      "detail": {
+        "success": false,
+        "status": 403,
+        "error": "Forbidden",
+        "message": "Access Denied (403 Forbidden): Your account does not have sufficient role permissions to perform this operation.",
+        "path": "/api/reports/documents/1/content",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:19.8455504"
+      }
+    },
+    {
+      "id": "M11-15",
+      "description": "Concurrent MySQL uploads allocate distinct versions",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:22.052868+07:00",
+      "detail": "Versions=[3, 4]"
+    },
+    {
+      "id": "M12-01",
+      "description": "Student cannot create council",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:22.052868+07:00",
+      "detail": {
+        "success": false,
+        "status": 403,
+        "error": "Forbidden",
+        "message": "Access Denied (403 Forbidden): Your account does not have sufficient role permissions to perform this operation.",
+        "path": "/api/councils",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:22.1039003"
+      }
+    },
+    {
+      "id": "M12-02",
+      "description": "Other department principal cannot create council",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:22.105900+07:00",
+      "detail": {
+        "success": false,
+        "status": 403,
+        "error": "Forbidden",
+        "message": "Access Denied (403 Forbidden): Your account does not have sufficient role permissions to perform this operation.",
+        "path": "/api/councils",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:22.144755"
+      }
+    },
+    {
+      "id": "M12-03",
+      "description": "Reject duplicate members",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:22.146260+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): Each lecturer can hold only one role in a council",
+        "path": "/api/councils",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:22.1977344"
+      }
+    },
+    {
+      "id": "M12-04",
+      "description": "Create council with valid roles and future schedule",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:22.199378+07:00",
+      "detail": {
+        "id": 1,
+        "name": "QA API Council 20261005_150751",
+        "departmentId": 1,
+        "departmentName": "Software Engineering Department",
+        "periodId": 1,
+        "periodName": "Graduation Thesis Period Term 1 2026-2027",
+        "room": "QA-20261005_150751",
+        "startsAt": "2026-10-05T15:10:22",
+        "endsAt": "2026-10-05T15:11:22",
+        "status": "SCHEDULED",
+        "canManage": true,
+        "members": [
+          {
+            "lecturerId": 14,
+            "fullName": "QA Chair 20261005_150751",
+            "role": "CHAIR"
+          },
+          {
+            "lecturerId": 15,
+            "fullName": "QA Secretary 20261005_150751",
+            "role": "SECRETARY"
+          },
+          {
+            "lecturerId": 16,
+            "fullName": "QA Reviewer 20261005_150751",
+            "role": "REVIEWER"
+          }
+        ],
+        "assignments": []
+      }
+    },
+    {
+      "id": "M12-05",
+      "description": "Reject overlapping room and members",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:24.385939+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): Lecturer or room schedule conflicts with council: QA API Council 20261005_150751",
+        "path": "/api/councils",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:24.4359337"
+      }
+    },
+    {
+      "id": "M12-06",
+      "description": "Edit council before assessments",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:24.437583+07:00",
+      "detail": {
+        "id": 1,
+        "name": "QA API Council 20261005_150751 Updated",
+        "departmentId": 1,
+        "departmentName": "Software Engineering Department",
+        "periodId": 1,
+        "periodName": "Graduation Thesis Period Term 1 2026-2027",
+        "room": "QA-20261005_150751",
+        "startsAt": "2026-10-05T15:10:22",
+        "endsAt": "2026-10-05T15:11:22",
+        "status": "SCHEDULED",
+        "canManage": true,
+        "members": [
+          {
+            "lecturerId": 14,
+            "fullName": "QA Chair 20261005_150751",
+            "role": "CHAIR"
+          },
+          {
+            "lecturerId": 15,
+            "fullName": "QA Secretary 20261005_150751",
+            "role": "SECRETARY"
+          },
+          {
+            "lecturerId": 16,
+            "fullName": "QA Reviewer 20261005_150751",
+            "role": "REVIEWER"
+          }
+        ],
+        "assignments": []
+      }
+    },
+    {
+      "id": "M12-07",
+      "description": "Assign approved registration",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:26.598090+07:00",
+      "detail": {
+        "id": 1,
+        "name": "QA API Council 20261005_150751 Updated",
+        "departmentId": 1,
+        "departmentName": "Software Engineering Department",
+        "periodId": 1,
+        "periodName": "Graduation Thesis Period Term 1 2026-2027",
+        "room": "QA-20261005_150751",
+        "startsAt": "2026-10-05T15:10:22",
+        "endsAt": "2026-10-05T15:11:22",
+        "status": "SCHEDULED",
+        "canManage": true,
+        "members": [
+          {
+            "lecturerId": 14,
+            "fullName": "QA Chair 20261005_150751",
+            "role": "CHAIR"
+          },
+          {
+            "lecturerId": 15,
+            "fullName": "QA Secretary 20261005_150751",
+            "role": "SECRETARY"
+          },
+          {
+            "lecturerId": 16,
+            "fullName": "QA Reviewer 20261005_150751",
+            "role": "REVIEWER"
+          }
+        ],
+        "assignments": [
+          {
+            "id": 1,
+            "registration": {
+              "id": 2,
+              "topicId": 5,
+              "topicTitle": "QA Defense Workflow 20261005_150751",
+              "teamId": 4,
+              "teamName": "QA Defense Team 20261005_150751",
+              "departmentId": 1,
+              "departmentName": "Software Engineering Department",
+              "periodId": 1,
+              "periodName": "Graduation Thesis Period Term 1 2026-2027",
+              "submissionDeadline": "2027-01-16T00:00:00",
+              "canSubmit": false,
+              "canManage": true,
+              "students": [
+                {
+                  "id": 13,
+                  "fullName": "QA Leader 20261005_150751",
+                  "studentCode": "QA20261005_150751"
+                }
+              ]
+            },
+            "canReview": false,
+            "canDefense": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "M12-08",
+      "description": "Reject duplicate assignment",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:26.689357+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): The team is already assigned; remove the existing assignment before changing councils",
+        "path": "/api/councils/1/assignments",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:26.7447253"
+      }
+    },
+    {
+      "id": "M12-09",
+      "description": "Remove assignment before assessments",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:26.745800+07:00",
+      "detail": null
+    },
+    {
+      "id": "M12-10",
+      "description": "Reassign approved registration",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:28.888210+07:00",
+      "detail": {
+        "id": 1,
+        "name": "QA API Council 20261005_150751 Updated",
+        "departmentId": 1,
+        "departmentName": "Software Engineering Department",
+        "periodId": 1,
+        "periodName": "Graduation Thesis Period Term 1 2026-2027",
+        "room": "QA-20261005_150751",
+        "startsAt": "2026-10-05T15:10:22",
+        "endsAt": "2026-10-05T15:11:22",
+        "status": "SCHEDULED",
+        "canManage": true,
+        "members": [
+          {
+            "lecturerId": 14,
+            "fullName": "QA Chair 20261005_150751",
+            "role": "CHAIR"
+          },
+          {
+            "lecturerId": 15,
+            "fullName": "QA Secretary 20261005_150751",
+            "role": "SECRETARY"
+          },
+          {
+            "lecturerId": 16,
+            "fullName": "QA Reviewer 20261005_150751",
+            "role": "REVIEWER"
+          }
+        ],
+        "assignments": [
+          {
+            "id": 2,
+            "registration": {
+              "id": 2,
+              "topicId": 5,
+              "topicTitle": "QA Defense Workflow 20261005_150751",
+              "teamId": 4,
+              "teamName": "QA Defense Team 20261005_150751",
+              "departmentId": 1,
+              "departmentName": "Software Engineering Department",
+              "periodId": 1,
+              "periodName": "Graduation Thesis Period Term 1 2026-2027",
+              "submissionDeadline": "2027-01-16T00:00:00",
+              "canSubmit": false,
+              "canManage": true,
+              "students": [
+                {
+                  "id": 13,
+                  "fullName": "QA Leader 20261005_150751",
+                  "studentCode": "QA20261005_150751"
+                }
+              ]
+            },
+            "canReview": false,
+            "canDefense": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "M12-11",
+      "description": "Student sees own schedule and assignment",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:28.977166+07:00",
+      "detail": "Own schedule visible, canManage=false"
+    },
+    {
+      "id": "M13-01",
+      "description": "Students cannot read assessments",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:29.047930+07:00",
+      "detail": {
+        "success": false,
+        "status": 403,
+        "error": "Forbidden",
+        "message": "Access Denied (403 Forbidden): Your account does not have sufficient role permissions to perform this operation.",
+        "path": "/api/assessments",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:29.0643723"
+      }
+    },
+    {
+      "id": "M13-02",
+      "description": "Only assigned reviewer can create review",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:29.065961+07:00",
+      "detail": {
+        "success": false,
+        "status": 403,
+        "error": "Forbidden",
+        "message": "Access Denied (403 Forbidden): Your account does not have sufficient role permissions to perform this operation.",
+        "path": "/api/assessments",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:29.1245968"
+      }
+    },
+    {
+      "id": "M13-03",
+      "description": "Reject score above 10",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:29.126246+07:00",
+      "detail": {
+        "success": false,
+        "status": 422,
+        "error": "Unprocessable Entity",
+        "message": "Invalid data payload (422 Unprocessable Entity): [contentScore: must be less than or equal to 10.00]",
+        "path": "/api/assessments",
+        "validationErrors": {
+          "contentScore": "must be less than or equal to 10.00"
+        },
+        "timestamp": "2026-10-05T15:08:29.1706786"
+      }
+    },
+    {
+      "id": "M13-04",
+      "description": "Reject score with more than two decimals",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:29.172768+07:00",
+      "detail": {
+        "success": false,
+        "status": 422,
+        "error": "Unprocessable Entity",
+        "message": "Invalid data payload (422 Unprocessable Entity): [contentScore: numeric value out of bounds (<2 digits>.<2 digits> expected)]",
+        "path": "/api/assessments",
+        "validationErrors": {
+          "contentScore": "numeric value out of bounds (<2 digits>.<2 digits> expected)"
+        },
+        "timestamp": "2026-10-05T15:08:29.1863336"
+      }
+    },
+    {
+      "id": "M13-05",
+      "description": "Save review draft",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:29.187996+07:00",
+      "detail": {
+        "id": 1,
+        "assignmentId": 2,
+        "evaluatorId": 16,
+        "evaluatorName": "QA Reviewer 20261005_150751",
+        "studentId": 13,
+        "studentName": "QA Leader 20261005_150751",
+        "type": "REVIEW",
+        "status": "DRAFT",
+        "contentScore": 8.5,
+        "implementationScore": 9,
+        "presentationScore": 8,
+        "strengths": "Clear QA report",
+        "weaknesses": "Synthetic data only",
+        "questions": "Explain design",
+        "comment": "Synthetic QA assessment; no academic result",
+        "submittedAt": null,
+        "updatedAt": "2026-10-05T15:08:29.2336134",
+        "canEdit": true
+      }
+    },
+    {
+      "id": "M13-06",
+      "description": "Update draft retains same record",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:29.262063+07:00",
+      "detail": "Same assessment ID"
+    },
+    {
+      "id": "M13-07",
+      "description": "Draft is private from other evaluator",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:29.334450+07:00",
+      "detail": "Other evaluator sees no draft"
+    },
+    {
+      "id": "M13-08",
+      "description": "Other evaluator cannot delete draft",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:29.376982+07:00",
+      "detail": {
+        "success": false,
+        "status": 403,
+        "error": "Forbidden",
+        "message": "Access Denied (403 Forbidden): Your account does not have sufficient role permissions to perform this operation.",
+        "path": "/api/assessments/1",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:29.414839"
+      }
+    },
+    {
+      "id": "M12-12",
+      "description": "Assessment prevents council structure change",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:29.416445+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): Schedules and members cannot be changed while assessments exist; delete draft assessments first",
+        "path": "/api/councils/1",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:29.4506637"
+      }
+    },
+    {
+      "id": "M12-13",
+      "description": "Assessment prevents assignment removal",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:29.451729+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): Assignments with assessments cannot be removed",
+        "path": "/api/councils/1/assignments/2",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:31.6133099"
+      }
+    },
+    {
+      "id": "M13-09",
+      "description": "Owner can delete own draft",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:31.615501+07:00",
+      "detail": null
+    },
+    {
+      "id": "M13-10",
+      "description": "Submit requires nonblank comment",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:31.734982+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): Comments are required before submitting an assessment",
+        "path": "/api/assessments/2/submit",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:31.7836543"
+      }
+    },
+    {
+      "id": "M13-11",
+      "description": "Defense cannot submit before scheduled start",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:33.997562+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): The defense has not started yet; only draft assessments can be saved",
+        "path": "/api/assessments/3/submit",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:34.0363725"
+      }
+    },
+    {
+      "id": "M13-12",
+      "description": "Submit review locks assessment",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:34.038366+07:00",
+      "detail": {
+        "id": 2,
+        "assignmentId": 2,
+        "evaluatorId": 16,
+        "evaluatorName": "QA Reviewer 20261005_150751",
+        "studentId": 13,
+        "studentName": "QA Leader 20261005_150751",
+        "type": "REVIEW",
+        "status": "SUBMITTED",
+        "contentScore": 8.5,
+        "implementationScore": 9.0,
+        "presentationScore": 8.0,
+        "strengths": "Clear QA report",
+        "weaknesses": "Synthetic data only",
+        "questions": "Explain design",
+        "comment": "Synthetic QA assessment; no academic result",
+        "submittedAt": "2026-10-05T15:08:34.0796588",
+        "updatedAt": "2026-10-05T15:08:34.0796588",
+        "canEdit": false
+      }
+    },
+    {
+      "id": "M13-13",
+      "description": "Reject editing submitted assessment",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:34.097675+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): Submitted assessments are locked and cannot be edited",
+        "path": "/api/assessments",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:34.1570179"
+      }
+    },
+    {
+      "id": "M13-14",
+      "description": "Reject deleting submitted assessment",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:34.158682+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): Only draft assessments can be deleted",
+        "path": "/api/assessments/2",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:36.2403298"
+      }
+    },
+    {
+      "id": "M11-13",
+      "description": "Submitted review blocks further upload",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:36.242050+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): Document submissions are locked because an assessment has already been submitted",
+        "path": "/api/reports/registrations/2/documents",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:36.3127236"
+      }
+    },
+    {
+      "id": "M11-14",
+      "description": "Leader canSubmit becomes false",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:36.314878+07:00",
+      "detail": "canSubmit=false"
+    },
+    {
+      "id": "M13-15",
+      "description": "Other evaluator can read submitted review",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:38.412655+07:00",
+      "detail": "Submitted review visible"
+    },
+    {
+      "id": "M12-14",
+      "description": "Submitted assessment blocks cancellation",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:38.457517+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): A council with submitted assessments cannot be cancelled",
+        "path": "/api/councils/1/status",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:40.6047372"
+      }
+    },
+    {
+      "id": "M12-15",
+      "description": "Council cannot complete before end",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:08:40.605868+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): The scheduled defense has not ended yet",
+        "path": "/api/councils/1/status",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:08:42.6850358"
+      }
+    },
+    {
+      "id": "M13-16",
+      "description": "Chair submits defense after start",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:10:22.699435+07:00",
+      "detail": {
+        "id": 3,
+        "assignmentId": 2,
+        "evaluatorId": 14,
+        "evaluatorName": "QA Chair 20261005_150751",
+        "studentId": 13,
+        "studentName": "QA Leader 20261005_150751",
+        "type": "DEFENSE",
+        "status": "SUBMITTED",
+        "contentScore": 8.5,
+        "implementationScore": 9.0,
+        "presentationScore": 8.0,
+        "strengths": "Clear QA report",
+        "weaknesses": "Synthetic data only",
+        "questions": "Explain design",
+        "comment": "Synthetic QA assessment; no academic result",
+        "submittedAt": "2026-10-05T15:10:24.8372265",
+        "updatedAt": "2026-10-05T15:10:24.8372265",
+        "canEdit": false
+      }
+    },
+    {
+      "id": "M13-17",
+      "description": "Secretary submits defense",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:10:26.987836+07:00",
+      "detail": {
+        "id": 4,
+        "assignmentId": 2,
+        "evaluatorId": 15,
+        "evaluatorName": "QA Secretary 20261005_150751",
+        "studentId": 13,
+        "studentName": "QA Leader 20261005_150751",
+        "type": "DEFENSE",
+        "status": "SUBMITTED",
+        "contentScore": 8.5,
+        "implementationScore": 9.0,
+        "presentationScore": 8.0,
+        "strengths": "Clear QA report",
+        "weaknesses": "Synthetic data only",
+        "questions": "Explain design",
+        "comment": "Synthetic QA assessment; no academic result",
+        "submittedAt": "2026-10-05T15:10:27.041385",
+        "updatedAt": "2026-10-05T15:10:27.0419209",
+        "canEdit": false
+      }
+    },
+    {
+      "id": "M12-18",
+      "description": "Council cannot complete with a missing defense sheet",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:11:22.071597+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): Required review and defense assessments are missing for one or more students",
+        "path": "/api/councils/1/status",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:11:24.2435845"
+      }
+    },
+    {
+      "id": "M13-18",
+      "description": "Reviewer submits final required defense sheet",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:11:26.399482+07:00",
+      "detail": {
+        "id": 5,
+        "assignmentId": 2,
+        "evaluatorId": 16,
+        "evaluatorName": "QA Reviewer 20261005_150751",
+        "studentId": 13,
+        "studentName": "QA Leader 20261005_150751",
+        "type": "DEFENSE",
+        "status": "SUBMITTED",
+        "contentScore": 8.5,
+        "implementationScore": 9.0,
+        "presentationScore": 8.0,
+        "strengths": "Clear QA report",
+        "weaknesses": "Synthetic data only",
+        "questions": "Explain design",
+        "comment": "Synthetic QA assessment; no academic result",
+        "submittedAt": "2026-10-05T15:11:26.4401188",
+        "updatedAt": "2026-10-05T15:11:26.4406667",
+        "canEdit": false
+      }
+    },
+    {
+      "id": "M12-16",
+      "description": "Complete council after end and all four required sheets",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:11:26.462011+07:00",
+      "detail": "Council COMPLETED"
+    },
+    {
+      "id": "M12-17",
+      "description": "Completed council cannot reopen",
+      "status": "PASS",
+      "executedAt": "2026-10-05T15:11:28.714822+07:00",
+      "detail": {
+        "success": false,
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid request (400 Bad Request): The council has been completed or cancelled",
+        "path": "/api/councils/1/status",
+        "validationErrors": null,
+        "timestamp": "2026-10-05T15:11:28.7790721"
+      }
+    }
+  ],
+  "recordedAt": "2026-10-05T15:11:28.781766+07:00",
+  "finalVerification": {
+    "reportVersions": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "documentCount": 7,
+    "submittedAssessments": 4,
+    "councilStatus": "COMPLETED"
+  }
+}

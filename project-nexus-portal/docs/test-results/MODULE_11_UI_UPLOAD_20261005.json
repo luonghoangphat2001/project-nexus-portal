@@ -1,0 +1,50 @@
+{
+  "runId": "20261005_160516",
+  "registrationId": 4,
+  "username": "qa_leader_20261005_160516",
+  "method": "Both reports uploaded and downloaded through Edge UI; API used only to verify persisted history.",
+  "documents": [
+    {
+      "id": 11,
+      "registrationId": 4,
+      "type": "REPORT",
+      "title": "QA UI Upload Version 2",
+      "note": "Updated synthetic report; retain previous version.",
+      "fileName": "ui-upload-v2-160516.txt",
+      "contentType": "text/plain",
+      "fileSize": 74,
+      "version": 2,
+      "submittedByName": "QA Leader 20261005_160516",
+      "submittedAt": "2026-10-05T16:07:05.481317"
+    },
+    {
+      "id": 10,
+      "registrationId": 4,
+      "type": "REPORT",
+      "title": "QA UI Upload Version 1",
+      "note": "Synthetic upload test after enabling file URL access.",
+      "fileName": "ui-upload-v1-160516.txt",
+      "contentType": "text/plain",
+      "fileSize": 66,
+      "version": 1,
+      "submittedByName": "QA Leader 20261005_160516",
+      "submittedAt": "2026-10-05T16:06:41.114846"
+    }
+  ],
+  "downloads": [
+    {
+      "version": 1,
+      "filename": "ui-upload-v1-160516.txt",
+      "sizeBytes": 66,
+      "sha256": "148ba8f802c82ee5c2c271e4fbbb114b0ff375470662fe1863d861bb57185773",
+      "matchesOriginal": true
+    },
+    {
+      "version": 2,
+      "filename": "ui-upload-v2-160516.txt",
+      "sizeBytes": 74,
+      "sha256": "5d6127a6a9222372389bc85549309e7d550f670525d51555c64582d2402b8b82",
+      "matchesOriginal": true
+    }
+  ]
+}

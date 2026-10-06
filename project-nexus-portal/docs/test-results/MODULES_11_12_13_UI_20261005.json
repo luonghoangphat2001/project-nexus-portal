@@ -1,0 +1,123 @@
+{
+  "date": "2026-10-05",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "environment": "Edge / http://localhost:3000 / Spring Boot Java 17 / MySQL 8",
+  "fixture": {
+    "runId": "20261005_151214",
+    "registrationId": 3,
+    "councilId": 2,
+    "assignmentId": 3,
+    "startsAt": "2026-10-05T15:38:00",
+    "endsAt": "2026-10-05T15:39:00",
+    "finalStatus": "COMPLETED",
+    "reports": "Two synthetic reports were inserted through the API because Edge file upload permissions were unavailable. UI upload was not counted as passed.",
+    "assessments": "All four assessments were saved and submitted through the UI using the assigned reviewer, chair and secretary accounts."
+  },
+  "summary": {
+    "PASS": 12,
+    "PARTIAL": 0,
+    "BLOCKED": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "id": "UI-01",
+      "status": "PASS",
+      "actual": "Sidebar navigation opened all three English module titles; role-based navigation behaved correctly."
+    },
+    {
+      "id": "UI-02",
+      "status": "PASS",
+      "actual": "Retested after user enabled file URL access. Logged in as QA leader 23, selected the synthetic TXT file through Edge file chooser, clicked Submit Document, observed success banner and Report version 1 in Submission History (registration 4).",
+      "previousStatus": "BLOCKED",
+      "evidence": "screenshots/report-upload-versions.jpg"
+    },
+    {
+      "id": "UI-03",
+      "status": "PASS",
+      "actual": "Uploaded a second distinct TXT through Edge UI to registration 4. History displayed versions 1 and 2, retained after reload. Downloaded both through UI; each SHA-256 matches its respective original file.",
+      "evidence": "screenshots/report-upload-versions.jpg",
+      "previousStatus": "PARTIAL",
+      "downloads": [
+        {
+          "version": 1,
+          "filename": "ui-upload-v1-160516.txt",
+          "sizeBytes": 66,
+          "sha256": "148ba8f802c82ee5c2c271e4fbbb114b0ff375470662fe1863d861bb57185773",
+          "matchesOriginal": true
+        },
+        {
+          "version": 2,
+          "filename": "ui-upload-v2-160516.txt",
+          "sizeBytes": 74,
+          "sha256": "5d6127a6a9222372389bc85549309e7d550f670525d51555c64582d2402b8b82",
+          "matchesOriginal": true
+        }
+      ]
+    },
+    {
+      "id": "UI-04",
+      "status": "PASS",
+      "actual": "Missing required datetime prevented submission. Duplicate Chair role returned a visible 400 banner requiring exactly one chair, secretary and reviewer."
+    },
+    {
+      "id": "UI-05",
+      "status": "PASS",
+      "actual": "Created Scheduled council with three distinct lecturers, Vietnam start/end times; edited name to QA UI Council 20261005_151214 Updated."
+    },
+    {
+      "id": "UI-06",
+      "status": "PASS",
+      "actual": "Assigned QA registration; Documents selected registration 3 and Assessments selected assignment 3."
+    },
+    {
+      "id": "UI-07",
+      "status": "PASS",
+      "actual": "Saved reviewer Review draft with 8.5/9/8; Edit Draft changed content score to 9, and the saved sheet displayed 9/9/8."
+    },
+    {
+      "id": "UI-08",
+      "status": "PASS",
+      "actual": "Cancel on the confirmation kept Draft without sending a request. Confirm after fixture report was available produced Submitted & Locked, removed edit/delete/submit controls."
+    },
+    {
+      "id": "UI-09",
+      "status": "PASS",
+      "actual": "Student accessing /assessments saw Access Restricted (403). After submitted scores, Reports showed History and Download without the upload form."
+    },
+    {
+      "id": "UI-10",
+      "status": "PASS",
+      "actual": "Reviewer Defense submission before 15:38 showed The defense has not started yet and remained Draft. After start and report availability, Defense was submitted and locked."
+    },
+    {
+      "id": "UI-11",
+      "status": "PASS",
+      "actual": "Reviewer Review + Defense, Chair Defense, Secretary Defense all submitted through UI. Admin Complete after End displayed Completed and removed management controls. State persisted after backend restart.",
+      "evidence": "screenshots/council-completed.jpg"
+    },
+    {
+      "id": "UI-12",
+      "status": "PASS",
+      "actual": "Inspected Reports, Council and Assessment layouts; all four Submitted & Locked badges visible, no Edit Draft buttons. No render errors or errors pointing into the application bundle were observed. Console contains AdBlock360 failures and one Failed to fetch attributed to the page URL whose script origin remains unconfirmed; a completely clean console is not claimed. Corrected Vietnamese lecturer names verified in Council options.",
+      "evidence": "screenshots/assessments-submitted.jpg"
+    }
+  ],
+  "additionalChecks": [
+    "Review submission without a Report displayed the expected business error and retained Draft.",
+    "Chair Assessment Type exposed only Defense Assessment, while reviewer could choose Review.",
+    "Existing corrupted seed names were repaired only when they matched a known mojibake encoding of the exact checked-in seed name; user roles and credentials were preserved.",
+    "24 integration tests passed again after the UTF-8 configuration change; backend was packaged and restarted successfully."
+  ],
+  "uploadRetest": {
+    "runId": "20261005_160516",
+    "registrationId": 4,
+    "teamId": 6,
+    "topicId": 7,
+    "leaderId": 23,
+    "username": "qa_leader_20261005_160516",
+    "result": "PASS",
+    "details": "MODULE_11_UI_UPLOAD_20261005.json",
+    "previousFilePermissionBlock": "Resolved by user enabling Allow access to file URLs."
+  }
+}

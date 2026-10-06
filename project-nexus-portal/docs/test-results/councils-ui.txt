@@ -1,0 +1,94 @@
+- complementary:
+  - generic: Nexus
+  - generic: Portal
+  - generic: S
+  - paragraph: System Administrator (Super Admin)
+  - paragraph: ADMIN
+  - link "Dashboard":
+    - /url: /dashboard
+    - generic: Dashboard
+  - link "Capstone Topics":
+    - /url: /topics
+    - generic: Capstone Topics
+  - link "My Team":
+    - /url: /teams
+    - generic: My Team
+  - link "Matchmaking Board":
+    - /url: /matchmaking
+    - generic: Matchmaking Board
+  - link "Topic Registrations":
+    - /url: /registrations
+    - generic: Topic Registrations
+  - link "Reports & Documents":
+    - /url: /reports
+    - generic: Reports & Documents
+  - link "Council Assignments" [active]:
+    - /url: /councils
+    - generic: Council Assignments
+  - link "Reviews & Grading":
+    - /url: /assessments
+    - generic: Reviews & Grading
+  - link "User Profile":
+    - /url: /profile
+    - generic: User Profile
+  - link "User Management":
+    - /url: /users
+    - generic: User Management
+  - link "Roles & Permissions":
+    - /url: /roles
+    - generic: Roles & Permissions
+  - link "System Administration":
+    - /url: /admin/system
+    - generic: System Administration
+  - link "Security & Audit Logs":
+    - /url: /admin/security
+    - generic: Security & Audit Logs
+- banner:
+  - button "Toggle Navigation Menu":
+  - textbox "Search projects, topics, users..."
+  - button:
+  - button:
+  - button "S System Administrator (Super Admin)":
+    - generic: S
+    - paragraph: System Administrator (Super Admin)
+- main:
+  - heading "Council Assignments" [level=1]
+  - paragraph: Module 12 · Manage councils, members and defense schedules by department.
+  - button "Refresh":
+    - text: Refresh
+  - button "Create Council":
+    - text: Create Council
+  - heading "QA UI Council 20261005_151214 Updated" [level=2]
+  - generic: Completed
+  - paragraph: Software Engineering Department · Graduation Thesis Period Term 1 2026-2027
+  - paragraph: QA-UI-151214 · 05/10/2026, 15:38 → 05/10/2026, 15:39 (Vietnam time, UTC+7)
+  - text: QA Chair 20261005_151214 ·
+  - strong: Chair
+  - text: QA Secretary 20261005_151214 ·
+  - strong: Secretary
+  - text: QA Reviewer 20261005_151214 ·
+  - strong: Reviewer
+  - heading "Assigned Teams (1)" [level=3]
+  - paragraph: QA Defense Team 20261005_151214 · QA Defense Workflow 20261005_151214
+  - paragraph: QA Leader 20261005_151214 (QA20261005_151214)
+  - link "Documents":
+    - /url: /reports?registrationId=3
+  - link "Assessments":
+    - /url: /assessments?assignmentId=3
+  - heading "QA API Council 20261005_150751 Updated" [level=2]
+  - generic: Completed
+  - paragraph: Software Engineering Department · Graduation Thesis Period Term 1 2026-2027
+  - paragraph: QA-20261005_150751 · 05/10/2026, 15:10 → 05/10/2026, 15:11 (Vietnam time, UTC+7)
+  - text: QA Chair 20261005_150751 ·
+  - strong: Chair
+  - text: QA Secretary 20261005_150751 ·
+  - strong: Secretary
+  - text: QA Reviewer 20261005_150751 ·
+  - strong: Reviewer
+  - heading "Assigned Teams (1)" [level=3]
+  - paragraph: QA Defense Team 20261005_150751 · QA Defense Workflow 20261005_150751
+  - paragraph: QA Leader 20261005_150751 (QA20261005_150751)
+  - link "Documents":
+    - /url: /reports?registrationId=2
+  - link "Assessments":
+    - /url: /assessments?assignmentId=2
