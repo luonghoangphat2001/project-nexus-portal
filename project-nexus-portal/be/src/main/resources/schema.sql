@@ -362,3 +362,43 @@ CREATE TABLE IF NOT EXISTS team_join_requests (
   CONSTRAINT fk_team_join_requests_faculty_id FOREIGN KEY (faculty_id) REFERENCES faculties (id) ON DELETE RESTRICT,
   CONSTRAINT fk_team_join_requests_cohort_id FOREIGN KEY (cohort_id) REFERENCES cohorts (id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- In-app announcements and per-user read receipts (Module 9)
+CREATE TABLE IF NOT EXISTS notifications (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(150) NOT NULL,
+  content TEXT NOT NULL,
+  faculty_id BIGINT NULL,
+  author_id BIGINT NOT NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  CONSTRAINT fk_notifications_faculty FOREIGN KEY (faculty_id) REFERENCES faculties(id),
+  CONSTRAINT fk_notifications_author FOREIGN KEY (author_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS notification_reads (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  notification_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  read_at DATETIME(6) NOT NULL,
+  CONSTRAINT uk_notification_reads UNIQUE (notification_id, user_id),
+  CONSTRAINT fk_notification_reads_notification FOREIGN KEY (notification_id) REFERENCES notifications(id),
+  CONSTRAINT fk_notification_reads_user FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Team task tracking (Module 10)
+CREATE TABLE IF NOT EXISTS progress_tasks (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  version BIGINT DEFAULT 0,
+  team_id BIGINT NOT NULL,
+  assignee_id BIGINT NOT NULL,
+  title VARCHAR(150) NOT NULL,
+  description TEXT,
+  due_date DATE NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'TODO',
+  feedback TEXT,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  CONSTRAINT fk_progress_tasks_team FOREIGN KEY (team_id) REFERENCES teams(id),
+  CONSTRAINT fk_progress_tasks_assignee FOREIGN KEY (assignee_id) REFERENCES users(id)
+);

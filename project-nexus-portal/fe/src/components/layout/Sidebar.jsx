@@ -25,6 +25,10 @@ export const Sidebar = ({ isOpen }) => {
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Registration Periods', path: '/periods', icon: BookmarkCheck },
+    { name: 'Academic Structure', path: '/academic', icon: Layers },
+    { name: 'Notifications', path: '/notifications', icon: FileText },
+    { name: 'Project Progress', path: '/progress', icon: LayoutDashboard },
     { name: 'Capstone Topics', path: '/topics', icon: FileText },
     ...(isStudent
       ? [

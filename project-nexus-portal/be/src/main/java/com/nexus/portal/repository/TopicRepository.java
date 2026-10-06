@@ -14,6 +14,7 @@ import java.util.List;
 
 @Repository
 public interface TopicRepository extends JpaRepository<Topic, Long>, JpaSpecificationExecutor<Topic> {
+    boolean existsByPeriodId(Long periodId);
 
     @Query("SELECT DISTINCT t FROM Topic t " +
            "JOIN t.topicLecturers tl " +
