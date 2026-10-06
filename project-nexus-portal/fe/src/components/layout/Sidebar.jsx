@@ -37,6 +37,11 @@ export const Sidebar = ({ isOpen }) => {
         ]
       : []),
     { name: 'Topic Registrations', path: '/registrations', icon: BookmarkCheck },
+    { name: 'Reports & Documents', path: '/reports', icon: FileText },
+    { name: 'Council Assignments', path: '/councils', icon: Users2 },
+    ...(isAdmin || isPrincipal || isTeacher || hasRole('ROLE_COUNCIL')
+      ? [{ name: 'Reviews & Grading', path: '/assessments', icon: BookmarkCheck }]
+      : []),
     { name: 'User Profile', path: '/profile', icon: UserCheck },
     ...(isAdmin || isPrincipal || isTeacher
       ? [

@@ -1,0 +1,85 @@
+Browser tab: 1527049307, Title: "Nexus Portal - Admin Dashboard", URL: "http://localhost:3000/reports".
+1 AXWebArea Nexus Portal - Admin Dashboard, URL: localhost:3000/reports
+	2 container root
+		3 container
+			4 image
+			5 text Nexus Portal Q QA Leader 20261005_160516 USER
+			6 link Description: Dashboard, Value: localhost:3000/dashboard
+			7 link Description: Capstone Topics, Value: localhost:3000/topics
+			8 link Description: My Team, Value: localhost:3000/teams
+			9 link Description: Matchmaking Board, Value: localhost:3000/matchmaking
+			10 link Description: Topic Registrations, Value: localhost:3000/registrations
+			11 link Description: Reports & Documents, Value: localhost:3000/reports
+			12 link Description: Council Assignments, Value: localhost:3000/councils
+			13 link Description: User Profile, Value: localhost:3000/profile
+		14 container
+			15 button Toggle Navigation Menu
+				16 image
+			17 image
+			18 text field (settable)
+			19 button
+				20 image
+			21 button
+				22 image
+			23 button Q QA Leader 20261005_160516
+				24 text Q
+				25 text QA Leader 20261005_160516
+		26 container
+			27 heading Reports & Documents, Value: 1
+				28 text Reports & Documents
+			29 text Module 11 · Submit and manage documents for approved team projects.
+			30 button Refresh
+				31 image
+				32 text Refresh
+			33 container
+				34 text Team / Project
+				35 pop up button (collapsed, settable) Team / Project, Secondary Actions: Expand, Value: QA Defense Team 20261005_160516 · QA Defense Workflow 20261005_160516 · Graduation Thesis Period Term 1 2026-2027
+					36 menu
+						37 (selected) QA Defense Team 20261005_160516 · QA Defense Workflow 20261005_160516 · Graduation Thesis Period Term 1 2026-2027
+			38 container
+				39 text Submission deadline:  16/01/2027, 00:00  (Vietnam time, UTC+7). Only team leaders can submit documents.
+			40 container
+				41 heading Submit a New Version, Value: 2
+					42 text Submit a New Version
+				43 text Document Type
+				44 pop up button (collapsed, settable) Document Type, Value: Report, Secondary Actions: Expand
+					45 menu
+						46 (selected) Report
+						47 Presentation Slides
+						48 Source Code
+						49 Other Documents
+				50 text Title
+				51 text field (settable) Title
+				52 text File (PDF, DOCX, PPTX, ZIP, TXT)
+				53 button File (PDF, DOCX, PPTX, ZIP, TXT)
+				54 text Default file limit: 10 MB. Further submissions are locked after an assessment is submitted. Notes
+				55 text entry area (settable) Notes
+				56 button (disabled) Submit Document
+					57 image
+					58 text Submit Document
+			59 heading Submission History, Value: 2
+				60 text Submission History
+			61 image
+			62 container
+				63 text QA UI Upload Version 2 v 2  ·  Report
+			64 container
+				65 text ui-upload-v2-160516.txt  ·  0.00  MB
+			66 container
+				67 text QA Leader 20261005_160516  ·  05/10/2026, 16:07
+			68 text Updated synthetic report; retain previous version.
+			69 button Download
+				70 image
+				71 text Download
+			72 image
+			73 container
+				74 text QA UI Upload Version 1 v 1  ·  Report
+			75 container
+				76 text ui-upload-v1-160516.txt  ·  0.00  MB
+			77 container
+				78 text QA Leader 20261005_160516  ·  05/10/2026, 16:06
+			79 text Synthetic upload test after enabling file URL access.
+			80 button Download
+				81 image
+				82 text Download
+
+The focused UI element is 1 AXWebArea Nexus Portal - Admin Dashboard, URL: localhost:3000/reports

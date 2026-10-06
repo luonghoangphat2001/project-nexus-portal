@@ -20,6 +20,9 @@ import { AcademicPage } from './pages/AcademicPage';
 import { PeriodsPage } from './pages/PeriodsPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { ProgressPage } from './pages/ProgressPage';
+import { ReportsPage } from './pages/ReportsPage';
+import { CouncilsPage } from './pages/CouncilsPage';
+import { AssessmentsPage } from './pages/AssessmentsPage';
 
 export const App = () => {
   return (
@@ -53,6 +56,13 @@ export const App = () => {
             <Route path="teams" element={<TeamsPage />} />
             <Route path="registrations" element={<RegistrationsPage />} />
             <Route path="matchmaking" element={<MatchmakingPage />} />
+            <Route path="reports" element={<ReportsPage />} />
+            <Route path="councils" element={<CouncilsPage />} />
+            <Route path="assessments" element={
+              <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_PRINCIPAL', 'ROLE_TEACHER', 'ROLE_COUNCIL']}>
+                <AssessmentsPage />
+              </RoleBasedRoute>
+            } />
 
             {/* Module 1: Admin & Faculty Staff Management */}
             <Route

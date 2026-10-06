@@ -22,6 +22,23 @@ import java.util.NoSuchElementException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleUploadTooLarge(Exception ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(ErrorResponse.builder()
+                .success(false).status(413).error("Payload Too Large")
+                .message("The uploaded file exceeds the maximum allowed size")
+                .path(request.getRequestURI()).timestamp(LocalDateTime.now()).build());
+    }
+
+    @ExceptionHandler({org.springframework.http.converter.HttpMessageNotReadableException.class,
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<ErrorResponse> handleInvalidPayload(Exception ex, HttpServletRequest request) {
+        return ResponseEntity.badRequest().body(ErrorResponse.builder()
+                .success(false).status(400).error("Bad Request")
+                .message("The request payload has an invalid format")
+                .path(request.getRequestURI()).timestamp(LocalDateTime.now()).build());
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
         ErrorResponse errorResponse = ErrorResponse.builder()

@@ -146,3 +146,13 @@ Tất cả các bảng cơ sở dữ liệu được định nghĩa dưới dạ
   - Kiểm tra biến môi trường nghiêm ngặt, hiển thị thông báo lỗi thân thiện thay vì fallback dữ liệu ảo làm sai lệch trạng thái hệ thống.
 - **Thứ tự sắp xếp Tailwind CSS**:
   - Layout $\rightarrow$ Spacing $\rightarrow$ Sizing $\rightarrow$ Typography $\rightarrow$ Background & Color $\rightarrow$ State & Transition.
+
+## 5. Tích hợp Module 11–13
+
+- `ReportController` → `ReportService` → `ReportServiceImpl`: phiên bản tài liệu gắn với `TopicRegistration` đã duyệt; nội dung file lưu BLOB cùng transaction, DTO metadata tách khỏi DTO nội dung tải xuống.
+- `CouncilController` → `CouncilService` → `CouncilServiceImpl`: hội đồng, vai trò giảng viên, lịch và phân công nhóm; `DefenseAssignment` gắn hội đồng với đăng ký của nhóm.
+- `AssessmentController` → `AssessmentService` → `AssessmentServiceImpl`: phiếu nháp/đã gửi cho từng sinh viên và người chấm, lưu riêng các điểm thành phần để module 14 tính kết quả.
+- `DefenseAccessPolicy` là component nghiệp vụ dùng chung để kiểm tra quyền theo bản ghi (nhóm, giảng viên hướng dẫn, bộ môn, hội đồng), bên cạnh Spring Security và route guards.
+- `ReportsPage`, `CouncilsPage`, `AssessmentsPage` sử dụng service Axios riêng và component dùng chung trong `components/common/`; các route và sidebar được tích hợp với layout hiện có.
+- Mutation có transaction `READ_COMMITTED` và khóa pessimistic để tránh trùng phiên bản, phân công trùng, lịch giao nhau hoặc ghi đè phiếu đã gửi khi có request đồng thời. Trạng thái và quyền trên FE do BE cung cấp; service luôn kiểm tra lại quyền khi xử lý request.
+- Chi tiết quy tắc và hợp đồng API: [MODULES_11_12_13.md](./docs/MODULES_11_12_13.md).

@@ -402,3 +402,83 @@ CREATE TABLE IF NOT EXISTS progress_tasks (
   CONSTRAINT fk_progress_tasks_team FOREIGN KEY (team_id) REFERENCES teams(id),
   CONSTRAINT fk_progress_tasks_assignee FOREIGN KEY (assignee_id) REFERENCES users(id)
 );
+-- Modules 11–13: immutable document history, council assignments and individual assessments.
+CREATE TABLE IF NOT EXISTS report_documents (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  registration_id BIGINT NOT NULL,
+  submitted_by BIGINT NOT NULL,
+  document_type VARCHAR(30) NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  note VARCHAR(2000),
+  file_name VARCHAR(255) NOT NULL,
+  content_type VARCHAR(100) NOT NULL,
+  file_size BIGINT NOT NULL,
+  document_version INT NOT NULL,
+  content LONGBLOB NOT NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  UNIQUE KEY uk_report_version (registration_id, document_type, document_version),
+  CONSTRAINT fk_report_registration FOREIGN KEY (registration_id) REFERENCES topic_registrations(id),
+  CONSTRAINT fk_report_submitter FOREIGN KEY (submitted_by) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS defense_councils (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  department_id BIGINT NOT NULL,
+  period_id BIGINT NOT NULL,
+  room VARCHAR(150) NOT NULL,
+  starts_at DATETIME(6) NOT NULL,
+  ends_at DATETIME(6) NOT NULL,
+  status VARCHAR(30) NOT NULL DEFAULT 'SCHEDULED',
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  CONSTRAINT fk_council_department FOREIGN KEY (department_id) REFERENCES departments(id),
+  CONSTRAINT fk_council_period FOREIGN KEY (period_id) REFERENCES registration_periods(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS defense_council_members (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  council_id BIGINT NOT NULL,
+  lecturer_id BIGINT NOT NULL,
+  member_role VARCHAR(30) NOT NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  UNIQUE KEY uk_council_lecturer (council_id, lecturer_id),
+  CONSTRAINT fk_council_member_council FOREIGN KEY (council_id) REFERENCES defense_councils(id),
+  CONSTRAINT fk_council_member_lecturer FOREIGN KEY (lecturer_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS defense_assignments (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  council_id BIGINT NOT NULL,
+  registration_id BIGINT NOT NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  UNIQUE KEY uk_defense_registration (registration_id),
+  CONSTRAINT fk_assignment_council FOREIGN KEY (council_id) REFERENCES defense_councils(id),
+  CONSTRAINT fk_assignment_registration FOREIGN KEY (registration_id) REFERENCES topic_registrations(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS assessments (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  assignment_id BIGINT NOT NULL,
+  evaluator_id BIGINT NOT NULL,
+  student_id BIGINT NOT NULL,
+  assessment_type VARCHAR(30) NOT NULL,
+  status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+  content_score DECIMAL(4,2) NOT NULL,
+  implementation_score DECIMAL(4,2) NOT NULL,
+  presentation_score DECIMAL(4,2) NOT NULL,
+  strengths VARCHAR(4000),
+  weaknesses VARCHAR(4000),
+  questions VARCHAR(4000),
+  comment VARCHAR(4000),
+  submitted_at DATETIME(6),
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  UNIQUE KEY uk_individual_assessment (assignment_id, evaluator_id, student_id, assessment_type),
+  CONSTRAINT fk_assessment_assignment FOREIGN KEY (assignment_id) REFERENCES defense_assignments(id),
+  CONSTRAINT fk_assessment_evaluator FOREIGN KEY (evaluator_id) REFERENCES users(id),
+  CONSTRAINT fk_assessment_student FOREIGN KEY (student_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

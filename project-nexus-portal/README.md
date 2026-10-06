@@ -56,3 +56,13 @@ Truy cập: [http://localhost:3000](http://localhost:3000).
 ## 3. Quản lý Models và Cơ sở dữ liệu trong Java
 Xem hướng dẫn thêm cột, sửa kiểu dữ liệu trong Java Models tại:
 👉 [ARCHITECTURE.md](./ARCHITECTURE.md#2-hướng-dẫn-thêm-cột-hoặc-đổi-kiểu-dữ-liệu-trong-java-models)
+
+## 4. Module 11, 12, 13
+
+Đã triển khai đầy đủ BE/FE cho Nộp báo cáo & Tài liệu (`/reports`), Phân công hội đồng (`/councils`), Phản biện & Chấm điểm (`/assessments`). Các module sử dụng đăng ký đề tài đã duyệt và quyền truy cập theo nhóm, bộ môn, hội đồng.
+
+Xem [hướng dẫn nghiệp vụ, API, cấu hình và kiểm thử](./docs/MODULES_11_12_13.md). Backend mặc định nhận tệp tối đa 10 MiB; JPA/`schema.sql` bổ sung năm bảng. Chạy `mvn test` trong `be` và `npm run build` trong `fe` để kiểm tra.
+
+Xem [Functional Test Cases cho module 11–13](./docs/TEST_CASES_MODULES_11_12_13.md) để kiểm tra từng chức năng, quyền truy cập và luồng thực tế trên localhost/MySQL. Script `python scripts/qa_defense_localhost.py` tạo dữ liệu QA riêng và lưu kết quả thực thi; `--setup-only` chuẩn bị dữ liệu cho vòng kiểm thử bằng trình duyệt.
+
+Các endpoint ghép theo `API_PREFIX`; `.env.example` hiện dùng `/api`, tương ứng `VITE_API_BASE_URL=http://localhost:8080/api`. Dữ liệu mẫu cần được duyệt đăng ký trước khi thực hành module 11–13. Với DB đã sử dụng, đặt `SQL_INIT_MODE=never` để không chạy lại seed phát triển.
