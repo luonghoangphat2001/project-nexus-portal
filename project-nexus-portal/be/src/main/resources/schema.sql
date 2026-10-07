@@ -443,3 +443,23 @@ CREATE TABLE IF NOT EXISTS assessments (
   CONSTRAINT fk_assessment_evaluator FOREIGN KEY (evaluator_id) REFERENCES users(id),
   CONSTRAINT fk_assessment_student FOREIGN KEY (student_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Modules 14–16: immutable published final grades and aggregate academic reports.
+CREATE TABLE IF NOT EXISTS final_results (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  assignment_id BIGINT NOT NULL,
+  student_id BIGINT NOT NULL,
+  review_score DECIMAL(4,2) NOT NULL,
+  defense_score DECIMAL(4,2) NOT NULL,
+  final_score DECIMAL(4,2) NOT NULL,
+  passed BOOLEAN NOT NULL,
+  published_by BIGINT NOT NULL,
+  published_at DATETIME(6) NOT NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  UNIQUE KEY uk_final_result_assignment_student (assignment_id, student_id),
+  KEY idx_final_results_student_published (student_id, published_at),
+  CONSTRAINT fk_final_result_assignment FOREIGN KEY (assignment_id) REFERENCES defense_assignments(id),
+  CONSTRAINT fk_final_result_student FOREIGN KEY (student_id) REFERENCES users(id),
+  CONSTRAINT fk_final_result_publisher FOREIGN KEY (published_by) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
