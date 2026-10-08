@@ -7,6 +7,15 @@ Enterprise Monorepo Portal System:
 
 ---
 
+Before starting, create both environment files from their templates (skip any file that already exists):
+
+`powershell
+Copy-Item be/.env.example be/.env
+Copy-Item fe/.env.example fe/.env
+`
+
+Run these commands from the directory containing e and e. The frontend requires VITE_API_BASE_URL=http://localhost:8080/api. Local Maven must be installed and available on PATH; Docker includes Maven and Java in the backend build image.
+
 ## 1. Khởi chạy bằng Docker Compose (Độc lập trong từng thư mục)
 
 ### 1.1 Khởi chạy Backend & MySQL
@@ -14,7 +23,7 @@ Enterprise Monorepo Portal System:
 cd project-nexus-portal/be
 docker-compose up -d --build
 ```
-- **Backend API**: [http://localhost:8080/api/v1](http://localhost:8080/api/v1)
+- **Backend API**: [http://localhost:8080/api](http://localhost:8080/api)
 - **MySQL Database**: `localhost:3306` (`nexus_db`)
 
 ### 1.2 Khởi chạy Frontend (React + Nginx)
@@ -40,7 +49,7 @@ cd project-nexus-portal/fe
 npm install
 npm run dev
 ```
-Truy cập: [http://localhost:5173](http://localhost:5173).
+Truy cập: [http://localhost:3000](http://localhost:3000).
 
 ---
 

@@ -3,6 +3,8 @@ package com.nexus.portal.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.portal.exception.ErrorResponse;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.DispatcherType;
+import com.nexus.portal.controller.NotificationStreamController;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -93,6 +95,12 @@ public class SecurityConfig {
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // Permit only redispatches of an already authorized notification stream.
+                        .requestMatchers(request ->
+                                (request.getDispatcherType() == DispatcherType.ASYNC
+                                        || request.getDispatcherType() == DispatcherType.ERROR)
+                                && Boolean.TRUE.equals(request.getAttribute(
+                                        NotificationStreamController.AUTHORIZED_STREAM_ATTRIBUTE))).permitAll()
                         // Group 1: Public Auth & Public Module APIs (wildcard ** covers all endpoints in the group)
                         .requestMatchers(
                                 "/auth/**",

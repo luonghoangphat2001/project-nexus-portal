@@ -16,6 +16,10 @@ import { ProfilePage } from './pages/ProfilePage';
 import { SystemAdminPage } from './pages/SystemAdminPage';
 import { SecurityPage } from './pages/SecurityPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { AcademicPage } from './pages/AcademicPage';
+import { PeriodsPage } from './pages/PeriodsPage';
+import { NotificationsPage } from './pages/NotificationsPage';
+import { ProgressPage } from './pages/ProgressPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { CouncilsPage } from './pages/CouncilsPage';
 import { AssessmentsPage } from './pages/AssessmentsPage';
@@ -39,6 +43,10 @@ export const App = () => {
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="academic" element={<AcademicPage />} />
+            <Route path="periods" element={<PeriodsPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="progress" element={<ProgressPage />} />
 
             {/* User Profile & Security Settings */}
             <Route path="profile" element={<ProfilePage />} />
