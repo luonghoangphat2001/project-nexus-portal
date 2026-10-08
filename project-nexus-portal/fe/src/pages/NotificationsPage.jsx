@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { subscribeNotifications } from '../services/notificationStream';
 import { notificationService } from '../services/notificationService';
 import { academicService } from '../services/academicService';
 import { useAuth } from '../context/AuthContext';
@@ -15,12 +16,27 @@ export function NotificationsPage() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [connection, setConnection] = useState('reconnecting');
+  const requestVersion = useRef(0);
+  async function refresh() {
+    const version = ++requestVersion.current;
+    const notifications = await notificationService.getAll();
+    if (version === requestVersion.current) setItems(notifications);
+  }
   async function load() {
     setLoading(true);
-    try { const [notifications, facultyItems] = await Promise.all([notificationService.getAll(), academicService.getAllFaculties()]); setItems(notifications); setFaculties(facultyItems); }
+    try { const [, facultyItems] = await Promise.all([refresh(), academicService.getAllFaculties()]); setFaculties(facultyItems); }
     catch (err) { setError(err.message); } finally { setLoading(false); }
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    let active = true;
+    load();
+    const unsubscribe = subscribeNotifications(
+      () => { if (active) refresh().catch(err => { if (active) setError(err.message); }); },
+      status => { if (active) setConnection(status); },
+    );
+    return () => { active = false; ++requestVersion.current; unsubscribe(); };
+  }, []);
   async function act(action, message) {
     setBusy(true); setError(''); setSuccess('');
     try { await action(); setSuccess(message); await load(); return true; }
@@ -31,6 +47,7 @@ export function NotificationsPage() {
     if (await act(() => notificationService.create({ ...form, facultyId: form.facultyId ? Number(form.facultyId) : null }), 'Notification published.')) setForm(null);
   }
   return <ModuleShell title="Notifications" description="Read capstone announcements for your faculty and the university." {...{ error, success, loading }}>
+    <p className="text-xs text-slate-500" role="status">{connection === 'connected' ? 'Live updates connected' : connection === 'reconnecting' ? 'Connecting to live updates…' : 'Live updates disconnected'}</p>
     <div className="flex items-center justify-between"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={unreadOnly} onChange={event => setUnreadOnly(event.target.checked)} />Unread only ({items.filter(item => !item.read).length})</label>
       {canPublish && <button className={buttonClass} disabled={busy || loading} onClick={() => setForm({ title: '', content: '', facultyId: '' })}>Publish Notification</button>}</div>
     {form && <form className="space-y-4 rounded-xl border bg-white p-5" onSubmit={publish}>
