@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/reports")
-@Tag(name = "Module 11 - Reports & Documents")
+@Tag(name = "Reports & Documents", description = "Endpoints for report submissions, document version history, and file downloads")
 public class ReportController {
     private final ReportService reports;
     public ReportController(ReportService reports) { this.reports = reports; }

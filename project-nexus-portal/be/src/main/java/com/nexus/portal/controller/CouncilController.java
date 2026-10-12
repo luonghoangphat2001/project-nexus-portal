@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/councils")
-@Tag(name = "Module 12 - Defense Councils")
+@Tag(name = "Council Assignments", description = "Endpoints for defense councils, lecturer roles, schedules, and team assignments")
 public class CouncilController {
     private final CouncilService councils;
     public CouncilController(CouncilService councils) { this.councils = councils; }
