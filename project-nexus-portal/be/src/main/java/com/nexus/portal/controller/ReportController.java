@@ -1,9 +1,10 @@
 package com.nexus.portal.controller;
 
+import com.nexus.portal.config.ApiFeature;
+import com.nexus.portal.config.ApiFeatureTag;
 import com.nexus.portal.dto.request.ReportUploadRequest;
 import com.nexus.portal.dto.response.*;
 import com.nexus.portal.service.ReportService;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
@@ -12,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/reports")
-@Tag(name = "Module 11 - Reports & Documents")
+@ApiFeatureTag(ApiFeature.REPORTS)
 public class ReportController {
     private final ReportService reports;
     public ReportController(ReportService reports) { this.reports = reports; }

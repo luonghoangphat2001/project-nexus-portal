@@ -1,9 +1,10 @@
 package com.nexus.portal.controller;
 
+import com.nexus.portal.config.ApiFeature;
+import com.nexus.portal.config.ApiFeatureTag;
 import com.nexus.portal.dto.request.AssessmentRequest;
 import com.nexus.portal.dto.response.*;
 import com.nexus.portal.service.AssessmentService;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/assessments")
 @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL', 'TEACHER', 'COUNCIL')")
-@Tag(name = "Module 13 - Reviews & Assessments")
+@ApiFeatureTag(ApiFeature.ASSESSMENTS)
 public class AssessmentController {
     private final AssessmentService assessments;
     public AssessmentController(AssessmentService assessments) { this.assessments = assessments; }

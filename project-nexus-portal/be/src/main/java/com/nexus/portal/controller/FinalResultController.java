@@ -1,8 +1,9 @@
 package com.nexus.portal.controller;
 
+import com.nexus.portal.config.ApiFeature;
+import com.nexus.portal.config.ApiFeatureTag;
 import com.nexus.portal.dto.response.*;
 import com.nexus.portal.service.FinalResultService;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/results")
-@Tag(name = "Modules 14–16 - Kết quả bảo vệ và thống kê học tập")
+@ApiFeatureTag(ApiFeature.FINAL_RESULTS)
 public class FinalResultController {
     private final FinalResultService results;
 

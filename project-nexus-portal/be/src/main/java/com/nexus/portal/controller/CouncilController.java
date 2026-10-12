@@ -1,9 +1,10 @@
 package com.nexus.portal.controller;
 
+import com.nexus.portal.config.ApiFeature;
+import com.nexus.portal.config.ApiFeatureTag;
 import com.nexus.portal.dto.request.*;
 import com.nexus.portal.dto.response.*;
 import com.nexus.portal.service.CouncilService;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/councils")
-@Tag(name = "Module 12 - Defense Councils")
+@ApiFeatureTag(ApiFeature.DEFENSE_COUNCILS)
 public class CouncilController {
     private final CouncilService councils;
     public CouncilController(CouncilService councils) { this.councils = councils; }

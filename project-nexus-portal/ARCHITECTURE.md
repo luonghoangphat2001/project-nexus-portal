@@ -110,7 +110,7 @@ Tất cả các bảng cơ sở dữ liệu được định nghĩa dưới dạ
 5. **`dto/`**: Phân tách rõ ràng giữa dữ liệu client gửi lên (`request/`) và dữ liệu trả về cho client (`response/`).
 6. **`exception/`**: Tập trung xử lý lỗi toàn hệ thống qua `GlobalExceptionHandler` (`@RestControllerAdvice`).
 7. **`security/`**: Cấu hình Spring Security 6 với JWT Filter, thiết lập cơ chế Stateless Session.
-8. **`config/`**: `CorsConfig.java` đọc đúng **1 URL duy nhất** từ biến môi trường `CORS_ALLOWED_ORIGIN`.
+8. **`config/`**: `CorsConfig.java` đọc đúng **1 URL duy nhất** từ biến môi trường `CORS_ALLOWED_ORIGIN`. Nhóm API theo feature dùng `@ApiFeatureTag(ApiFeature.X)` trên controller; tên và mô tả tiếng Anh được quản lý tập trung trong `ApiFeature`, OpenAPI gắn tag qua `OpenApiConfig`.
 
 ### 3.2 Frontend (`fe`)
 1. **`layout/` (`MainLayout`, `Sidebar`, `Header`)**: Khung Admin Dashboard cố định với `<Outlet />` render động các trang con.

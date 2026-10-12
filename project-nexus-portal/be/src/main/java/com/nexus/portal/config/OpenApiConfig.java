@@ -8,16 +8,38 @@ import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import io.swagger.v3.oas.models.tags.Tag;
+import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 public class OpenApiConfig {
 
     private static final String SECURITY_SCHEME_NAME = "BearerAuth";
+
+    @Bean
+    public OperationCustomizer apiFeatureTagOperationCustomizer() {
+        return (operation, handlerMethod) -> {
+            ApiFeatureTag featureTag = handlerMethod.getBeanType().getAnnotation(ApiFeatureTag.class);
+            if (featureTag != null) {
+                operation.setTags(List.of(featureTag.value().getTagName()));
+            }
+            return operation;
+        };
+    }
+
+    private List<Tag> apiFeatureTags() {
+        return Arrays.stream(ApiFeature.values())
+                .map(feature -> new Tag()
+                        .name(feature.getTagName())
+                        .description(feature.getDescription()))
+                .toList();
+    }
 
     @Value("${app.api.version}")
     private String apiVersion;
@@ -60,6 +82,7 @@ public class OpenApiConfig {
                                 .name("Apache 2.0")
                                 .url("https://www.apache.org/licenses/LICENSE-2.0.html")))
                 .servers(List.of(primaryServer, relativeServer))
+                .tags(apiFeatureTags())
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
                 .components(new Components()
                         .addSecuritySchemes(SECURITY_SCHEME_NAME,
@@ -71,4 +94,3 @@ public class OpenApiConfig {
                                         .description("Enter your JWT Bearer token to authorize requests (e.g. eyJhbGciOi...)")));
     }
 }
-
