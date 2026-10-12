@@ -35,6 +35,18 @@ public class AcademicServiceImpl implements AcademicService {
     private final CohortRepository cohortRepository;
     private final AuditLogService auditLogService;
 
+    private void validateCode(Long existingId, Long currentId) {
+        if (existingId != null && !existingId.equals(currentId)) {
+            throw new BadRequestException("This academic code already exists");
+        }
+    }
+
+    private void validateCohort(CohortRequest request) {
+        if (request.getGraduationYear() < request.getAdmissionYear()) {
+            throw new BadRequestException("Graduation year must be on or after admission year");
+        }
+    }
+
     public AcademicServiceImpl(FacultyRepository facultyRepository,
                                DepartmentRepository departmentRepository,
                                MajorRepository majorRepository,
@@ -107,6 +119,7 @@ public class AcademicServiceImpl implements AcademicService {
     @Override
     @Transactional
     public FacultyResponse createFaculty(FacultyRequest request, String performedBy) {
+        validateCode(facultyRepository.findByCode(request.getCode().trim()).map(Faculty::getId).orElse(null), null);
         Faculty faculty = Faculty.builder()
                 .code(request.getCode().trim())
                 .name(request.getName().trim())
@@ -122,6 +135,7 @@ public class AcademicServiceImpl implements AcademicService {
     @Override
     @Transactional
     public FacultyResponse updateFaculty(Long id, FacultyRequest request, String performedBy) {
+        validateCode(facultyRepository.findByCode(request.getCode().trim()).map(Faculty::getId).orElse(null), id);
         Faculty faculty = facultyRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Faculty not found with ID: " + id));
 
@@ -156,6 +170,7 @@ public class AcademicServiceImpl implements AcademicService {
     @Override
     @Transactional
     public DepartmentResponse createDepartment(DepartmentRequest request, String performedBy) {
+        validateCode(departmentRepository.findByCode(request.getCode().trim()).map(Department::getId).orElse(null), null);
         Faculty faculty = facultyRepository.findById(request.getFacultyId())
                 .orElseThrow(() -> new ResourceNotFoundException("Faculty not found with ID: " + request.getFacultyId()));
 
@@ -175,6 +190,7 @@ public class AcademicServiceImpl implements AcademicService {
     @Override
     @Transactional
     public DepartmentResponse updateDepartment(Long id, DepartmentRequest request, String performedBy) {
+        validateCode(departmentRepository.findByCode(request.getCode().trim()).map(Department::getId).orElse(null), id);
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Department not found with ID: " + id));
 
@@ -213,6 +229,7 @@ public class AcademicServiceImpl implements AcademicService {
     @Override
     @Transactional
     public MajorResponse createMajor(MajorRequest request, String performedBy) {
+        validateCode(majorRepository.findByCode(request.getCode().trim()).map(Major::getId).orElse(null), null);
         Department department = departmentRepository.findById(request.getDepartmentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Department not found with ID: " + request.getDepartmentId()));
 
@@ -232,6 +249,7 @@ public class AcademicServiceImpl implements AcademicService {
     @Override
     @Transactional
     public MajorResponse updateMajor(Long id, MajorRequest request, String performedBy) {
+        validateCode(majorRepository.findByCode(request.getCode().trim()).map(Major::getId).orElse(null), id);
         Major major = majorRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Major not found with ID: " + id));
 
@@ -266,6 +284,8 @@ public class AcademicServiceImpl implements AcademicService {
     @Override
     @Transactional
     public CohortResponse createCohort(CohortRequest request, String performedBy) {
+        validateCode(cohortRepository.findByCode(request.getCode().trim()).map(Cohort::getId).orElse(null), null);
+        validateCohort(request);
         Cohort cohort = Cohort.builder()
                 .code(request.getCode().trim())
                 .name(request.getName().trim())
@@ -283,6 +303,8 @@ public class AcademicServiceImpl implements AcademicService {
     @Override
     @Transactional
     public CohortResponse updateCohort(Long id, CohortRequest request, String performedBy) {
+        validateCode(cohortRepository.findByCode(request.getCode().trim()).map(Cohort::getId).orElse(null), id);
+        validateCohort(request);
         Cohort cohort = cohortRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cohort not found with ID: " + id));
 
