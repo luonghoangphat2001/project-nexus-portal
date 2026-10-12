@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../../context/AuthContext';
 import { Bell, Search, LogOut, User as UserIcon, Shield, Menu, Mail, Maximize } from 'lucide-react';
 
@@ -36,10 +37,7 @@ export const Header = ({ onToggleSidebar }) => {
         </button>
 
         {/* Notifications Icon */}
-        <button className="text-slate-400 hover:text-[#b66dff] transition-colors relative">
-          <Bell className="w-4 h-4" />
-          <span className="w-1.5 h-1.5 bg-[#fed713] rounded-full absolute -top-0.5 -right-0.5"></span>
-        </button>
+        <NotificationBell />
 
         <div className="h-4 w-px bg-slate-200"></div>
 

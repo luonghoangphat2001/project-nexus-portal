@@ -82,3 +82,6 @@ lerna-debug.log*
 mysql_data/
 **/mysql_data/
 docker-compose.override.yml
+
+# Local verification tools
+/.tools/
