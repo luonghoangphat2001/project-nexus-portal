@@ -16,9 +16,11 @@ import org.springframework.security.access.AccessDeniedException;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -91,7 +93,7 @@ class FinalResultServiceImplTest {
                 assessment(AssessmentType.DEFENSE, "7.00", "7.50", "8.00"));
         when(access.getUser("admin")).thenReturn(manager);
         when(access.canManage(manager, department)).thenReturn(true);
-        when(assignments.findById(9L)).thenReturn(Optional.of(assignment));
+        lenient().when(assignments.findById(9L)).thenReturn(Optional.of(assignment));
     }
 
     @Test
@@ -137,6 +139,33 @@ class FinalResultServiceImplTest {
 
         assertThrows(AccessDeniedException.class, () -> service.getAssignmentGrades(9L, "admin"));
         verify(assessments, never()).findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(any());
+    }
+
+    @Test
+    void requestsOnlyPublishedResultsWithinAuthorizedReportFilters() {
+        when(access.hasRole(manager, RoleName.ROLE_ADMIN)).thenReturn(true);
+        when(departments.findAll()).thenReturn(List.of(department));
+        when(periods.existsById(3L)).thenReturn(true);
+        when(topics.findById(4L)).thenReturn(Optional.of(assignment.getRegistration().getTopic()));
+        FinalResult published = new FinalResult();
+        published.setAssignment(assignment);
+        published.setStudent(student);
+        published.setReviewScore(new BigDecimal("8.00"));
+        published.setDefenseScore(new BigDecimal("7.50"));
+        published.setFinalScore(new BigDecimal("7.65"));
+        published.setPassed(true);
+        published.setPublishedAt(LocalDateTime.parse("2026-10-07T00:00:00"));
+        when(results.findPublishedForReport(Set.of(2L), 3L, 2L, 4L)).thenReturn(List.of(published));
+
+        List<com.nexus.portal.dto.response.AcademicReportRowResponse> report =
+                service.getAcademicReport(3L, 2L, 4L, "admin");
+
+        assertEquals(1, report.size());
+        assertEquals(1, report.get(0).studentCount());
+        assertEquals(new BigDecimal("7.65"), report.get(0).averageFinalScore());
+        assertEquals(1, report.get(0).passCount());
+        verify(results).findPublishedForReport(Set.of(2L), 3L, 2L, 4L);
+        verify(results, never()).findAll();
     }
 
     private Assessment assessment(AssessmentType type, String content, String implementation, String presentation) {

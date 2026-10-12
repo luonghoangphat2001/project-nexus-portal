@@ -18,10 +18,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/results")
 @ApiFeatureTag(ApiFeature.FINAL_RESULTS)
-public class FinalResultController {
+public class AcademicResultsController {
     private final FinalResultService results;
 
-    public FinalResultController(FinalResultService results) {
+    public AcademicResultsController(FinalResultService results) {
         this.results = results;
     }
 

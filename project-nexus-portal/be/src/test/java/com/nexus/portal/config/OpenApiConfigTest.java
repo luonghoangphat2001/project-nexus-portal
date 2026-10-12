@@ -1,6 +1,6 @@
 package com.nexus.portal.config;
 
-import com.nexus.portal.controller.FinalResultController;
+import com.nexus.portal.controller.AcademicResultsController;
 import io.swagger.v3.oas.models.Operation;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
@@ -13,9 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class OpenApiConfigTest {
     @Test
     void tagsFinalResultEndpointsWithEnglishFeatureName() throws NoSuchMethodException {
-        FinalResultController controller = new FinalResultController(null);
+        AcademicResultsController controller = new AcademicResultsController(null);
         HandlerMethod handler = new HandlerMethod(controller,
-                FinalResultController.class.getMethod("getMyPublishedGrades",
+                AcademicResultsController.class.getMethod("getMyPublishedGrades",
                         Authentication.class));
         Operation operation = new Operation();
 

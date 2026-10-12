@@ -157,4 +157,4 @@ Tất cả các bảng cơ sở dữ liệu được định nghĩa dưới dạ
 - Mutation có transaction `READ_COMMITTED` và khóa pessimistic để tránh trùng phiên bản, phân công trùng, lịch giao nhau hoặc ghi đè phiếu đã gửi khi có request đồng thời. Trạng thái và quyền trên FE do BE cung cấp; service luôn kiểm tra lại quyền khi xử lý request.
 - Modules 11–13 quản lý tài liệu, hội đồng và phiếu đánh giá; chi tiết tại [MODULES_11_12_13.md](./docs/MODULES_11_12_13.md).
 - Modules 14–16 tính điểm từ phiếu đã gửi, công bố kết quả và thống kê điểm đã công bố. Đây là luồng kết quả học tập, tách biệt với tài liệu báo cáo tại module 11 và số liệu hệ thống trên Dashboard; chi tiết tại [MODULES_14_15_16.md](./docs/MODULES_14_15_16.md).
-- Luồng modules 14–16 dùng `FinalResultController` → `FinalResultService` → `FinalResultServiceImpl` → `FinalResultRepository` → `FinalResult`; giao diện là `ResultsPage` và gọi API qua `finalResultService`.
+- Luồng modules 14–16 dùng `AcademicResultsController` → `FinalResultService` → `FinalResultServiceImpl` → `FinalResultRepository` → `FinalResult`; giao diện là `ResultsPage` và gọi API qua `finalResultService`.

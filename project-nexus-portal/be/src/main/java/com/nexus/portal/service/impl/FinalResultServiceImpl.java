@@ -155,16 +155,7 @@ public class FinalResultServiceImpl implements FinalResultService {
         }
 
         Map<ReportKey, List<FinalResult>> grouped = new HashMap<>();
-        results.findAll().stream()
-                .filter(result -> result.getPublishedAt() != null)
-                .filter(result -> allowedDepartmentIds.contains(
-                        result.getAssignment().getRegistration().getTopic().getDepartment().getId()))
-                .filter(result -> periodId == null || result.getAssignment().getRegistration().getTopic()
-                        .getPeriod().getId().equals(periodId))
-                .filter(result -> departmentId == null || result.getAssignment().getRegistration().getTopic()
-                        .getDepartment().getId().equals(departmentId))
-                .filter(result -> topicId == null || result.getAssignment().getRegistration().getTopic()
-                        .getId().equals(topicId))
+        results.findPublishedForReport(allowedDepartmentIds, periodId, departmentId, topicId)
                 .forEach(result -> {
                     Topic topic = result.getAssignment().getRegistration().getTopic();
                     RegistrationPeriod period = topic.getPeriod();
