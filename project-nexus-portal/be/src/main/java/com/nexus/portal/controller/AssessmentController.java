@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/assessments")
 @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL', 'TEACHER', 'COUNCIL')")
-@Tag(name = "Module 13 - Reviews & Assessments")
+@Tag(name = "Reviews & Grading", description = "Endpoints for review and defense assessments, draft scores, and final submissions")
 public class AssessmentController {
     private final AssessmentService assessments;
     public AssessmentController(AssessmentService assessments) { this.assessments = assessments; }
