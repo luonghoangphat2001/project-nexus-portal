@@ -1,31 +1,31 @@
-# Modules 14–16 — Tính điểm, công bố kết quả và thống kê học tập
+# Modules 14–16 — Grade Calculation, Result Publication, and Academic Statistics
 
-Các module này sử dụng phiếu đánh giá đã gửi của module 13 và chỉ xử lý phân công thuộc hội đồng đã hoàn tất. Quy ước tích hợp, phân quyền và cấu trúc tầng được mô tả trong [ARCHITECTURE.md](../ARCHITECTURE.md); tài liệu này chỉ ghi quy tắc nghiệp vụ và API riêng để tránh lặp lại hướng dẫn kiến trúc.
+These modules use submitted assessments from Module 13 and process only assignments belonging to completed councils. Integration conventions, access control, and layer responsibilities are documented in [ARCHITECTURE.md](../ARCHITECTURE.md); this document covers only the business rules and APIs specific to these modules.
 
-## Quy tắc nghiệp vụ
+## Business Rules
 
-- Điểm một phiếu đánh giá là trung bình cộng của ba tiêu chí hiện có (nội dung, triển khai, trình bày/tài liệu), thang điểm 0–10.
-- Điểm phản biện là điểm của phiếu `REVIEW` do thành viên giữ vai trò phản biện chấm. Điểm bảo vệ là trung bình các phiếu `DEFENSE` đã gửi của các thành viên hội đồng.
-- Điểm tổng kết = `30% × điểm phản biện + 70% × điểm bảo vệ`, làm tròn hai chữ số thập phân theo quy tắc half-up. Điểm đạt là từ `5.00`.
-- Chỉ tính/công bố khi hội đồng hoàn tất, nhóm có thành viên và mỗi sinh viên có đúng một phiếu `REVIEW` từ phản biện được chỉ định cùng một phiếu `DEFENSE` từ từng thành viên hội đồng.
-- Điểm công bố được lưu thành bản chụp bất biến theo phân công/sinh viên; không cho phép công bố lại. Giao dịch khóa hội đồng để tránh hai yêu cầu công bố đồng thời và ghi nhật ký kiểm toán khi thành công.
-- Quản trị viên được xem toàn bộ khoa; trưởng khoa chỉ được xem dữ liệu thuộc khoa mình được phân công. Sinh viên chỉ xem kết quả của chính mình sau khi công bố. Nội dung nhận xét trong phiếu đánh giá không được trả về cho sinh viên.
-- Thống kê chỉ tính kết quả đã công bố, nhóm theo đợt đăng ký, khoa và đề tài. Báo cáo có số sinh viên, điểm trung bình, số đạt/chưa đạt và các khoảng điểm: dưới `5.00`, `5.00–5.99`, `6.00–6.99`, `7.00–7.99`, `8.00–8.99`, `9.00–10.00`.
-- Báo cáo điểm là chức năng riêng, không thay thế tài liệu báo cáo của module 11 hoặc các chỉ số tài khoản/hệ thống trên Dashboard. CSV dùng UTF-8, escape dấu nháy và trung hòa tiền tố công thức bảng tính trong dữ liệu văn bản.
+- Each assessment score is the average of its three existing criteria (content, implementation, and presentation/documentation), on a 0–10 scale.
+- The review score is calculated from the `REVIEW` assessment submitted by the assigned reviewer. The defense score is the average of all submitted `DEFENSE` assessments from council members.
+- Final score = `30% × review score + 70% × defense score`, rounded to two decimal places using half-up rounding. A score of `5.00` or higher is passing.
+- Grades can be calculated and published only after the council is completed, the team has members, and each student has exactly one `REVIEW` assessment from the assigned reviewer and one `DEFENSE` assessment from every council member.
+- Published grades are stored as immutable snapshots by assignment/student; republishing is not allowed. The transaction locks the council to prevent concurrent publication requests and writes an audit log on success.
+- Administrators can view all departments; department heads can view only data for departments they are assigned to manage. Students can view only their own published results. Assessment comments are never returned to students.
+- Statistics include published results only, grouped by registration period, department, and topic. Reports include student count, average score, pass/fail counts, and score bands: below `5.00`, `5.00–5.99`, `6.00–6.99`, `7.00–7.99`, `8.00–8.99`, and `9.00–10.00`.
+- Academic result reports are separate from Module 11 document reports and account/system metrics on the Dashboard. CSV exports use UTF-8, escape quotation marks, and neutralize spreadsheet formula prefixes in text fields.
 
 ## API
 
-Các endpoint dưới đây cần JWT và được nối với tiền tố API cấu hình (mặc định `/api`).
+The following endpoints require a JWT and use the configured API prefix (default: `/api`).
 
-| Phương thức | Endpoint | Quyền | Chức năng |
+| Method | Endpoint | Access | Description |
 | --- | --- | --- | --- |
-| GET | `/results/assignments/{assignmentId}` | Quản trị viên/trưởng khoa, giới hạn theo khoa | Xem điểm tính trước hoặc bản điểm đã công bố |
-| POST | `/results/assignments/{assignmentId}/publish` | Quản trị viên/trưởng khoa, giới hạn theo khoa | Công bố kết quả của phân công đã hoàn tất |
-| GET | `/results/me` | Sinh viên | Xem kết quả đã công bố của chính mình |
-| GET | `/results/reports/options` | Quản trị viên/trưởng khoa, giới hạn theo khoa | Tải lựa chọn bộ lọc đợt, khoa và đề tài |
-| GET | `/results/reports` | Quản trị viên/trưởng khoa, giới hạn theo khoa | Xem thống kê; hỗ trợ `periodId`, `departmentId`, `topicId` |
-| GET | `/results/reports.csv` | Quản trị viên/trưởng khoa, giới hạn theo khoa | Tải báo cáo CSV theo cùng bộ lọc |
+| GET | `/results/assignments/{assignmentId}` | Administrators/department heads, scoped to assigned departments | View calculated or published grades |
+| POST | `/results/assignments/{assignmentId}/publish` | Administrators/department heads, scoped to assigned departments | Publish results for a completed assignment |
+| GET | `/results/me` | Students | View the current student's published results |
+| GET | `/results/reports/options` | Administrators/department heads, scoped to assigned departments | Load registration period, department, and topic filter options |
+| GET | `/results/reports` | Administrators/department heads, scoped to assigned departments | View statistics; supports `periodId`, `departmentId`, and `topicId` |
+| GET | `/results/reports.csv` | Administrators/department heads, scoped to assigned departments | Download a CSV report with the same filters |
 
-## Lưu trữ
+## Storage
 
-Bảng `final_results` chỉ lưu bản điểm đã công bố, có ràng buộc duy nhất trên cặp phân công/sinh viên. Cấu trúc MySQL được khai báo trong `be/src/main/resources/schema.sql`; môi trường kiểm thử dùng Hibernate tạo bảng.
+The `final_results` table stores published grade snapshots and enforces uniqueness on the assignment/student pair. It is mapped by the `FinalResult` entity and created or updated by Hibernate according to `HIBERNATE_DDL_AUTO`; the test environment also uses Hibernate schema generation.

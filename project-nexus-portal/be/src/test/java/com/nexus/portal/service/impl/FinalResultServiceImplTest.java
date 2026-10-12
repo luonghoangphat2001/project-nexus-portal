@@ -16,11 +16,9 @@ import org.springframework.security.access.AccessDeniedException;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -33,9 +31,6 @@ class FinalResultServiceImplTest {
     @Mock private DefenseCouncilRepository councils;
     @Mock private TeamMemberRepository members;
     @Mock private FinalResultRepository results;
-    @Mock private DepartmentRepository departments;
-    @Mock private RegistrationPeriodRepository periods;
-    @Mock private TopicRepository topics;
     @Mock private DefenseAccessPolicy access;
     @Mock private AuditLogService audit;
 
@@ -51,7 +46,7 @@ class FinalResultServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new FinalResultServiceImpl(assessments, assignments, councils, members, results,
-                departments, periods, topics, access, audit, clock);
+                access, audit, clock);
 
         manager = new User();
         manager.setId(1L);
@@ -112,7 +107,7 @@ class FinalResultServiceImplTest {
         assertTrue(published.get(0).published());
         assertEquals(Instant.parse("2026-10-07T00:00:00Z"), published.get(0).publishedAt().toInstant(ZoneOffset.UTC));
         verify(audit).log(1L, "admin", "PUBLISH_FINAL_RESULTS", "results/assignments/9",
-                "Đã công bố 1 kết quả cho đăng ký 6", null, null, "SUCCESS");
+                "Published 1 final grades for registration 6", null, null, "SUCCESS");
     }
 
     @Test
@@ -139,33 +134,6 @@ class FinalResultServiceImplTest {
 
         assertThrows(AccessDeniedException.class, () -> service.getAssignmentGrades(9L, "admin"));
         verify(assessments, never()).findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(any());
-    }
-
-    @Test
-    void requestsOnlyPublishedResultsWithinAuthorizedReportFilters() {
-        when(access.hasRole(manager, RoleName.ROLE_ADMIN)).thenReturn(true);
-        when(departments.findAll()).thenReturn(List.of(department));
-        when(periods.existsById(3L)).thenReturn(true);
-        when(topics.findById(4L)).thenReturn(Optional.of(assignment.getRegistration().getTopic()));
-        FinalResult published = new FinalResult();
-        published.setAssignment(assignment);
-        published.setStudent(student);
-        published.setReviewScore(new BigDecimal("8.00"));
-        published.setDefenseScore(new BigDecimal("7.50"));
-        published.setFinalScore(new BigDecimal("7.65"));
-        published.setPassed(true);
-        published.setPublishedAt(LocalDateTime.parse("2026-10-07T00:00:00"));
-        when(results.findPublishedForReport(Set.of(2L), 3L, 2L, 4L)).thenReturn(List.of(published));
-
-        List<com.nexus.portal.dto.response.AcademicReportRowResponse> report =
-                service.getAcademicReport(3L, 2L, 4L, "admin");
-
-        assertEquals(1, report.size());
-        assertEquals(1, report.get(0).studentCount());
-        assertEquals(new BigDecimal("7.65"), report.get(0).averageFinalScore());
-        assertEquals(1, report.get(0).passCount());
-        verify(results).findPublishedForReport(Set.of(2L), 3L, 2L, 4L);
-        verify(results, never()).findAll();
     }
 
     private Assessment assessment(AssessmentType type, String content, String implementation, String presentation) {

@@ -52,8 +52,8 @@ project-nexus-portal/
         │   ├── common/          # UI Reusable components (Card, Table, Badge, Button, Input)
         │   └── layout/          # Admin Dashboard layout: Sidebar, Header, MainLayout (Outlet)
         ├── routes/              # Cấu hình React Router DOM, Outlet & Protected Routes
-        ├── pages/               # Các màn hình nghiệp vụ, gồm ReportsPage và ResultsPage
-        ├── services/            # Axios Client và các service theo nghiệp vụ
+        ├── pages/               # DashboardPage, UsersPage, RolesPage, LoginPage, NotFoundPage
+        ├── services/            # Axios Client bắt buộc VITE_API_BASE_URL (báo lỗi rõ ràng nếu thiếu)
         ├── context/             # AuthContext quản lý state đăng nhập toàn cục
         ├── App.jsx
         └── main.jsx
@@ -67,7 +67,7 @@ Tất cả các bảng cơ sở dữ liệu được định nghĩa dưới dạ
 👉 `be/src/main/java/com/nexus/portal/model/` (ví dụ: `User.java`, `Role.java`, `BaseEntity.java`).
 
 ### 2.1 Cách thêm một cột mới vào Model (Ví dụ thêm `phone_number` vào `User`)
-1. **Mở file model tương ứng**: `be/src/main/java/com/nexus/portal/model/User.java`.
+1. **Mở file model tương ứng**: [User.java](file:///Volumes/Outdoor/CNKT/LapTrinhWeb/laptrinhweb_ute/project-nexus-portal/be/src/main/java/com/nexus/portal/model/User.java).
 2. **Khai báo thuộc tính với Jakarta persistence annotation**:
    ```java
    @Column(name = "phone_number", length = 20)
@@ -110,7 +110,7 @@ Tất cả các bảng cơ sở dữ liệu được định nghĩa dưới dạ
 5. **`dto/`**: Phân tách rõ ràng giữa dữ liệu client gửi lên (`request/`) và dữ liệu trả về cho client (`response/`).
 6. **`exception/`**: Tập trung xử lý lỗi toàn hệ thống qua `GlobalExceptionHandler` (`@RestControllerAdvice`).
 7. **`security/`**: Cấu hình Spring Security 6 với JWT Filter, thiết lập cơ chế Stateless Session.
-8. **`config/`**: `CorsConfig.java` đọc đúng **1 URL duy nhất** từ biến môi trường `CORS_ALLOWED_ORIGIN`. Nhóm API theo feature dùng `@ApiFeatureTag(ApiFeature.X)` trên controller; tên và mô tả tiếng Anh được quản lý tập trung trong `ApiFeature`, OpenAPI gắn tag qua `OpenApiConfig`.
+8. **`config/`**: `CorsConfig.java` đọc đúng **1 URL duy nhất** từ biến môi trường `CORS_ALLOWED_ORIGIN`.
 
 ### 3.2 Frontend (`fe`)
 1. **`layout/` (`MainLayout`, `Sidebar`, `Header`)**: Khung Admin Dashboard cố định với `<Outlet />` render động các trang con.
@@ -147,7 +147,7 @@ Tất cả các bảng cơ sở dữ liệu được định nghĩa dưới dạ
 - **Thứ tự sắp xếp Tailwind CSS**:
   - Layout $\rightarrow$ Spacing $\rightarrow$ Sizing $\rightarrow$ Typography $\rightarrow$ Background & Color $\rightarrow$ State & Transition.
 
-## 5. Tích hợp các module nghiệp vụ
+## 5. Tích hợp Module 11–13
 
 - `ReportController` → `ReportService` → `ReportServiceImpl`: phiên bản tài liệu gắn với `TopicRegistration` đã duyệt; nội dung file lưu BLOB cùng transaction, DTO metadata tách khỏi DTO nội dung tải xuống.
 - `CouncilController` → `CouncilService` → `CouncilServiceImpl`: hội đồng, vai trò giảng viên, lịch và phân công nhóm; `DefenseAssignment` gắn hội đồng với đăng ký của nhóm.
@@ -155,6 +155,4 @@ Tất cả các bảng cơ sở dữ liệu được định nghĩa dưới dạ
 - `DefenseAccessPolicy` là component nghiệp vụ dùng chung để kiểm tra quyền theo bản ghi (nhóm, giảng viên hướng dẫn, bộ môn, hội đồng), bên cạnh Spring Security và route guards.
 - `ReportsPage`, `CouncilsPage`, `AssessmentsPage` sử dụng service Axios riêng và component dùng chung trong `components/common/`; các route và sidebar được tích hợp với layout hiện có.
 - Mutation có transaction `READ_COMMITTED` và khóa pessimistic để tránh trùng phiên bản, phân công trùng, lịch giao nhau hoặc ghi đè phiếu đã gửi khi có request đồng thời. Trạng thái và quyền trên FE do BE cung cấp; service luôn kiểm tra lại quyền khi xử lý request.
-- Modules 11–13 quản lý tài liệu, hội đồng và phiếu đánh giá; chi tiết tại [MODULES_11_12_13.md](./docs/MODULES_11_12_13.md).
-- Modules 14–16 tính điểm từ phiếu đã gửi, công bố kết quả và thống kê điểm đã công bố. Đây là luồng kết quả học tập, tách biệt với tài liệu báo cáo tại module 11 và số liệu hệ thống trên Dashboard; chi tiết tại [MODULES_14_15_16.md](./docs/MODULES_14_15_16.md).
-- Luồng modules 14–16 dùng `AcademicResultsController` → `FinalResultService` → `FinalResultServiceImpl` → `FinalResultRepository` → `FinalResult`; giao diện là `ResultsPage` và gọi API qua `finalResultService`.
+- Chi tiết quy tắc và hợp đồng API: [MODULES_11_12_13.md](./docs/MODULES_11_12_13.md).

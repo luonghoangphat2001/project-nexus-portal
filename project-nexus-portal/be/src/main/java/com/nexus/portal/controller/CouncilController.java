@@ -1,7 +1,7 @@
 package com.nexus.portal.controller;
 
-import com.nexus.portal.config.ApiFeature;
 import com.nexus.portal.config.ApiFeatureTag;
+import com.nexus.portal.enums.ApiFeature;
 import com.nexus.portal.dto.request.*;
 import com.nexus.portal.dto.response.*;
 import com.nexus.portal.service.CouncilService;

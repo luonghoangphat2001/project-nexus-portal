@@ -1,4 +1,4 @@
-package com.nexus.portal.config;
+package com.nexus.portal.enums;
 
 public enum ApiFeature {
     REPORTS("Reports & Documents",
@@ -7,8 +7,10 @@ public enum ApiFeature {
             "Endpoints for defense councils, lecturer roles, schedules, and team assignments"),
     ASSESSMENTS("Reviews & Grading",
             "Endpoints for review and defense assessments, draft scores, and final submissions"),
-    FINAL_RESULTS("Final Results & Academic Analytics",
-            "Endpoints for publishing defense results and viewing academic reports");
+    FINAL_RESULTS("Final Results",
+            "Endpoints for calculating, publishing, and viewing final defense grades"),
+    ACADEMIC_REPORTS("Academic Reports & Statistics",
+            "Endpoints for published academic result statistics by period, department, and topic");
 
     private final String tagName;
     private final String description;

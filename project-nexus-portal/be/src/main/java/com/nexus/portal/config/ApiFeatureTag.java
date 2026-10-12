@@ -1,5 +1,6 @@
 package com.nexus.portal.config;
 
+import com.nexus.portal.enums.ApiFeature;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
