@@ -77,13 +77,13 @@ export function ResultsPage() {
   }, [isStudent, filters, refresh]);
 
   const publish = async () => {
-    if (!selectedId || !window.confirm('Công bố kết quả cho sinh viên trong nhóm này? Điểm đã công bố không thể thay đổi.')) return;
+    if (!selectedId || !window.confirm('Publish results for this team? Published scores cannot be changed.')) return;
     setBusy(true);
     setError('');
     setNotice('');
     try {
       await resultPublicationService.publishAssignmentResults(selectedId);
-      setNotice('Đã công bố kết quả cho tất cả thành viên trong nhóm.');
+      setNotice('Results published for all team members.');
       setRefresh((n) => n + 1);
     } catch (e) {
       setError(e.message);
@@ -120,21 +120,21 @@ export function ResultsPage() {
 
   if (isStudent) {
     return <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold text-slate-800">Kết quả bảo vệ của tôi</h1>
-        <p className="mt-1 text-sm text-slate-500">Chỉ hiển thị kết quả đã được công bố chính thức.</p></div>
+      <div><h1 className="text-2xl font-bold text-slate-800">My Defense Results</h1>
+        <p className="mt-1 text-sm text-slate-500">Only officially published results are shown.</p></div>
       <Banner error={error} notice={notice} />
-      {loading ? <Empty>Đang tải kết quả...</Empty> : myGrades.length === 0
-        ? <Panel><Empty>Bạn chưa có kết quả nào được công bố.</Empty></Panel>
+      {loading ? <Empty>Loading results...</Empty> : myGrades.length === 0
+        ? <Panel><Empty>No results have been published yet.</Empty></Panel>
         : <Panel className="overflow-x-auto"><table className="w-full text-left text-sm">
           <thead className="text-xs uppercase text-slate-500"><tr>
-            <th className="p-3">Đợt đăng ký</th><th className="p-3">Đề tài</th><th className="p-3">Điểm phản biện</th>
-            <th className="p-3">Điểm bảo vệ</th><th className="p-3">Điểm cuối</th><th className="p-3">Kết quả</th>
+            <th className="p-3">Registration Period</th><th className="p-3">Topic</th><th className="p-3">Reviewer Score</th>
+            <th className="p-3">Defense Score</th><th className="p-3">Final Score</th><th className="p-3">Result</th>
           </tr></thead>
           <tbody>{myGrades.map((grade) => <tr key={`${grade.assignmentId}-${grade.studentId}`} className="border-t border-slate-100">
             <td className="p-3">{grade.periodName}</td><td className="p-3">{grade.topicTitle} · {grade.teamName}</td>
             <td className="p-3">{formatScore(grade.reviewScore)}</td><td className="p-3">{formatScore(grade.defenseScore)}</td>
             <td className="p-3 font-semibold">{formatScore(grade.finalScore)}</td>
-            <td className={`p-3 font-medium ${grade.passed ? 'text-emerald-700' : 'text-rose-700'}`}>{grade.passed ? 'Đạt' : 'Không đạt'}</td>
+            <td className={`p-3 font-medium ${grade.passed ? 'text-emerald-700' : 'text-rose-700'}`}>{grade.passed ? 'Passed' : 'Failed'}</td>
           </tr>)}</tbody>
         </table></Panel>}
     </div>;
@@ -142,72 +142,72 @@ export function ResultsPage() {
 
   return <div className="space-y-6">
     <div className="flex flex-wrap items-center justify-between gap-3"><div>
-      <h1 className="text-2xl font-bold text-slate-800">Tính điểm, công bố và thống kê kết quả học tập</h1>
-      <p className="mt-1 text-sm text-slate-500">Tính điểm bảo vệ, công bố kết quả và theo dõi thống kê học tập.</p>
-    </div><Button secondary disabled={busy || loading} onClick={() => setRefresh((n) => n + 1)}><RefreshCw size={16} />Làm mới</Button></div>
+      <h1 className="text-2xl font-bold text-slate-800">Score Calculation, Publication, and Academic Reports</h1>
+      <p className="mt-1 text-sm text-slate-500">Calculate defense scores, publish results, and review academic statistics.</p>
+    </div><Button secondary disabled={busy || loading} onClick={() => setRefresh((n) => n + 1)}><RefreshCw size={16} />Refresh</Button></div>
     <Banner error={error} notice={notice} />
     <Panel className="space-y-4">
-      <div><h2 className="font-semibold text-slate-800">Tính điểm và công bố kết quả</h2>
-        <p className="mt-1 text-xs text-slate-500">Điểm cuối = 30% điểm phản biện + 70% điểm bảo vệ. Mỗi phiếu là trung bình của ba tiêu chí; từ 5.00 điểm trở lên là đạt.</p></div>
-      {loading ? <Empty>Đang tải các phân công đã hoàn thành...</Empty> : completedAssignments.length === 0
-        ? <Empty>Không có phân công hội đồng đã hoàn thành trong phạm vi khoa bạn quản lý.</Empty>
+      <div><h2 className="font-semibold text-slate-800">Calculate and Publish Results</h2>
+        <p className="mt-1 text-xs text-slate-500">Final score = 30% reviewer score + 70% defense score. Each assessment averages three criteria; scores of 5.00 or higher pass.</p></div>
+      {loading ? <Empty>Loading completed assignments...</Empty> : completedAssignments.length === 0
+        ? <Empty>No completed council assignments are available in your managed departments.</Empty>
         : <>
-          <Field label="Hội đồng / Nhóm / Đề tài"><select className={inputClass} disabled={busy}
+          <Field label="Council / Team / Topic"><select className={inputClass} disabled={busy}
             value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
             {completedAssignments.map((a) => <option key={a.id} value={a.id}>
               {a.council.name} · {a.registration.teamName} · {a.registration.topicTitle}
             </option>)}
           </select></Field>
-          {gradesLoading ? <Empty>Đang tính điểm cuối...</Empty> : grades.length === 0
-            ? <Empty>Không có kết quả sinh viên để hiển thị.</Empty>
+            {gradesLoading ? <Empty>Calculating final scores...</Empty> : grades.length === 0
+            ? <Empty>No student results to display.</Empty>
             : <div className="overflow-x-auto"><table className="w-full text-left text-sm">
               <thead className="text-xs uppercase text-slate-500"><tr>
-                <th className="p-3">Sinh viên</th><th className="p-3">Điểm phản biện</th><th className="p-3">Điểm bảo vệ</th>
-                <th className="p-3">Điểm cuối</th><th className="p-3">Kết quả</th>
+                <th className="p-3">Student</th><th className="p-3">Reviewer Score</th><th className="p-3">Defense Score</th>
+                <th className="p-3">Final Score</th><th className="p-3">Result</th>
               </tr></thead>
               <tbody>{grades.map((grade) => <tr key={grade.studentId} className="border-t border-slate-100">
                 <td className="p-3">{grade.studentName} · {grade.studentCode || grade.studentId}</td>
                 <td className="p-3">{formatScore(grade.reviewScore)}</td><td className="p-3">{formatScore(grade.defenseScore)}</td>
                 <td className="p-3 font-semibold">{formatScore(grade.finalScore)}</td>
-                <td className={`p-3 font-medium ${grade.passed ? 'text-emerald-700' : 'text-rose-700'}`}>{grade.passed ? 'Đạt' : 'Không đạt'}</td>
+                <td className={`p-3 font-medium ${grade.passed ? 'text-emerald-700' : 'text-rose-700'}`}>{grade.passed ? 'Passed' : 'Failed'}</td>
               </tr>)}</tbody>
             </table></div>}
           {grades.length > 0 && <Button disabled={busy || grades.every((grade) => grade.published)} onClick={publish}>
-            {grades.every((grade) => grade.published) ? 'Đã công bố điểm' : 'Công bố điểm cho sinh viên'}
+            {grades.every((grade) => grade.published) ? 'Results Published' : 'Publish Results'}
           </Button>}
         </>}
     </Panel>
 
     <Panel className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><h2 className="font-semibold text-slate-800">Báo cáo và thống kê kết quả học tập</h2>
-          <p className="mt-1 text-xs text-slate-500">Chỉ tính kết quả đã công bố. Điểm được chia theo từng khoảng một điểm và một khoảng riêng cho điểm dưới 5.00.</p></div>
-        <Button secondary disabled={busy || reportLoading} onClick={exportReport}><Download size={16} />Xuất CSV</Button>
+        <div><h2 className="font-semibold text-slate-800">Academic Results and Statistics</h2>
+          <p className="mt-1 text-xs text-slate-500">Published results only. Scores are grouped into one-point bands, with a separate band for scores below 5.00.</p></div>
+        <Button secondary disabled={busy || reportLoading} onClick={exportReport}><Download size={16} />Export CSV</Button>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
-        <Field label="Đợt đăng ký"><select className={inputClass} value={filters.periodId}
+        <Field label="Registration Period"><select className={inputClass} value={filters.periodId}
           onChange={(e) => updateFilter('periodId', e.target.value)}>
-          <option value="">Tất cả đợt</option>{options.periods.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+          <option value="">All periods</option>{options.periods.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
         </select></Field>
-        <Field label="Khoa"><select className={inputClass} value={filters.departmentId}
+        <Field label="Department"><select className={inputClass} value={filters.departmentId}
           onChange={(e) => updateFilter('departmentId', e.target.value)}>
-          <option value="">Tất cả khoa được phân công</option>{options.departments.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+          <option value="">All managed departments</option>{options.departments.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
         </select></Field>
-        <Field label="Đề tài"><select className={inputClass} value={filters.topicId}
+        <Field label="Topic"><select className={inputClass} value={filters.topicId}
           onChange={(e) => updateFilter('topicId', e.target.value)}>
-          <option value="">Tất cả đề tài</option>{options.topics.filter((topic) =>
+          <option value="">All topics</option>{options.topics.filter((topic) =>
             (!filters.departmentId || String(topic.departmentId) === filters.departmentId)
             && (!filters.periodId || String(topic.periodId) === filters.periodId))
             .map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
         </select></Field>
       </div>
-      {reportLoading ? <Empty>Đang tải báo cáo...</Empty> : report.length === 0
-        ? <Empty>Không có kết quả đã công bố phù hợp với bộ lọc.</Empty>
+      {reportLoading ? <Empty>Loading report...</Empty> : report.length === 0
+        ? <Empty>No published results match the selected filters.</Empty>
         : <div className="overflow-x-auto"><table className="w-full text-left text-sm">
           <thead className="text-xs uppercase text-slate-500"><tr>
-            <th className="p-3">Đợt đăng ký</th><th className="p-3">Khoa</th><th className="p-3">Đề tài</th>
-            <th className="p-3">Số sinh viên</th><th className="p-3">Điểm trung bình</th><th className="p-3">Đạt</th>
-            <th className="p-3">Không đạt</th><th className="p-3">Phân bố điểm</th>
+            <th className="p-3">Registration Period</th><th className="p-3">Department</th><th className="p-3">Topic</th>
+            <th className="p-3">Students</th><th className="p-3">Average Score</th><th className="p-3">Passed</th>
+            <th className="p-3">Failed</th><th className="p-3">Score Distribution</th>
           </tr></thead>
           <tbody>{report.map((row) => <tr key={`${row.periodId}-${row.departmentId}-${row.topicId}`} className="border-t border-slate-100 align-top">
             <td className="p-3">{row.periodName}</td><td className="p-3">{row.departmentName}</td><td className="p-3">{row.topicTitle}</td>

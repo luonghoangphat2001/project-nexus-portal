@@ -62,9 +62,9 @@ public class ResultStatisticsController extends CsvExportController<ResultStatis
     @Override
     protected List<String> exportHeaders() {
         List<String> headers = new ArrayList<>(List.of(
-                "Đợt đăng ký", "Khoa", "Đề tài", "Số sinh viên", "Điểm trung bình", "Đạt", "Không đạt"));
+            "Registration Period", "Department", "Topic", "Students", "Average Score", "Passed", "Failed"));
         Arrays.stream(ScoreRange.values())
-                .forEach(range -> headers.add("Điểm " + ScoreRangeClassifier.labelOf(range)));
+            .forEach(range -> headers.add("Score " + ScoreRangeClassifier.labelOf(range)));
         return headers;
     }
 

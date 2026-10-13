@@ -10,12 +10,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * Controller cơ sở dùng chung cho các chức năng xuất file CSV (mở được bằng Excel).
+ * Shared base controller for CSV exports that can be opened in spreadsheet applications.
  * <p>
- * Controller con chỉ cần khai báo tên file, tiêu đề cột và cách map một bản ghi thành một dòng;
- * phần dựng CSV, escape, BOM UTF-8 và header HTTP do lớp này xử lý.
+ * Subclasses provide the file name, column headers, and mapping from a record to a row;
+ * this class handles CSV generation, escaping, the UTF-8 BOM, and HTTP headers.
  *
- * @param <T> kiểu bản ghi được xuất
+ * @param <T> record type being exported
  */
 public abstract class CsvExportController<T> {
 
@@ -23,13 +23,13 @@ public abstract class CsvExportController<T> {
     private static final String LINE_BREAK = "\r\n";
     private static final String FORMULA_PREFIXES = "=+-@";
 
-    /** Tên file tải về, ví dụ {@code academic-results-report.csv}. */
+    /** Download file name, for example {@code academic-results-report.csv}. */
     protected abstract String exportFileName();
 
-    /** Tiêu đề các cột. */
+    /** Column headers. */
     protected abstract List<String> exportHeaders();
 
-    /** Giá trị các ô của một dòng, đúng thứ tự với {@link #exportHeaders()}. */
+    /** Cell values for a row, in the same order as {@link #exportHeaders()}. */
     protected abstract List<?> exportRow(T item);
 
     protected ResponseEntity<byte[]> buildCsvResponse(List<T> rows) {
@@ -72,7 +72,7 @@ public abstract class CsvExportController<T> {
         return csvField(value.toString());
     }
 
-    /** Bọc trong dấu ngoặc kép, escape {@code "} và vô hiệu hóa tiền tố công thức bảng tính. */
+    /** Quote fields, escape {@code "}, and neutralize spreadsheet formula prefixes. */
     protected static String csvField(String value) {
         String safe = value == null ? "" : value;
         String trimmed = safe.stripLeading();

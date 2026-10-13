@@ -1,31 +1,31 @@
-# Mô-đun 14–16 — Tính điểm, Công bố điểm, Báo cáo và Thống kê
+# Modules 14–16: Score Calculation, Publication, Reporting, and Statistics
 
-Các mô-đun này sử dụng phiếu đánh giá đã gửi từ Mô-đun 13 và chỉ xử lý phân công thuộc hội đồng đã hoàn thành. Quy ước tích hợp, phân quyền và trách nhiệm từng lớp được giữ theo `ARCHITECTURE.md`; tài liệu này chỉ mô tả quy tắc nghiệp vụ và API riêng.
+These modules consume submitted assessments from Module 13 and process only assignments belonging to completed councils. Integration conventions, access control, and layer responsibilities follow `ARCHITECTURE.md`; this document covers the module-specific business rules and APIs.
 
-## Quy tắc nghiệp vụ
+## Business Rules
 
-- Điểm mỗi phiếu là trung bình của ba tiêu chí hiện có: nội dung, triển khai và trình bày/tài liệu, theo thang điểm 0–10.
-- Điểm phản biện lấy từ phiếu `REVIEW` do phản biện được phân công gửi. Điểm bảo vệ là trung bình của tất cả phiếu `DEFENSE` đã gửi bởi thành viên hội đồng.
-- Điểm cuối = `30% × điểm phản biện + 70% × điểm bảo vệ`, làm tròn đến hai chữ số thập phân theo quy tắc half-up. Sinh viên đạt nếu điểm từ `5.00` trở lên.
-- Chỉ tính và công bố điểm sau khi hội đồng hoàn thành, nhóm có thành viên, và mỗi sinh viên có chính xác một phiếu `REVIEW` cùng một phiếu `DEFENSE` từ mỗi thành viên hội đồng.
-- Điểm đã công bố được lưu thành bản ghi bất biến, duy nhất theo cặp phân công/sinh viên; không cho phép công bố lại. Transaction khóa hội đồng để tránh công bố đồng thời và ghi audit log khi thành công.
-- Quản trị viên xem được mọi khoa; trưởng khoa chỉ xem dữ liệu của khoa được phân công quản lý. Sinh viên chỉ xem kết quả đã công bố của mình. Nhận xét trong phiếu đánh giá không được trả về cho sinh viên.
-- Thống kê chỉ tính điểm đã công bố, nhóm theo đợt đăng ký, khoa và đề tài. Báo cáo gồm số sinh viên, điểm trung bình, số đạt/không đạt và các khoảng điểm: dưới `5.00`, `5.00–5.99`, `6.00–6.99`, `7.00–7.99`, `8.00–8.99` và `9.00–10.00`.
-- Báo cáo kết quả học tập tách biệt với báo cáo tài liệu ở Mô-đun 11 và số liệu hệ thống trên Dashboard. CSV dùng UTF-8, escape dấu ngoặc kép và vô hiệu hóa tiền tố công thức bảng tính trong trường văn bản.
+- Each assessment score is the average of its three existing criteria: content, implementation, and presentation/documentation, on a 0–10 scale.
+- The reviewer score comes from the assigned reviewer's `REVIEW` assessment. The defense score is the average of all submitted `DEFENSE` assessments from council members.
+- Final score = `30% × reviewer score + 70% × defense score`, rounded to two decimal places using half-up rounding. A student passes with a score of at least `5.00`.
+- Scores can be calculated and published only after the council is completed, the team has members, and each student has exactly one `REVIEW` assessment and one `DEFENSE` assessment from every council member.
+- Published scores are immutable snapshots, unique per assignment/student pair; republishing is not allowed. A transaction locks the council to prevent concurrent publication and writes an audit log on success.
+- Administrators can view all departments; department heads can view only departments they manage. Students can view only their own published results. Assessment comments are never returned to students.
+- Statistics include published scores only, grouped by registration period, department, and topic. Reports show student count, average score, pass/fail counts, and these score bands: below `5.00`, `5.00–5.99`, `6.00–6.99`, `7.00–7.99`, `8.00–8.99`, and `9.00–10.00`.
+- Academic result reports are separate from Module 11 document reports and Dashboard system metrics. CSV output uses UTF-8, escapes quotation marks, and neutralizes spreadsheet formula prefixes in text fields.
 
 ## API
 
-Các endpoint dưới đây yêu cầu JWT và sử dụng tiền tố API được cấu hình (mặc định: `/api`).
+The following endpoints require a JWT and use the configured API prefix (default: `/api`).
 
-| Phương thức | Endpoint | Quyền truy cập | Mô tả |
+| Method | Endpoint | Access | Description |
 | --- | --- | --- | --- |
-| GET | `/results/assignments/{assignmentId}` | Quản trị viên/trưởng khoa, giới hạn theo khoa được phân công | Xem điểm đang tính hoặc điểm đã công bố |
-| POST | `/results/assignments/{assignmentId}/publish` | Quản trị viên/trưởng khoa, giới hạn theo khoa được phân công | Công bố điểm cho một phân công đã hoàn thành |
-| GET | `/results/me` | Sinh viên | Xem kết quả đã công bố của sinh viên hiện tại |
-| GET | `/results/reports/options` | Quản trị viên/trưởng khoa, giới hạn theo khoa được phân công | Lấy danh sách đợt đăng ký, khoa và đề tài để lọc |
-| GET | `/results/reports` | Quản trị viên/trưởng khoa, giới hạn theo khoa được phân công | Xem thống kê; hỗ trợ `periodId`, `departmentId` và `topicId` |
-| GET | `/results/reports.csv` | Quản trị viên/trưởng khoa, giới hạn theo khoa được phân công | Tải báo cáo CSV theo cùng bộ lọc |
+| GET | `/results/assignments/{assignmentId}` | Administrator/department head, scoped to managed departments | View calculated or published scores |
+| POST | `/results/assignments/{assignmentId}/publish` | Administrator/department head, scoped to managed departments | Publish scores for a completed assignment |
+| GET | `/results/me` | Student | View the current student's published results |
+| GET | `/results/reports/options` | Administrator/department head, scoped to managed departments | Get registration periods, departments, and topics for filters |
+| GET | `/results/reports` | Administrator/department head, scoped to managed departments | View statistics; supports `periodId`, `departmentId`, and `topicId` |
+| GET | `/results/reports.csv` | Administrator/department head, scoped to managed departments | Download the report as CSV using the same filters |
 
-## Lưu trữ
+## Persistence
 
-Bảng `published_results` lưu bản chụp điểm đã công bố và có ràng buộc duy nhất trên cặp phân công/sinh viên. Bảng được khai báo trong `be/src/main/resources/schema.sql` và ánh xạ bởi entity `PublishedResult`.
+The `published_results` table stores published score snapshots and enforces uniqueness for each assignment/student pair. It is declared in `be/src/main/resources/schema.sql` and mapped by the `PublishedResult` entity.

@@ -46,13 +46,13 @@ class ResultStatisticsServiceImplTest {
         manager.setUsername("admin");
         department = new Department();
         department.setId(2L);
-        department.setName("Khoa Công nghệ thông tin");
+        department.setName("Computer Science Department");
         period = new RegistrationPeriod();
         period.setId(3L);
-        period.setName("Học kỳ Thu 2026");
+        period.setName("Fall 2026");
         topic = new Topic();
         topic.setId(4L);
-        topic.setTitle("Cổng thông tin Nexus");
+        topic.setTitle("Nexus Portal");
         topic.setDepartment(department);
         topic.setPeriod(period);
 
@@ -108,7 +108,7 @@ class ResultStatisticsServiceImplTest {
 
     private TopicRegistration registration(Topic targetTopic) {
         Team team = new Team();
-        team.setName("Nhóm 1");
+        team.setName("Team 1");
         TopicRegistration registration = new TopicRegistration();
         registration.setTopic(targetTopic);
         registration.setTeam(team);

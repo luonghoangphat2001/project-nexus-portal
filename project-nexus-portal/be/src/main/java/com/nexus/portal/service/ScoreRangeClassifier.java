@@ -4,7 +4,7 @@ import com.nexus.portal.enums.ScoreRange;
 
 import java.math.BigDecimal;
 
-/** Xếp điểm vào khoảng điểm và đặt nhãn hiển thị cho thống kê phổ điểm. */
+/** Classifies scores into bands and provides labels for score-distribution reports. */
 public final class ScoreRangeClassifier {
     private static final BigDecimal MIN_SCORE = BigDecimal.ZERO;
     private static final BigDecimal MAX_SCORE = new BigDecimal("10.00");

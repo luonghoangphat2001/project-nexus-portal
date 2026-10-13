@@ -69,6 +69,6 @@ Các endpoint ghép theo `API_PREFIX`; `.env.example` hiện dùng `/api`, tươ
 
 ## 5. Module 14, 15, 16
 
-Đã triển khai Tính điểm (`/results/assignments/{id}`), Công bố điểm (`/results/assignments/{id}/publish`, `/results/me`) và Báo cáo & Thống kê kết quả (`/results/reports`, `/results/reports.csv`), giao diện tại `/results`. Các module dùng phiếu đánh giá đã gửi ở module 13 và chỉ xử lý hội đồng đã hoàn thành.
+Modules 14–16 provide score calculation (`/results/assignments/{id}`), result publication (`/results/assignments/{id}/publish`, `/results/me`), and academic reporting and statistics (`/results/reports`, `/results/reports.csv`) at `/results`. They use submitted assessments from Module 13 and process only completed councils.
 
-Xem [hướng dẫn nghiệp vụ và API](./docs/MODULES_14_15_16.md) và [danh sách test case](./docs/TEST_CASES_MODULES_14_15_16.md). Backend bổ sung bảng `published_results` trong `schema.sql`. Chạy `mvn test` trong `be` và `npm run build` trong `fe` để kiểm tra.
+See the [business rules and API guide](./docs/MODULES_14_15_16.md) and [test cases](./docs/TEST_CASES_MODULES_14_15_16.md). The backend adds the `published_results` table in `schema.sql`. Run `mvn test` in `be` and `npm run build` in `fe` to validate.

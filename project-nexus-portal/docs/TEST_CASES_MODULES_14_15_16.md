@@ -1,41 +1,42 @@
-# Module 14–16 Test Cases
+# Modules 14–16 Test Cases
 
-Tài liệu liệt kê các test tự động của module 14–16 (JUnit, `be/src/test`). Chưa ghi kết quả thực thi: chạy `mvn test` trong `be` và cập nhật mục Execution Summary khi có kết quả.
+This document lists the automated tests for Modules 14–16 (JUnit, `be/src/test`).
 
 ## Execution Summary
 
-- Chưa chạy trên môi trường localhost/MySQL.
-- Chạy: `cd be && mvn test`; `cd fe && npm run build`.
+- `mvn -B -f be/pom.xml test`: 66 tests passed.
+- `npm run build --prefix fe`: passed.
+- Not run against a localhost/MySQL environment.
 
-## Tính điểm (Module 14) — `ScoreCalculatorTest`, `ScoreCalculationServiceImplTest`
+## Score Calculation (Module 14): `ScoreCalculatorTest`, `ScoreCalculationServiceImplTest`
 
-| Mã | Kịch bản | Kỳ vọng |
+| ID | Scenario | Expected |
 | --- | --- | --- |
-| G-01 | Điểm phiếu = trung bình ba tiêu chí; điểm bảo vệ = trung bình mọi phiếu DEFENSE | Đúng số liệu |
-| G-02 | Điểm cuối = 30% phản biện + 70% bảo vệ, làm tròn half-up 2 chữ số | Đúng làm tròn |
-| G-03 | Ngưỡng đạt 5.00 | `5.00` là đạt |
-| G-04 | Xem trước điểm của phân công đã hoàn thành | Trả danh sách điểm |
-| G-05 | Điểm đã công bố | Trả bản đã lưu, không tính lại |
-| G-06 | Thiếu phiếu REVIEW/DEFENSE | Từ chối, không trả điểm một phần |
-| G-07 | Hội đồng chưa hoàn thành | Từ chối |
-| G-08 | Quản lý ngoài khoa được phân công | Từ chối quyền |
+| G-01 | Assessment score averages three criteria; defense score averages all DEFENSE assessments | Correct values |
+| G-02 | Final score is 30% reviewer + 70% defense, half-up rounded to two decimals | Correct rounding |
+| G-03 | Passing threshold is 5.00 | `5.00` passes |
+| G-04 | Preview scores for a completed assignment | Returns score rows |
+| G-05 | Scores are already published | Returns saved snapshot without recalculation |
+| G-06 | REVIEW/DEFENSE assessment is missing | Rejects without returning partial scores |
+| G-07 | Council is not completed | Rejects |
+| G-08 | Manager is outside the assigned department | Denies access |
 
-## Công bố điểm (Module 15) — `ResultPublicationServiceImplTest`
+## Result Publication (Module 15): `ResultPublicationServiceImplTest`
 
-| Mã | Kịch bản | Kỳ vọng |
+| ID | Scenario | Expected |
 | --- | --- | --- |
-| P-01 | Công bố sau khi hội đồng hoàn thành | Lưu bản chụp điểm có trọng số, ghi audit |
-| P-02 | Bộ phiếu không đầy đủ | Từ chối, không lưu điểm một phần |
-| P-03 | Hội đồng chưa hoàn thành | Từ chối |
-| P-04 | Quản lý ngoài khoa được phân công | Từ chối quyền |
-| P-05 | Công bố lần hai cho cùng phân công | Từ chối |
-| P-06 | Sinh viên xem `/results/me` | Chỉ thấy điểm đã công bố của mình, không có nhận xét |
+| P-01 | Publish after the council is completed | Saves weighted score snapshots and writes an audit record |
+| P-02 | Assessment set is incomplete | Rejects without saving partial scores |
+| P-03 | Council is not completed | Rejects |
+| P-04 | Manager is outside the assigned department | Denies access |
+| P-05 | Publish the same assignment a second time | Rejects |
+| P-06 | Student views `/results/me` | Sees only their published scores; no comments are returned |
 
-## Báo cáo & Thống kê (Module 16) — `ScoreRangeClassifierTest`, `ResultStatisticsServiceImplTest`
+## Reporting and Statistics (Module 16): `ScoreRangeClassifierTest`, `ResultStatisticsServiceImplTest`
 
-| Mã | Kịch bản | Kỳ vọng |
+| ID | Scenario | Expected |
 | --- | --- | --- |
-| R-01 | Phân loại khoảng điểm tại các biên | Đúng khoảng |
-| R-02 | Thống kê theo bộ lọc được phép | Chỉ tính điểm đã công bố |
-| R-03 | Khoa ngoài phạm vi quản lý | Từ chối trước khi truy vấn |
-| R-04 | Tải CSV | UTF-8, escape dấu ngoặc kép, vô hiệu hóa tiền tố công thức |
+| R-01 | Classify scores at band boundaries | Correct band |
+| R-02 | Request statistics with allowed filters | Includes published scores only |
+| R-03 | Request a department outside the manager's scope | Denies access before querying results |
+| R-04 | Export CSV | UTF-8, escaped quotes, and neutralized formula prefixes |
