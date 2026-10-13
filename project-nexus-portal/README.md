@@ -66,3 +66,9 @@ Xem [hướng dẫn nghiệp vụ, API, cấu hình và kiểm thử](./docs/MOD
 Xem [Functional Test Cases cho module 11–13](./docs/TEST_CASES_MODULES_11_12_13.md) để kiểm tra từng chức năng, quyền truy cập và luồng thực tế trên localhost/MySQL. Script `python scripts/qa_defense_localhost.py` tạo dữ liệu QA riêng và lưu kết quả thực thi; `--setup-only` chuẩn bị dữ liệu cho vòng kiểm thử bằng trình duyệt.
 
 Các endpoint ghép theo `API_PREFIX`; `.env.example` hiện dùng `/api`, tương ứng `VITE_API_BASE_URL=http://localhost:8080/api`. Dữ liệu mẫu cần được duyệt đăng ký trước khi thực hành module 11–13. Với DB đã sử dụng, đặt `SQL_INIT_MODE=never` để không chạy lại seed phát triển.
+
+## 5. Module 14, 15, 16
+
+Đã triển khai Tính điểm (`/results/assignments/{id}`), Công bố điểm (`/results/assignments/{id}/publish`, `/results/me`) và Báo cáo & Thống kê kết quả (`/results/reports`, `/results/reports.csv`), giao diện tại `/results`. Các module dùng phiếu đánh giá đã gửi ở module 13 và chỉ xử lý hội đồng đã hoàn thành.
+
+Xem [hướng dẫn nghiệp vụ và API](./docs/MODULES_14_15_16.md) và [danh sách test case](./docs/TEST_CASES_MODULES_14_15_16.md). Backend bổ sung bảng `published_results` trong `schema.sql`. Chạy `mvn test` trong `be` và `npm run build` trong `fe` để kiểm tra.

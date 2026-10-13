@@ -156,3 +156,6 @@ Tất cả các bảng cơ sở dữ liệu được định nghĩa dưới dạ
 - `ReportsPage`, `CouncilsPage`, `AssessmentsPage` sử dụng service Axios riêng và component dùng chung trong `components/common/`; các route và sidebar được tích hợp với layout hiện có.
 - Mutation có transaction `READ_COMMITTED` và khóa pessimistic để tránh trùng phiên bản, phân công trùng, lịch giao nhau hoặc ghi đè phiếu đã gửi khi có request đồng thời. Trạng thái và quyền trên FE do BE cung cấp; service luôn kiểm tra lại quyền khi xử lý request.
 - Chi tiết quy tắc và hợp đồng API: [MODULES_11_12_13.md](./docs/MODULES_11_12_13.md).
+- Modules 14–16 tính điểm từ phiếu đã gửi, công bố kết quả và thống kê điểm đã công bố; chi tiết tại [MODULES_14_15_16.md](./docs/MODULES_14_15_16.md).
+- `ScoreCalculationController` → `ScoreCalculationService` → `ScoreCalculationServiceImpl` (tính điểm bằng `ScoreCalculator`); `ResultPublicationController` → `ResultPublicationService` → `ResultPublicationServiceImpl` → `PublishedResultRepository` → `PublishedResult` (bản chụp điểm đã công bố, bất biến); `ResultStatisticsController` → `ResultStatisticsService` → `ResultStatisticsServiceImpl` → `ResultStatisticsRepository` (thống kê và CSV, chỉ tính điểm đã công bố).
+- `ResultsPage` dùng `resultPublicationService` và `resultStatisticsService`; route `/results` và sidebar tích hợp với layout hiện có.

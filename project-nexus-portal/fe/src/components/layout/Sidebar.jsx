@@ -42,6 +42,9 @@ export const Sidebar = ({ isOpen }) => {
     ...(isAdmin || isPrincipal || isTeacher || hasRole('ROLE_COUNCIL')
       ? [{ name: 'Reviews & Grading', path: '/assessments', icon: BookmarkCheck }]
       : []),
+    ...(isAdmin || isPrincipal || isStudent
+      ? [{ name: 'Results & Reports', path: '/results', icon: FileText }]
+      : []),
     { name: 'User Profile', path: '/profile', icon: UserCheck },
     ...(isAdmin || isPrincipal || isTeacher
       ? [
