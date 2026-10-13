@@ -1,12 +1,17 @@
 package com.nexus.portal.service.impl;
 
-import com.nexus.portal.dto.response.ResultStatisticsRowResponse;
+import com.nexus.portal.dto.response.ResultStatisticsResponse;
 import com.nexus.portal.enums.RoleName;
 import com.nexus.portal.model.*;
+import com.nexus.portal.repository.DefenseAssignmentRepository;
+import com.nexus.portal.repository.DefenseCouncilRepository;
+import com.nexus.portal.repository.PublishedResultRepository;
 import com.nexus.portal.repository.ResultStatisticsRepository;
 import com.nexus.portal.repository.DepartmentRepository;
 import com.nexus.portal.repository.RegistrationPeriodRepository;
 import com.nexus.portal.repository.TopicRepository;
+import com.nexus.portal.service.AuditLogService;
+import com.nexus.portal.service.ScoreCalculationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,13 +30,18 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ResultStatisticsServiceImplTest {
+    @Mock private DefenseAssignmentRepository assignments;
+    @Mock private DefenseCouncilRepository councils;
+    @Mock private PublishedResultRepository results;
+    @Mock private ScoreCalculationService scoreCalculation;
     @Mock private ResultStatisticsRepository reports;
     @Mock private DepartmentRepository departments;
     @Mock private RegistrationPeriodRepository periods;
     @Mock private TopicRepository topics;
     @Mock private DefenseAccessPolicy access;
+    @Mock private AuditLogService audit;
 
-    private ResultStatisticsServiceImpl service;
+    private ResultsServiceImpl service;
     private User manager;
     private Department department;
     private RegistrationPeriod period;
@@ -39,14 +49,15 @@ class ResultStatisticsServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new ResultStatisticsServiceImpl(reports, departments, periods, topics, access);
+        service = new ResultsServiceImpl(assignments, councils, results, scoreCalculation,
+            access, audit, java.time.Clock.systemUTC(), reports, departments, periods, topics);
 
         manager = new User();
         manager.setId(1L);
         manager.setUsername("admin");
         department = new Department();
         department.setId(2L);
-        department.setName("Computer Science Department");
+        department.setName("Information Technology");
         period = new RegistrationPeriod();
         period.setId(3L);
         period.setName("Fall 2026");
@@ -69,7 +80,7 @@ class ResultStatisticsServiceImplTest {
         when(reports.findPublishedForReport(Set.of(2L), 3L, 2L, 4L))
                 .thenReturn(List.of(publishedResult("7.65", true)));
 
-        List<ResultStatisticsRowResponse> result = service.getStatistics(3L, 2L, 4L, "admin");
+        List<ResultStatisticsResponse.Row> result = service.getStatistics(3L, 2L, 4L, "admin");
 
         assertEquals(1, result.size());
         assertEquals(1, result.get(0).studentCount());

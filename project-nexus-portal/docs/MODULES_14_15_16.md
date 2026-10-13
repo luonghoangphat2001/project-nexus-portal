@@ -1,21 +1,21 @@
-# Modules 14–16: Score Calculation, Publication, Reporting, and Statistics
+# Modules 14–16: Score Calculation, Publication, Reports, and Statistics
 
-These modules consume submitted assessments from Module 13 and process only assignments belonging to completed councils. Integration conventions, access control, and layer responsibilities follow `ARCHITECTURE.md`; this document covers the module-specific business rules and APIs.
+These modules consume submitted assessments from Module 13 and process only assignments belonging to completed councils. Integration, authorization, and layer responsibilities follow `ARCHITECTURE.md`; this document describes the module-specific business rules and API.
 
 ## Business Rules
 
 - Each assessment score is the average of its three existing criteria: content, implementation, and presentation/documentation, on a 0–10 scale.
-- The reviewer score comes from the assigned reviewer's `REVIEW` assessment. The defense score is the average of all submitted `DEFENSE` assessments from council members.
-- Final score = `30% × reviewer score + 70% × defense score`, rounded to two decimal places using half-up rounding. A student passes with a score of at least `5.00`.
-- Scores can be calculated and published only after the council is completed, the team has members, and each student has exactly one `REVIEW` assessment and one `DEFENSE` assessment from every council member.
-- Published scores are immutable snapshots, unique per assignment/student pair; republishing is not allowed. A transaction locks the council to prevent concurrent publication and writes an audit log on success.
-- Administrators can view all departments; department heads can view only departments they manage. Students can view only their own published results. Assessment comments are never returned to students.
-- Statistics include published scores only, grouped by registration period, department, and topic. Reports show student count, average score, pass/fail counts, and these score bands: below `5.00`, `5.00–5.99`, `6.00–6.99`, `7.00–7.99`, `8.00–8.99`, and `9.00–10.00`.
-- Academic result reports are separate from Module 11 document reports and Dashboard system metrics. CSV output uses UTF-8, escapes quotation marks, and neutralizes spreadsheet formula prefixes in text fields.
+- The reviewer score comes from the submitted `REVIEW` assessment by the assigned reviewer. The defense score is the average of all submitted `DEFENSE` assessments from council members.
+- Final score = `30% × reviewer score + 70% × defense score`, rounded to two decimal places using half-up rounding. A student passes with a score of `5.00` or higher.
+- Scores can only be calculated and published after the council is completed, the team has members, and each student has exactly one `REVIEW` assessment and one `DEFENSE` assessment from every council member.
+- Published scores are stored as immutable snapshots, unique by assignment/student; republishing is rejected. The publication transaction locks the council to prevent concurrent publication and writes an audit log on success.
+- Administrators can view all departments; department heads can only view departments they manage. Students can only view their own published results. Assessment comments are never returned to students.
+- Statistics include published scores only and are grouped by registration period, department, and topic. Reports include student count, average score, pass/fail counts, and these score bands: below `5.00`, `5.00–5.99`, `6.00–6.99`, `7.00–7.99`, `8.00–8.99`, and `9.00–10.00`.
+- Academic results are separate from the document reports in Module 11 and system metrics on the Dashboard. CSV uses UTF-8, escapes double quotes, and neutralizes spreadsheet formula prefixes in text fields.
 
 ## API
 
-The following endpoints require a JWT and use the configured API prefix (default: `/api`).
+The following endpoints require JWT authentication and use the configured API prefix (default: `/api`).
 
 | Method | Endpoint | Access | Description |
 | --- | --- | --- | --- |

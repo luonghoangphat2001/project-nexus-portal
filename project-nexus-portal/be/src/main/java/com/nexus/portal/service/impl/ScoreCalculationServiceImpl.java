@@ -10,7 +10,7 @@ import com.nexus.portal.exception.ResourceNotFoundException;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.AssessmentRepository;
 import com.nexus.portal.repository.DefenseAssignmentRepository;
-import com.nexus.portal.repository.PublishedResultReadRepository;
+import com.nexus.portal.repository.PublishedResultRepository;
 import com.nexus.portal.repository.TeamMemberRepository;
 import com.nexus.portal.service.CalculatedScore;
 import com.nexus.portal.service.ScoreCalculationService;
@@ -29,11 +29,11 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
     private final AssessmentRepository assessments;
     private final DefenseAssignmentRepository assignments;
     private final TeamMemberRepository members;
-    private final PublishedResultReadRepository publishedResults;
+    private final PublishedResultRepository publishedResults;
     private final DefenseAccessPolicy access;
 
     public ScoreCalculationServiceImpl(AssessmentRepository assessments, DefenseAssignmentRepository assignments,
-                                 TeamMemberRepository members, PublishedResultReadRepository publishedResults,
+                                 TeamMemberRepository members, PublishedResultRepository publishedResults,
                                  DefenseAccessPolicy access) {
         this.assessments = assessments;
         this.assignments = assignments;

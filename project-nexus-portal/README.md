@@ -67,8 +67,8 @@ Xem [Functional Test Cases cho module 11–13](./docs/TEST_CASES_MODULES_11_12_1
 
 Các endpoint ghép theo `API_PREFIX`; `.env.example` hiện dùng `/api`, tương ứng `VITE_API_BASE_URL=http://localhost:8080/api`. Dữ liệu mẫu cần được duyệt đăng ký trước khi thực hành module 11–13. Với DB đã sử dụng, đặt `SQL_INIT_MODE=never` để không chạy lại seed phát triển.
 
-## 5. Module 14, 15, 16
+## 5. Modules 14–16
 
-Modules 14–16 provide score calculation (`/results/assignments/{id}`), result publication (`/results/assignments/{id}/publish`, `/results/me`), and academic reporting and statistics (`/results/reports`, `/results/reports.csv`) at `/results`. They use submitted assessments from Module 13 and process only completed councils.
+Score calculation (`/results/assignments/{id}`), result publication (`/results/assignments/{id}/publish`, `/results/me`), and academic reports/statistics (`/results/reports`, `/results/reports.csv`) are available in the `/results` interface. These modules consume submitted assessments from Module 13 and process only completed councils.
 
-See the [business rules and API guide](./docs/MODULES_14_15_16.md) and [test cases](./docs/TEST_CASES_MODULES_14_15_16.md). The backend adds the `published_results` table in `schema.sql`. Run `mvn test` in `be` and `npm run build` in `fe` to validate.
+See the [business rules and API guide](./docs/MODULES_14_15_16.md) and [test cases](./docs/TEST_CASES_MODULES_14_15_16.md). The backend adds the `published_results` table in `schema.sql`. Run `mvn test` from `be` and `npm run build` from `fe` to verify.

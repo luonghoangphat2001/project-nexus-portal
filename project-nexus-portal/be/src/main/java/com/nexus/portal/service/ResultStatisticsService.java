@@ -1,13 +1,12 @@
 package com.nexus.portal.service;
 
-import com.nexus.portal.dto.response.ResultStatisticsOptionsResponse;
-import com.nexus.portal.dto.response.ResultStatisticsRowResponse;
+import com.nexus.portal.dto.response.ResultStatisticsResponse;
 
 import java.util.List;
 
 public interface ResultStatisticsService {
-    ResultStatisticsOptionsResponse getFilterOptions(String identifier);
+    ResultStatisticsResponse.Options getFilterOptions(String identifier);
 
-    List<ResultStatisticsRowResponse> getStatistics(
+    List<ResultStatisticsResponse.Row> getStatistics(
             Long periodId, Long departmentId, Long topicId, String identifier);
 }

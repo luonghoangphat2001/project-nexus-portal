@@ -10,12 +10,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * Shared base controller for CSV exports that can be opened in spreadsheet applications.
+ * Shared base controller for CSV downloads that can be opened in spreadsheet applications.
  * <p>
- * Subclasses provide the file name, column headers, and mapping from a record to a row;
- * this class handles CSV generation, escaping, the UTF-8 BOM, and HTTP headers.
+ * Subclasses provide the file name, column headers, and row mapping; this class handles CSV encoding,
+ * escaping, the UTF-8 BOM, and HTTP headers.
  *
- * @param <T> record type being exported
+ * @param <T> kiểu bản ghi được xuất
  */
 public abstract class CsvExportController<T> {
 
@@ -29,7 +29,7 @@ public abstract class CsvExportController<T> {
     /** Column headers. */
     protected abstract List<String> exportHeaders();
 
-    /** Cell values for a row, in the same order as {@link #exportHeaders()}. */
+    /** Cell values for one row, in the same order as {@link #exportHeaders()}. */
     protected abstract List<?> exportRow(T item);
 
     protected ResponseEntity<byte[]> buildCsvResponse(List<T> rows) {
@@ -72,7 +72,7 @@ public abstract class CsvExportController<T> {
         return csvField(value.toString());
     }
 
-    /** Quote fields, escape {@code "}, and neutralize spreadsheet formula prefixes. */
+    /** Quote the cell, escape {@code "}, and neutralize spreadsheet formula prefixes. */
     protected static String csvField(String value) {
         String safe = value == null ? "" : value;
         String trimmed = safe.stripLeading();

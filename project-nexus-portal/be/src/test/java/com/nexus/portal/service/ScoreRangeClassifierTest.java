@@ -1,6 +1,7 @@
 package com.nexus.portal.service;
 
 import com.nexus.portal.enums.ScoreRange;
+import com.nexus.portal.service.ScoreCalculationService.ScoreRangeClassifier;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

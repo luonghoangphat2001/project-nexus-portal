@@ -3,8 +3,7 @@ import { Download, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import councilService from '../services/councilService';
 import scoreCalculationService from '../services/scoreCalculationService';
-import resultPublicationService from '../services/resultPublicationService';
-import resultStatisticsService from '../services/resultStatisticsService';
+import resultsService from '../services/resultsService';
 import { Banner, Button, Empty, Field, Panel, inputClass } from '../components/common/DefenseUi';
 
 const formatScore = (value) => Number(value).toFixed(2);
@@ -36,8 +35,8 @@ export function ResultsPage() {
     setLoading(true);
     setError('');
     const load = isStudent
-      ? resultPublicationService.getMyPublishedResults().then((data) => { if (active) setMyGrades(data); })
-      : Promise.all([councilService.getCouncils(), resultStatisticsService.getFilterOptions()])
+      ? resultsService.getMyPublishedResults().then((data) => { if (active) setMyGrades(data); })
+      : Promise.all([councilService.getCouncils(), resultsService.getFilterOptions()])
         .then(([councils, reportOptions]) => {
           if (!active) return;
           setAssignments(councils.filter((c) => c.canManage).flatMap((c) =>
@@ -70,7 +69,7 @@ export function ResultsPage() {
     if (isStudent) return () => { active = false; };
     setReportLoading(true);
     setError('');
-    resultStatisticsService.getStatistics(selectedFilters(filters)).then((data) => { if (active) setReport(data); })
+    resultsService.getStatistics(selectedFilters(filters)).then((data) => { if (active) setReport(data); })
       .catch((e) => { if (active) setError(e.message); })
       .finally(() => { if (active) setReportLoading(false); });
     return () => { active = false; };
@@ -82,7 +81,7 @@ export function ResultsPage() {
     setError('');
     setNotice('');
     try {
-      await resultPublicationService.publishAssignmentResults(selectedId);
+      await resultsService.publishAssignmentResults(selectedId);
       setNotice('Results published for all team members.');
       setRefresh((n) => n + 1);
     } catch (e) {
@@ -96,11 +95,11 @@ export function ResultsPage() {
     setBusy(true);
     setError('');
     try {
-      const blob = await resultStatisticsService.exportStatisticsCsv(selectedFilters(filters));
+      const blob = await resultsService.exportStatisticsCsv(selectedFilters(filters));
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'bao-cao-thong-ke-diem-hoc-tap.csv';
+      link.download = 'academic-results-report.csv';
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -158,7 +157,7 @@ export function ResultsPage() {
               {a.council.name} · {a.registration.teamName} · {a.registration.topicTitle}
             </option>)}
           </select></Field>
-            {gradesLoading ? <Empty>Calculating final scores...</Empty> : grades.length === 0
+          {gradesLoading ? <Empty>Calculating final scores...</Empty> : grades.length === 0
             ? <Empty>No student results to display.</Empty>
             : <div className="overflow-x-auto"><table className="w-full text-left text-sm">
               <thead className="text-xs uppercase text-slate-500"><tr>

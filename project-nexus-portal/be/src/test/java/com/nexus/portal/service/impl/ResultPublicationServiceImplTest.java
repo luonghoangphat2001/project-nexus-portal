@@ -6,8 +6,11 @@ import com.nexus.portal.exception.BadRequestException;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.DefenseAssignmentRepository;
 import com.nexus.portal.repository.DefenseCouncilRepository;
-import com.nexus.portal.repository.PublishedResultReadRepository;
+import com.nexus.portal.repository.DepartmentRepository;
 import com.nexus.portal.repository.PublishedResultRepository;
+import com.nexus.portal.repository.RegistrationPeriodRepository;
+import com.nexus.portal.repository.ResultStatisticsRepository;
+import com.nexus.portal.repository.TopicRepository;
 import com.nexus.portal.service.AuditLogService;
 import com.nexus.portal.service.CalculatedScore;
 import com.nexus.portal.service.ScoreCalculationService;
@@ -33,14 +36,17 @@ import static org.mockito.Mockito.*;
 class ResultPublicationServiceImplTest {
     @Mock private DefenseAssignmentRepository assignments;
     @Mock private DefenseCouncilRepository councils;
-    @Mock private PublishedResultReadRepository publishedResultsReader;
     @Mock private PublishedResultRepository results;
     @Mock private ScoreCalculationService scoreCalculation;
     @Mock private DefenseAccessPolicy access;
     @Mock private AuditLogService audit;
+    @Mock private ResultStatisticsRepository reports;
+    @Mock private DepartmentRepository departments;
+    @Mock private RegistrationPeriodRepository periods;
+    @Mock private TopicRepository topics;
 
     private final Clock clock = Clock.fixed(Instant.parse("2026-10-07T00:00:00Z"), ZoneOffset.UTC);
-    private ResultPublicationServiceImpl service;
+    private ResultsServiceImpl service;
     private User manager;
     private User student;
     private Department department;
@@ -49,8 +55,8 @@ class ResultPublicationServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new ResultPublicationServiceImpl(assignments, councils, publishedResultsReader, results, scoreCalculation,
-                access, audit, clock);
+        service = new ResultsServiceImpl(assignments, councils, results, scoreCalculation,
+            access, audit, clock, reports, departments, periods, topics);
 
         manager = new User();
         manager.setId(1L);
@@ -95,7 +101,7 @@ class ResultPublicationServiceImplTest {
     @Test
     void publishesWeightedSnapshotOnlyAfterCompletedCouncil() {
         givenPublishDependencies();
-        when(publishedResultsReader.existsByAssignmentId(9L)).thenReturn(false);
+        when(results.existsByAssignmentId(9L)).thenReturn(false);
         when(scoreCalculation.calculateScores(assignment)).thenReturn(List.of(
                 new CalculatedScore(student, new BigDecimal("8.00"), new BigDecimal("7.50"),
                         new BigDecimal("7.65"), true)));
@@ -117,7 +123,7 @@ class ResultPublicationServiceImplTest {
     @Test
     void rejectsIncompleteAssessmentSetInsteadOfPublishingPartialGrades() {
         givenPublishDependencies();
-        when(publishedResultsReader.existsByAssignmentId(9L)).thenReturn(false);
+        when(results.existsByAssignmentId(9L)).thenReturn(false);
         when(scoreCalculation.calculateScores(assignment))
                 .thenThrow(new BadRequestException("Submitted assessments are incomplete"));
 
