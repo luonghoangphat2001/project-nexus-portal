@@ -18,6 +18,7 @@ import {
   UserCheck,
   Globe
 } from 'lucide-react';
+import { PageHeader, buttonClass, inputClass } from '../components/common/CommonUi';
 
 export const ProfilePage = () => {
   const { user: authUser, updateUser } = useAuth();
@@ -62,12 +63,12 @@ export const ProfilePage = () => {
 
     try {
       const res = await userService.updateProfile(profile);
-      setProfileSuccess('Profile updated successfully!');
+      setProfileSuccess(t('profile.updateSuccess', 'Cập nhật hồ sơ thành công!'));
       if (res && res.data) {
         updateUser(res.data);
       }
     } catch (err) {
-      setProfileError(err.message || 'Failed to update profile');
+      setProfileError(err.message || t('profile.updateFailed', 'Cập nhật hồ sơ thất bại'));
     } finally {
       setProfileLoading(false);
     }
@@ -80,23 +81,23 @@ export const ProfilePage = () => {
     setPasswordError('');
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordError('New password and confirmation password do not match!');
+      setPasswordError(t('profile.passwordMismatch', 'Mật khẩu xác nhận không khớp!'));
       setPasswordLoading(false);
       return;
     }
 
     if (passwordData.newPassword.length < 6) {
-      setPasswordError('New password must be at least 6 characters long!');
+      setPasswordError(t('profile.passwordMinLength', 'Mật khẩu mới phải từ 6 ký tự trở lên!'));
       setPasswordLoading(false);
       return;
     }
 
     try {
       await authService.changePassword(passwordData);
-      setPasswordSuccess('Password changed successfully! New credentials are now active.');
+      setPasswordSuccess(t('profile.passwordSuccess', 'Đổi mật khẩu thành công!'));
       setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err) {
-      setPasswordError(err.message || 'Failed to change password');
+      setPasswordError(err.message || t('profile.passwordFailed', 'Đổi mật khẩu thất bại'));
     } finally {
       setPasswordLoading(false);
     }
@@ -105,51 +106,43 @@ export const ProfilePage = () => {
   const getRoleBadge = (role) => {
     switch (role) {
       case 'ROLE_ADMIN':
-        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 border border-red-200">System Admin</span>;
+        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-50 text-rose-700 border border-rose-200">System Admin</span>;
       case 'ROLE_PRINCIPAL':
-        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 border border-amber-200">Faculty / Dept Head</span>;
+        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700 border border-amber-200">Trưởng khoa / BM</span>;
       case 'ROLE_TEACHER':
-        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200">Thesis Advisor</span>;
+        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">GVHD</span>;
       case 'ROLE_COUNCIL':
-        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200">Evaluation Council</span>;
+        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-purple-50 text-purple-700 border border-purple-200">Hội đồng</span>;
       case 'ROLE_USER':
       default:
-        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">Student</span>;
+        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Sinh viên</span>;
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <User className="w-7 h-7 text-indigo-600" />
-            {t('profile.title')}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {t('profile.desc')}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title={t('profile.title')}
+        description={t('profile.desc')}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: User Profile Card & Language Preferences */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center">
+          <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 text-center">
             <div className="relative inline-block mb-4">
               <img
-                src={profile.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName || authUser?.username || 'User')}&background=6366f1&color=fff&size=128`}
+                src={profile.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName || authUser?.username || 'User')}&background=2563eb&color=fff&size=128`}
                 alt="Avatar"
-                className="w-28 h-28 rounded-full object-cover border-4 border-indigo-50 shadow-md mx-auto"
+                className="w-24 h-24 rounded-full object-cover border-4 border-blue-50 shadow-xs mx-auto"
                 onError={(e) => {
-                  e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(authUser?.username || 'User')}&background=6366f1&color=fff&size=128`;
+                  e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(authUser?.username || 'User')}&background=2563eb&color=fff&size=128`;
                 }}
               />
-              <span className="absolute bottom-1 right-1 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full"></span>
+              <span className="absolute bottom-1 right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></span>
             </div>
 
-            <h2 className="text-lg font-bold text-slate-800">{authUser?.fullName || 'User'}</h2>
+            <h2 className="text-base font-bold text-slate-900">{authUser?.fullName || 'User'}</h2>
             <p className="text-sm text-slate-500 font-medium mb-3">@{authUser?.username}</p>
 
             <div className="flex flex-wrap justify-center gap-1.5 mb-6">
@@ -163,28 +156,28 @@ export const ProfilePage = () => {
               </div>
               <div className="flex items-center text-slate-600 gap-3">
                 <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-                <span>{authUser?.phone || 'Phone not provided'}</span>
+                <span>{authUser?.phone || 'Chưa cập nhật'}</span>
               </div>
               <div className="flex items-center text-slate-600 gap-3">
                 <IdCard className="w-4 h-4 text-slate-400 shrink-0" />
-                <span>Student/Staff ID: <strong className="text-slate-800">{authUser?.studentCode || 'N/A'}</strong></span>
+                <span>Mã số: <strong className="text-slate-900 font-semibold">{authUser?.studentCode || 'N/A'}</strong></span>
               </div>
               <div className="flex items-center text-slate-600 gap-3">
-                <UserCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>Status: <strong className="text-emerald-600">Active</strong></span>
+                <UserCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Trạng thái: <strong className="text-emerald-700 font-semibold">Hoạt động</strong></span>
               </div>
             </div>
           </div>
 
           {/* Language Preference Card */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80">
             <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
-              <Globe className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-base font-bold text-slate-800">{t('profile.languagePreference')}</h2>
+              <Globe className="w-5 h-5 text-blue-600" />
+              <h2 className="text-sm font-bold text-slate-900">{t('profile.languagePreference')}</h2>
             </div>
             <p className="text-xs text-slate-500 mb-4">{t('profile.languagePreferenceDesc')}</p>
             <div className="flex justify-center">
-              <LanguageSwitcher variant="pill" className="w-full justify-around py-1" />
+              <LanguageSwitcher variant="pill" className="w-full justify-around py-1.5" />
             </div>
           </div>
         </div>
@@ -192,127 +185,139 @@ export const ProfilePage = () => {
         {/* Right Column: Forms */}
         <div className="lg:col-span-2 space-y-6">
           {/* Form 1: Profile information */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-              <Shield className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-lg font-bold text-slate-800">{t('profile.personalInfo')}</h2>
+              <Shield className="w-5 h-5 text-blue-600" />
+              <h2 className="text-base font-bold text-slate-900">{t('profile.personalInfo')}</h2>
             </div>
 
             {profileSuccess && (
               <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-xl flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 shrink-0" />
-                {profileSuccess}
+                <span>{profileSuccess}</span>
               </div>
             )}
 
             {profileError && (
               <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
-                {profileError}
+                <span>{profileError}</span>
               </div>
             )}
 
             <form onSubmit={handleProfileSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t('profile.fullName')} *</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    {t('profile.fullName')} *
+                  </label>
                   <input
                     type="text"
                     required
                     value={profile.fullName}
                     onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                    className={inputClass}
                     placeholder={t('profile.fullName')}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t('profile.phone')}</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    {t('profile.phone')}
+                  </label>
                   <input
                     type="tel"
                     value={profile.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                    className={inputClass}
                     placeholder={t('profile.phonePlaceholder')}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t('profile.studentCode')}</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    {t('profile.studentCode')}
+                  </label>
                   <input
                     type="text"
                     value={profile.studentCode}
                     onChange={(e) => setProfile({ ...profile, studentCode: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                    className={inputClass}
                     placeholder={t('profile.studentCodePlaceholder')}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Avatar Image URL</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    Avatar URL
+                  </label>
                   <input
                     type="url"
                     value={profile.avatarUrl}
                     onChange={(e) => setProfile({ ...profile, avatarUrl: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                    className={inputClass}
                     placeholder="https://example.com/avatar.jpg"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2">
+              <div className="flex justify-end pt-3 border-t border-slate-100">
                 <button
                   type="submit"
                   disabled={profileLoading}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm transition disabled:opacity-50"
+                  className={buttonClass('primary')}
                 >
                   <Save className="w-4 h-4" />
-                  {profileLoading ? t('common.saving') : t('profile.saveProfile')}
+                  <span>{profileLoading ? t('common.saving') : t('profile.saveProfile')}</span>
                 </button>
               </div>
             </form>
           </div>
 
           {/* Form 2: Change password */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-              <Key className="w-5 h-5 text-amber-600" />
-              <h2 className="text-lg font-bold text-slate-800">{t('profile.changePassword')}</h2>
+              <Key className="w-5 h-5 text-blue-600" />
+              <h2 className="text-base font-bold text-slate-900">{t('profile.changePassword')}</h2>
             </div>
 
             {passwordSuccess && (
               <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-xl flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 shrink-0" />
-                {passwordSuccess}
+                <span>{passwordSuccess}</span>
               </div>
             )}
 
             {passwordError && (
               <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
-                {passwordError}
+                <span>{passwordError}</span>
               </div>
             )}
 
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{t('profile.currentPassword')} *</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  {t('profile.currentPassword')} *
+                </label>
                 <div className="relative">
                   <input
                     type="password"
                     required
                     value={passwordData.oldPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, oldPassword: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm"
+                    className={inputClass}
                     placeholder="••••••••"
                   />
-                  <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+                  <Lock className="w-4 h-4 text-slate-400 absolute right-3.5 top-3 pointer-events-none" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t('profile.newPassword')} *</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    {t('profile.newPassword')} *
+                  </label>
                   <div className="relative">
                     <input
                       type="password"
@@ -320,15 +325,17 @@ export const ProfilePage = () => {
                       minLength={6}
                       value={passwordData.newPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm"
+                      className={inputClass}
                       placeholder="••••••••"
                     />
-                    <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+                    <Lock className="w-4 h-4 text-slate-400 absolute right-3.5 top-3 pointer-events-none" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t('profile.confirmPassword')} *</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    {t('profile.confirmPassword')} *
+                  </label>
                   <div className="relative">
                     <input
                       type="password"
@@ -336,22 +343,22 @@ export const ProfilePage = () => {
                       minLength={6}
                       value={passwordData.confirmPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm"
+                      className={inputClass}
                       placeholder="••••••••"
                     />
-                    <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+                    <Lock className="w-4 h-4 text-slate-400 absolute right-3.5 top-3 pointer-events-none" />
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2">
+              <div className="flex justify-end pt-3 border-t border-slate-100">
                 <button
                   type="submit"
                   disabled={passwordLoading}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-xl shadow-sm transition disabled:opacity-50"
+                  className={buttonClass('primary')}
                 >
                   <Key className="w-4 h-4" />
-                  {passwordLoading ? t('common.saving') : t('profile.updatePassword')}
+                  <span>{passwordLoading ? t('common.saving') : t('profile.updatePassword')}</span>
                 </button>
               </div>
             </form>

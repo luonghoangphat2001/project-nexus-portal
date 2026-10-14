@@ -3,8 +3,32 @@ import { Download, Upload, FileText, RefreshCw } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import reportService from '../services/reportService';
 import { useTranslation } from '../i18n/LanguageContext';
-import { Banner, Button, Empty, Field, Panel, formatDate, inputClass } from '../components/common/DefenseUi';
-import { StatusBadge } from '../components/common/CommonUi';
+import {
+  PageHeader,
+  FilterCard,
+  FilterField,
+  TableCard,
+  TableHeaderBar,
+  StatusBadge,
+  buttonClass,
+  inputClass,
+  selectClass
+} from '../components/common/CommonUi';
+
+function formatDate(date) {
+  if (!date) return '—';
+  try {
+    return new Date(date).toLocaleString(undefined, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch {
+    return String(date);
+  }
+}
 
 export function ReportsPage() {
   const { t } = useTranslation();
@@ -83,61 +107,87 @@ export function ReportsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{t('reports.title')}</h1>
-          <p className="mt-1 text-sm text-slate-500">{t('reports.subtitle')}</p>
-        </div>
-        <Button secondary disabled={busy || loading} onClick={() => setRefresh((v) => v + 1)}>
-          <RefreshCw size={16} />
-          <span>{t('reports.refresh')}</span>
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title={t('reports.title')}
+        description={t('reports.subtitle')}
+        action={
+          <button
+            disabled={busy || loading}
+            onClick={() => setRefresh((v) => v + 1)}
+            className={buttonClass('secondary')}
+          >
+            <RefreshCw className={`w-4 h-4 ${busy ? 'animate-spin' : ''}`} />
+            <span>{t('reports.refresh')}</span>
+          </button>
+        }
+      />
 
-      <Banner error={error} notice={notice} />
+      {error && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm">
+          {error}
+        </div>
+      )}
+      {notice && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm">
+          {notice}
+        </div>
+      )}
 
       {loading ? (
-        <Empty>{t('common.loading')}</Empty>
+        <div className="p-12 text-center text-sm text-slate-500 bg-white rounded-2xl border border-slate-200">
+          {t('common.loading')}
+        </div>
       ) : registrations.length === 0 ? (
-        <Panel><Empty>{t('reports.noRegistrations')}</Empty></Panel>
+        <div className="p-12 text-center text-sm text-slate-500 bg-white rounded-2xl border border-slate-200">
+          {t('reports.noRegistrations')}
+        </div>
       ) : (
         <>
-          <Panel>
-            <Field label={t('reports.selectTeamProject')}>
-              <select
-                disabled={busy}
-                className={inputClass}
-                value={selectedId}
-                onChange={(e) => {
-                  setSelectedId(e.target.value);
-                  setNotice('');
-                  setValues({ type: 'REPORT', title: '', note: '', file: null });
-                  if (fileInput.current) fileInput.current.value = '';
-                }}
-              >
-                {registrations.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.teamName} · {r.topicTitle} · {r.periodName}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            {selected && (
-              <p className="mt-3 text-sm text-slate-500">
-                {t('reports.deadlineNotice')} <strong>{formatDate(selected.submissionDeadline)}</strong> {t('reports.deadlineSub')}
-              </p>
-            )}
-          </Panel>
+          {/* Project / Registration Selector */}
+          <FilterCard title={t('reports.selectTeamProject')} collapsible={false}>
+            <div className="space-y-3">
+              <FilterField label={t('reports.selectTeamProject')}>
+                <select
+                  disabled={busy}
+                  className={selectClass}
+                  value={selectedId}
+                  onChange={(e) => {
+                    setSelectedId(e.target.value);
+                    setNotice('');
+                    setValues({ type: 'REPORT', title: '', note: '', file: null });
+                    if (fileInput.current) fileInput.current.value = '';
+                  }}
+                >
+                  {registrations.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.teamName} · {r.topicTitle} · {r.periodName}
+                    </option>
+                  ))}
+                </select>
+              </FilterField>
+              {selected && (
+                <p className="text-sm text-slate-600">
+                  {t('reports.deadlineNotice')}{' '}
+                  <strong className="text-slate-900">{formatDate(selected.submissionDeadline)}</strong>{' '}
+                  {t('reports.deadlineSub')}
+                </p>
+              )}
+            </div>
+          </FilterCard>
 
+          {/* Upload Document Form */}
           {selected?.canSubmit && (
-            <Panel>
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4">
+              <h2 className="text-base font-bold text-slate-900">{t('reports.submitNewVersion')}</h2>
               <form onSubmit={upload} className="space-y-4">
-                <h2 className="font-semibold text-slate-800">{t('reports.submitNewVersion')}</h2>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Field label={t('reports.docType')}>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                      {t('reports.docType')} *
+                    </label>
                     <select
-                      className={inputClass}
+                      className={selectClass}
                       value={values.type}
                       disabled={busy}
                       onChange={(e) => setValues({ ...values, type: e.target.value })}
@@ -148,19 +198,28 @@ export function ReportsPage() {
                         </option>
                       ))}
                     </select>
-                  </Field>
-                  <Field label={t('reports.docTitle')}>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                      {t('reports.docTitle')} *
+                    </label>
                     <input
                       required
                       maxLength={200}
                       className={inputClass}
                       value={values.title}
                       disabled={busy}
+                      placeholder={t('reports.docTitle')}
                       onChange={(e) => setValues({ ...values, title: e.target.value })}
                     />
-                  </Field>
+                  </div>
                 </div>
-                <Field label={t('reports.fileLabel')}>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    {t('reports.fileLabel')} *
+                  </label>
                   <input
                     ref={fileInput}
                     type="file"
@@ -170,62 +229,111 @@ export function ReportsPage() {
                     className={inputClass}
                     onChange={(e) => setValues({ ...values, file: e.target.files[0] || null })}
                   />
-                </Field>
-                <p className="text-xs text-slate-500">{t('reports.fileLimitNote')}</p>
-                <Field label={t('reports.notes')}>
+                  <p className="mt-1 text-xs text-slate-500">{t('reports.fileLimitNote')}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    {t('reports.notes')}
+                  </label>
                   <textarea
                     rows={2}
                     maxLength={2000}
                     className={inputClass}
                     value={values.note}
                     disabled={busy}
+                    placeholder={t('reports.notes')}
                     onChange={(e) => setValues({ ...values, note: e.target.value })}
                   />
-                </Field>
-                <Button type="submit" disabled={busy || !values.file || !values.title.trim()}>
-                  <Upload size={16} />
-                  <span>{busy ? t('reports.processing') : t('reports.submitDoc')}</span>
-                </Button>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={busy || !values.file || !values.title.trim()}
+                    className={buttonClass('primary')}
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>{busy ? t('reports.processing') : t('reports.submitDoc')}</span>
+                  </button>
+                </div>
               </form>
-            </Panel>
+            </div>
           )}
 
-          <Panel>
-            <h2 className="font-semibold text-slate-800">{t('reports.historyTitle')}</h2>
+          {/* Submission History Table */}
+          <TableCard>
+            <TableHeaderBar
+              title={t('reports.historyTitle')}
+              count={documents.length}
+            />
+
             {documentLoading ? (
-              <Empty>{t('reports.loadingDocs')}</Empty>
+              <div className="p-8 text-center text-sm text-slate-500">
+                {t('reports.loadingDocs')}
+              </div>
             ) : documents.length === 0 ? (
-              <Empty>{t('reports.noDocs')}</Empty>
+              <div className="p-8 text-center text-sm text-slate-500">
+                {t('reports.noDocs')}
+              </div>
             ) : (
-              <div className="mt-4 divide-y divide-slate-100">
-                {documents.map((d) => (
-                  <div key={d.id} className="flex flex-wrap items-start justify-between gap-3 py-4">
-                    <div className="flex min-w-0 gap-3">
-                      <FileText className="mt-1 shrink-0 text-[#b66dff]" size={20} />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="break-words font-medium text-slate-800">{d.title}</p>
-                          <span className="text-xs text-[#b66dff] font-semibold">v{d.version}</span>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-600 font-semibold text-sm">
+                      <th className="py-3.5 px-4">{t('reports.docTitle')}</th>
+                      <th className="py-3.5 px-4">{t('reports.docType')}</th>
+                      <th className="py-3.5 px-4">{t('reports.fileLabel')}</th>
+                      <th className="py-3.5 px-4">Người nộp</th>
+                      <th className="py-3.5 px-4">Thời gian</th>
+                      <th className="py-3.5 px-4 text-right">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {documents.map((d) => (
+                      <tr key={d.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3.5 px-4 font-semibold text-slate-900">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                            <span>{d.title}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold">
+                              v{d.version}
+                            </span>
+                          </div>
+                          {d.note && (
+                            <p className="mt-1 text-xs text-slate-500 italic">"{d.note}"</p>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
                           <StatusBadge value={d.type} type="docType" />
-                        </div>
-                        <p className="mt-1 break-all text-xs text-slate-500 font-mono">
-                          {d.fileName} · {(d.fileSize / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {d.submittedByName} · {formatDate(d.submittedAt)}
-                        </p>
-                        {d.note && <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600 italic">"{d.note}"</p>}
-                      </div>
-                    </div>
-                    <Button secondary disabled={busy} onClick={() => download(d.id)}>
-                      <Download size={16} />
-                      <span>{t('reports.download')}</span>
-                    </Button>
-                  </div>
-                ))}
+                        </td>
+                        <td className="py-3.5 px-4 font-mono text-xs text-slate-600">
+                          <div>{d.fileName}</div>
+                          <div className="text-slate-400">{(d.fileSize / 1024 / 1024).toFixed(2)} MB</div>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-700">
+                          {d.submittedByName}
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-500 text-xs">
+                          {formatDate(d.submittedAt)}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            disabled={busy}
+                            onClick={() => download(d.id)}
+                            className={buttonClass('secondary')}
+                          >
+                            <Download className="w-3.5 h-3.5 text-blue-600" />
+                            <span>{t('reports.download')}</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
-          </Panel>
+          </TableCard>
         </>
       )}
     </div>

@@ -6,7 +6,13 @@ import scoreCalculationService from '../services/scoreCalculationService';
 import resultsService from '../services/resultsService';
 import { useTranslation } from '../i18n/LanguageContext';
 import { Banner, Button, Empty, Field, Panel, inputClass } from '../components/common/DefenseUi';
-import { StatusBadge } from '../components/common/CommonUi';
+import {
+  PageHeader,
+  TableCard,
+  TableHeaderBar,
+  StatusBadge,
+  buttonClass,
+} from '../components/common/CommonUi';
 
 const formatScore = (value) => Number(value).toFixed(2);
 const selectedFilters = (filters) => Object.fromEntries(
@@ -133,44 +139,50 @@ export function ResultsPage() {
   if (isStudent) {
     return (
       <div className="space-y-6 animate-in fade-in duration-200">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{t('results.studentTitle')}</h1>
-          <p className="mt-1 text-sm text-slate-500">{t('results.studentSubtitle')}</p>
-        </div>
+        <PageHeader
+          title={t('results.studentTitle')}
+          description={t('results.studentSubtitle')}
+        />
         <Banner error={error} notice={notice} />
         {loading ? (
           <Empty>{t('common.loading')}</Empty>
         ) : myGrades.length === 0 ? (
           <Panel><Empty>{t('results.noPublishedStudent')}</Empty></Panel>
         ) : (
-          <Panel className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="text-xs uppercase text-slate-500 border-b border-slate-200">
-                <tr>
-                  <th className="p-3">{t('results.periodCol')}</th>
-                  <th className="p-3">{t('results.topicCol')}</th>
-                  <th className="p-3">{t('results.reviewerScore')}</th>
-                  <th className="p-3">{t('results.defenseScore')}</th>
-                  <th className="p-3">{t('results.finalScore')}</th>
-                  <th className="p-3">{t('results.resultCol')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {myGrades.map((grade) => (
-                  <tr key={`${grade.assignmentId}-${grade.studentId}`} className="border-t border-slate-100 hover:bg-slate-50/50">
-                    <td className="p-3">{grade.periodName}</td>
-                    <td className="p-3 font-medium text-slate-800">{grade.topicTitle} · <span className="text-slate-500 font-normal">{grade.teamName}</span></td>
-                    <td className="p-3 font-mono">{formatScore(grade.reviewScore)}</td>
-                    <td className="p-3 font-mono">{formatScore(grade.defenseScore)}</td>
-                    <td className="p-3 font-semibold font-mono">{formatScore(grade.finalScore)}</td>
-                    <td className="p-3">
-                      <StatusBadge value={grade.passed ? 'PASSED' : 'FAILED'} type="status" />
-                    </td>
+          <TableCard>
+            <TableHeaderBar
+              title={t('results.studentTitle')}
+              count={myGrades.length}
+            />
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
+                    <th className="py-3.5 px-4">{t('results.periodCol')}</th>
+                    <th className="py-3.5 px-4">{t('results.topicCol')}</th>
+                    <th className="py-3.5 px-4">{t('results.reviewerScore')}</th>
+                    <th className="py-3.5 px-4">{t('results.defenseScore')}</th>
+                    <th className="py-3.5 px-4">{t('results.finalScore')}</th>
+                    <th className="py-3.5 px-4">{t('results.resultCol')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </Panel>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {myGrades.map((grade) => (
+                    <tr key={`${grade.assignmentId}-${grade.studentId}`} className="hover:bg-slate-50/70 transition">
+                      <td className="py-3.5 px-4">{grade.periodName}</td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-900">{grade.topicTitle} · <span className="text-slate-500 font-normal">{grade.teamName}</span></td>
+                      <td className="py-3.5 px-4 font-mono">{formatScore(grade.reviewScore)}</td>
+                      <td className="py-3.5 px-4 font-mono">{formatScore(grade.defenseScore)}</td>
+                      <td className="py-3.5 px-4 font-semibold font-mono text-blue-600">{formatScore(grade.finalScore)}</td>
+                      <td className="py-3.5 px-4">
+                        <StatusBadge value={grade.passed ? 'PASSED' : 'FAILED'} type="status" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </TableCard>
         )}
       </div>
     );
@@ -178,101 +190,120 @@ export function ResultsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{t('results.adminTitle')}</h1>
-          <p className="mt-1 text-sm text-slate-500">{t('results.adminSubtitle')}</p>
-        </div>
-        <Button secondary disabled={busy || loading} onClick={() => setRefresh((n) => n + 1)}>
-          <RefreshCw size={16} />
-          <span>{t('results.refresh')}</span>
-        </Button>
-      </div>
+      <PageHeader
+        title={t('results.adminTitle')}
+        description={t('results.adminSubtitle')}
+        action={
+          <button
+            type="button"
+            disabled={busy || loading}
+            onClick={() => setRefresh((n) => n + 1)}
+            className={buttonClass.secondary}
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>{t('results.refresh')}</span>
+          </button>
+        }
+      />
 
       <Banner error={error} notice={notice} />
 
-      <Panel className="space-y-4">
-        <div>
-          <h2 className="font-semibold text-slate-800">{t('results.calcPublishTitle')}</h2>
-          <p className="mt-1 text-xs text-slate-500">{t('results.calcPublishFormula')}</p>
-        </div>
+      <TableCard>
+        <TableHeaderBar
+          title={t('results.calcPublishTitle')}
+          subtitle={t('results.calcPublishFormula')}
+        />
 
-        {loading ? (
-          <Empty>{t('common.loading')}</Empty>
-        ) : completedAssignments.length === 0 ? (
-          <Empty>{t('results.noCompletedCouncils')}</Empty>
-        ) : (
-          <>
-            <Field label={t('results.councilTeamTopic')}>
-              <select
-                className={inputClass}
-                disabled={busy}
-                value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
-              >
-                {completedAssignments.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.council.name} · {a.registration.teamName} · {a.registration.topicTitle}
-                  </option>
-                ))}
-              </select>
-            </Field>
+        <div className="p-5 space-y-4">
+          {loading ? (
+            <Empty>{t('common.loading')}</Empty>
+          ) : completedAssignments.length === 0 ? (
+            <Empty>{t('results.noCompletedCouncils')}</Empty>
+          ) : (
+            <>
+              <Field label={t('results.councilTeamTopic')}>
+                <select
+                  className={inputClass}
+                  disabled={busy}
+                  value={selectedId}
+                  onChange={(e) => setSelectedId(e.target.value)}
+                >
+                  {completedAssignments.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.council.name} · {a.registration.teamName} · {a.registration.topicTitle}
+                    </option>
+                  ))}
+                </select>
+              </Field>
 
-            {gradesLoading ? (
-              <Empty>{t('results.calculatingScores')}</Empty>
-            ) : grades.length === 0 ? (
-              <Empty>{t('results.noStudentResults')}</Empty>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="text-xs uppercase text-slate-500 border-b border-slate-200">
-                    <tr>
-                      <th className="p-3">{t('results.studentCol')}</th>
-                      <th className="p-3">{t('results.reviewerScore')}</th>
-                      <th className="p-3">{t('results.defenseScore')}</th>
-                      <th className="p-3">{t('results.finalScore')}</th>
-                      <th className="p-3">{t('results.resultCol')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {grades.map((grade) => (
-                      <tr key={grade.studentId} className="border-t border-slate-100 hover:bg-slate-50/50">
-                        <td className="p-3 font-medium text-slate-800">{grade.studentName} · <span className="text-slate-400 font-mono text-xs">{grade.studentCode || grade.studentId}</span></td>
-                        <td className="p-3 font-mono">{formatScore(grade.reviewScore)}</td>
-                        <td className="p-3 font-mono">{formatScore(grade.defenseScore)}</td>
-                        <td className="p-3 font-semibold font-mono">{formatScore(grade.finalScore)}</td>
-                        <td className="p-3">
-                          <StatusBadge value={grade.passed ? 'PASSED' : 'FAILED'} type="status" />
-                        </td>
+              {gradesLoading ? (
+                <Empty>{t('results.calculatingScores')}</Empty>
+              ) : grades.length === 0 ? (
+                <Empty>{t('results.noStudentResults')}</Empty>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-slate-200">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
+                        <th className="py-3 px-4">{t('results.studentCol')}</th>
+                        <th className="py-3 px-4">{t('results.reviewerScore')}</th>
+                        <th className="py-3 px-4">{t('results.defenseScore')}</th>
+                        <th className="py-3 px-4">{t('results.finalScore')}</th>
+                        <th className="py-3 px-4">{t('results.resultCol')}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                      {grades.map((grade) => (
+                        <tr key={grade.studentId} className="hover:bg-slate-50/70 transition">
+                          <td className="py-3 px-4 font-semibold text-slate-900">{grade.studentName} · <span className="text-slate-400 font-mono text-xs">{grade.studentCode || grade.studentId}</span></td>
+                          <td className="py-3 px-4 font-mono">{formatScore(grade.reviewScore)}</td>
+                          <td className="py-3 px-4 font-mono">{formatScore(grade.defenseScore)}</td>
+                          <td className="py-3 px-4 font-semibold font-mono text-blue-600">{formatScore(grade.finalScore)}</td>
+                          <td className="py-3 px-4">
+                            <StatusBadge value={grade.passed ? 'PASSED' : 'FAILED'} type="status" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
-            {grades.length > 0 && (
-              <Button disabled={busy || grades.every((grade) => grade.published)} onClick={publish}>
-                {grades.every((grade) => grade.published) ? t('results.publishedBtn') : t('results.publishBtn')}
-              </Button>
-            )}
-          </>
-        )}
-      </Panel>
-
-      <Panel className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="font-semibold text-slate-800">{t('results.academicStatsTitle')}</h2>
-            <p className="mt-1 text-xs text-slate-500">{t('results.academicStatsSub')}</p>
-          </div>
-          <Button secondary disabled={busy || reportLoading} onClick={exportReport}>
-            <Download size={16} />
-            <span>{t('results.exportCsv')}</span>
-          </Button>
+              {grades.length > 0 && (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    disabled={busy || grades.every((grade) => grade.published)}
+                    onClick={publish}
+                    className={buttonClass.primary}
+                  >
+                    {grades.every((grade) => grade.published) ? t('results.publishedBtn') : t('results.publishBtn')}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
+      </TableCard>
 
-        <div className="grid gap-4 md:grid-cols-3">
+      <TableCard>
+        <TableHeaderBar
+          title={t('results.academicStatsTitle')}
+          subtitle={t('results.academicStatsSub')}
+          actions={
+            <button
+              type="button"
+              disabled={busy || reportLoading}
+              onClick={exportReport}
+              className={buttonClass.secondary}
+            >
+              <Download className="w-4 h-4" />
+              <span>{t('results.exportCsv')}</span>
+            </button>
+          }
+        />
+
+        <div className="p-5 border-b border-slate-100 grid gap-4 md:grid-cols-3 bg-slate-50/50">
           <Field label={t('results.periodCol')}>
             <select
               className={inputClass}
@@ -332,29 +363,29 @@ export function ResultsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="text-xs uppercase text-slate-500 border-b border-slate-200">
-                <tr>
-                  <th className="p-3">{t('results.periodCol')}</th>
-                  <th className="p-3">{t('results.departmentCol')}</th>
-                  <th className="p-3">{t('results.topicCol')}</th>
-                  <th className="p-3">{t('results.studentsCountCol')}</th>
-                  <th className="p-3">{t('results.avgScoreCol')}</th>
-                  <th className="p-3">{t('results.passedCountCol')}</th>
-                  <th className="p-3">{t('results.failedCountCol')}</th>
-                  <th className="p-3">{t('results.scoreDistCol')}</th>
+              <thead>
+                <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
+                  <th className="py-3.5 px-4">{t('results.periodCol')}</th>
+                  <th className="py-3.5 px-4">{t('results.departmentCol')}</th>
+                  <th className="py-3.5 px-4">{t('results.topicCol')}</th>
+                  <th className="py-3.5 px-4">{t('results.studentsCountCol')}</th>
+                  <th className="py-3.5 px-4">{t('results.avgScoreCol')}</th>
+                  <th className="py-3.5 px-4">{t('results.passedCountCol')}</th>
+                  <th className="py-3.5 px-4">{t('results.failedCountCol')}</th>
+                  <th className="py-3.5 px-4">{t('results.scoreDistCol')}</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
                 {report.map((row) => (
-                  <tr key={`${row.periodId}-${row.departmentId}-${row.topicId}`} className="border-t border-slate-100 align-top hover:bg-slate-50/50">
-                    <td className="p-3">{row.periodName}</td>
-                    <td className="p-3">{row.departmentName}</td>
-                    <td className="p-3 font-medium text-slate-800">{row.topicTitle}</td>
-                    <td className="p-3 font-mono">{row.studentCount}</td>
-                    <td className="p-3 font-semibold font-mono">{formatScore(row.averageFinalScore)}</td>
-                    <td className="p-3 font-medium text-emerald-700 font-mono">{row.passCount}</td>
-                    <td className="p-3 font-medium text-rose-700 font-mono">{row.failCount}</td>
-                    <td className="p-3 text-xs">
+                  <tr key={`${row.periodId}-${row.departmentId}-${row.topicId}`} className="hover:bg-slate-50/70 transition">
+                    <td className="py-3.5 px-4">{row.periodName}</td>
+                    <td className="py-3.5 px-4">{row.departmentName}</td>
+                    <td className="py-3.5 px-4 font-semibold text-slate-900">{row.topicTitle}</td>
+                    <td className="py-3.5 px-4 font-mono">{row.studentCount}</td>
+                    <td className="py-3.5 px-4 font-semibold font-mono text-blue-600">{formatScore(row.averageFinalScore)}</td>
+                    <td className="py-3.5 px-4 font-semibold text-emerald-600 font-mono">{row.passCount}</td>
+                    <td className="py-3.5 px-4 font-semibold text-rose-600 font-mono">{row.failCount}</td>
+                    <td className="py-3.5 px-4 text-xs">
                       {Object.entries(row.scoreDistribution).map(([band, count]) => (
                         <span key={band} className="block text-slate-600 font-mono">
                           {band}: <strong>{count}</strong>
@@ -367,7 +398,7 @@ export function ResultsPage() {
             </table>
           </div>
         )}
-      </Panel>
+      </TableCard>
     </div>
   );
 }

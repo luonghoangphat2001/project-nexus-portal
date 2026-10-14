@@ -7,7 +7,7 @@ import assessmentService from '../services/assessmentService';
 import { AssessmentForm } from '../components/common/AssessmentForm';
 import { useTranslation } from '../i18n/LanguageContext';
 import { Banner, Button, Empty, Field, Panel, formatDate, inputClass } from '../components/common/DefenseUi';
-import { StatusBadge } from '../components/common/CommonUi';
+import { PageHeader, StatusBadge, buttonClass } from '../components/common/CommonUi';
 
 export function AssessmentsPage() {
   const { user } = useAuth();
@@ -102,16 +102,21 @@ export function AssessmentsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{t('assessments.title')}</h1>
-          <p className="mt-1 text-sm text-slate-500">{t('assessments.subtitle')}</p>
-        </div>
-        <Button secondary disabled={busy || loading} onClick={() => setRefresh((n) => n + 1)}>
-          <RefreshCw size={16} />
-          <span>{t('assessments.refresh')}</span>
-        </Button>
-      </div>
+      <PageHeader
+        title={t('assessments.title')}
+        description={t('assessments.subtitle')}
+        action={
+          <button
+            type="button"
+            disabled={busy || loading}
+            onClick={() => setRefresh((n) => n + 1)}
+            className={buttonClass.secondary}
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>{t('assessments.refresh')}</span>
+          </button>
+        }
+      />
 
       <Banner error={error} notice={notice} />
 
@@ -143,7 +148,7 @@ export function AssessmentsPage() {
                 <span>
                   {selected.council.room} · {formatDate(selected.council.startsAt)} (Vietnam time, UTC+7)
                 </span>
-                <Link className="text-[#b66dff] hover:underline font-medium" to={`/reports?registrationId=${selected.registration.id}`}>
+                <Link className="text-blue-600 hover:underline font-semibold" to={`/reports?registrationId=${selected.registration.id}`}>
                   {t('assessments.viewDocuments')}
                 </Link>
               </div>

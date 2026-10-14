@@ -13,11 +13,14 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
   PageHeader,
+  TableCard,
+  TableHeaderBar,
   StatusBadge,
   Modal,
   EmptyState,
   inputClass,
   selectClass,
+  buttonClass,
 } from '../components/common/CommonUi';
 
 export const RegistrationsPage = () => {
@@ -149,29 +152,30 @@ export const RegistrationsPage = () => {
       )}
 
       {/* Student: My Team's Registrations */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
-        <div className="p-5 border-b border-slate-100">
-          <h2 className="font-bold text-slate-800 text-base">{t('registrations.myTeamRegistrations')}</h2>
-        </div>
+      <TableCard>
+        <TableHeaderBar
+          title={t('registrations.myTeamRegistrations')}
+          count={teamRegistrations.length}
+        />
 
         {teamRegistrations.length === 0 ? (
-          <div className="p-8 text-center text-slate-400 text-sm">
+          <div className="p-12 text-center text-slate-400 text-sm">
             {t('registrations.noTeamRegsFound')}
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
             {teamRegistrations.map((reg) => (
-              <div key={reg.id} className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div key={reg.id} className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 hover:bg-slate-50/50 transition-colors">
                 <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-semibold text-slate-800 text-sm">{reg.topicTitle}</span>
+                  <div className="flex items-center space-x-2.5">
+                    <span className="font-bold text-slate-900 text-base">{reg.topicTitle}</span>
                     <StatusBadge value={reg.status} />
                   </div>
 
                   {reg.feedback && (
-                    <div className="mt-2 p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-600">
-                      <span className="font-semibold text-slate-700">{t('registrations.feedback')}: </span>
-                      {reg.feedback}
+                    <div className="mt-2.5 p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-sm text-slate-700">
+                      <span className="font-semibold text-slate-800">{t('registrations.feedback')}: </span>
+                      <span>{reg.feedback}</span>
                     </div>
                   )}
 
@@ -185,7 +189,7 @@ export const RegistrationsPage = () => {
                   <button
                     type="button"
                     onClick={() => handleCancelRegistration(reg.id)}
-                    className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-semibold self-start md:self-center transition-colors cursor-pointer"
+                    className={buttonClass.danger}
                   >
                     {t('common.cancel')}
                   </button>
@@ -194,33 +198,33 @@ export const RegistrationsPage = () => {
             ))}
           </div>
         )}
-      </div>
+      </TableCard>
 
       {/* Lecturer: Review Applications for Topics */}
       {isLecturerOrAdmin && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
-          <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <h2 className="font-bold text-slate-800 text-base">{t('registrations.advisorReviewSection')}</h2>
-            </div>
-
-            <div className="w-full sm:w-72">
-              <select
-                value={selectedTopicId}
-                onChange={(e) => {
-                  setSelectedTopicId(e.target.value);
-                  fetchTopicRegistrations(e.target.value);
-                }}
-                className={selectClass}
-              >
-                {advisorTopics.map((tItem) => (
-                  <option key={tItem.id} value={tItem.id}>
-                    {tItem.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+        <TableCard>
+          <TableHeaderBar
+            title={t('registrations.advisorReviewSection')}
+            subtitle={t('registrations.desc')}
+            actions={
+              <div className="w-full sm:w-72">
+                <select
+                  value={selectedTopicId}
+                  onChange={(e) => {
+                    setSelectedTopicId(e.target.value);
+                    fetchTopicRegistrations(e.target.value);
+                  }}
+                  className={selectClass}
+                >
+                  {advisorTopics.map((tItem) => (
+                    <option key={tItem.id} value={tItem.id}>
+                      {tItem.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            }
+          />
 
           {topicRegistrations.length === 0 ? (
             <div className="p-8 text-center text-slate-400 text-sm">
@@ -301,7 +305,7 @@ export const RegistrationsPage = () => {
               ))}
             </div>
           )}
-        </div>
+        </TableCard>
       )}
 
       {/* Review Modal */}

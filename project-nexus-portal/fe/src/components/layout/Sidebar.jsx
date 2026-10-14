@@ -19,6 +19,7 @@ import {
   ShieldAlert,
   Layers,
   ChevronDown,
+  ChevronsUpDown,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../i18n/LanguageContext';
@@ -38,6 +39,7 @@ export const Sidebar = ({ isOpen }) => {
     {
       id: 'overview',
       title: t('navGroups.overview'),
+      icon: LayoutDashboard,
       items: [
         { name: t('nav.dashboard'), path: '/dashboard', icon: LayoutDashboard },
       ],
@@ -45,6 +47,7 @@ export const Sidebar = ({ isOpen }) => {
     {
       id: 'academic',
       title: t('navGroups.academic'),
+      icon: GraduationCap,
       items: [
         { name: t('nav.periods'), path: '/periods', icon: CalendarRange },
         { name: t('nav.academic'), path: '/academic', icon: GraduationCap },
@@ -53,6 +56,7 @@ export const Sidebar = ({ isOpen }) => {
     {
       id: 'thesis',
       title: t('navGroups.thesis'),
+      icon: BookOpen,
       items: [
         { name: t('nav.topics'), path: '/topics', icon: BookOpen },
         { name: t('nav.registrations'), path: '/registrations', icon: ClipboardCheck },
@@ -69,6 +73,7 @@ export const Sidebar = ({ isOpen }) => {
     {
       id: 'evaluation',
       title: t('navGroups.evaluation'),
+      icon: Award,
       items: [
         { name: t('nav.councils'), path: '/councils', icon: Award },
         ...(isAdmin || isPrincipal || isTeacher || isCouncil
@@ -82,6 +87,7 @@ export const Sidebar = ({ isOpen }) => {
     {
       id: 'system',
       title: t('navGroups.system'),
+      icon: ShieldCheck,
       items: [
         ...(isAdmin || isPrincipal || isTeacher
           ? [
@@ -103,7 +109,7 @@ export const Sidebar = ({ isOpen }) => {
     },
   ].filter((group) => group.items.length > 0);
 
-  // Accordion state: by default all accessible groups are expanded
+  // Accordion state
   const [openGroups, setOpenGroups] = useState(() => {
     const initialState = {};
     navGroups.forEach((g) => {
@@ -112,7 +118,7 @@ export const Sidebar = ({ isOpen }) => {
     return initialState;
   });
 
-  // Auto-expand group when user navigates to a child route
+  // Auto-expand active group
   useEffect(() => {
     navGroups.forEach((group) => {
       const hasActive = group.items.some(
@@ -133,83 +139,45 @@ export const Sidebar = ({ isOpen }) => {
 
   const primaryRole = user?.roles?.[0];
   const roleDisplay =
+    (primaryRole && t(`enums.role.${primaryRole}`)) ||
     (primaryRole && t(`roles.${primaryRole}`)) ||
     (primaryRole && primaryRole.replace('ROLE_', '')) ||
     t('roles.user');
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 bg-white border-r border-[#ebedf2] transition-all duration-300 flex flex-col ${
+      className={`fixed inset-y-0 left-0 z-40 bg-white border-r border-slate-200/80 transition-all duration-300 flex flex-col ${
         isOpen ? 'w-64' : 'w-20'
       }`}
     >
-      {/* Brand Header */}
-      <div className="h-16 flex items-center px-6 border-b border-[#ebedf2] shrink-0">
+      {/* Brand Header Matching Reference Design */}
+      <div className="h-16 flex items-center px-6 border-b border-slate-100 shrink-0">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-sm shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-xs shrink-0">
             <Layers className="w-4 h-4" />
           </div>
           {isOpen && (
-            <div className="flex items-baseline space-x-1.5 overflow-hidden">
-              <span className="font-bold text-lg text-indigo-600 tracking-tight">Nexus</span>
-              <span className="text-xs font-semibold text-slate-700">Portal</span>
+            <div className="flex items-baseline space-x-1 overflow-hidden">
+              <span className="font-extrabold text-lg text-blue-600 tracking-tight">NEXUS</span>
+              <span className="text-xs font-bold text-slate-800 tracking-wider">PORTAL</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Profile Card / Clickable Avatar */}
-      {isOpen ? (
-        <div className="p-3 border-b border-[#ebedf2] shrink-0">
-          <Link
-            to="/profile"
-            className="p-2.5 rounded-xl border border-slate-100 flex items-center space-x-3 hover:bg-slate-50/90 hover:border-indigo-100 transition-all group"
-            title={t('header.profileAndSettings')}
-          >
-            <div className="relative shrink-0">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-xs group-hover:shadow-md transition-shadow">
-                {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
-              </div>
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
-            </div>
-            <div className="overflow-hidden flex-1 min-w-0">
-              <p className="text-xs font-bold text-slate-800 truncate leading-tight group-hover:text-indigo-600 transition-colors">
-                {user?.fullName || user?.username || 'Nexus User'}
-              </p>
-              <p className="text-[11px] font-medium text-slate-400 truncate mt-0.5">
-                {roleDisplay}
-              </p>
-            </div>
-          </Link>
-        </div>
-      ) : (
-        <div className="py-3 flex justify-center border-b border-[#ebedf2] shrink-0">
-          <Link
-            to="/profile"
-            className="relative p-1 rounded-xl hover:bg-slate-50 transition-colors group"
-            title={`${user?.fullName || 'User'} (${roleDisplay}) - ${t('header.profileAndSettings')}`}
-          >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-xs group-hover:scale-105 transition-transform">
-              {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
-            </div>
-            <span className="absolute bottom-1 right-1 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
-          </Link>
-        </div>
-      )}
-
-      {/* Navigation Groups */}
-      <div className="flex-1 py-3 px-3 overflow-y-auto space-y-2">
-        {navGroups.map((group, groupIndex) => {
+      {/* Navigation Menu List */}
+      <div className="flex-1 py-4 px-3 overflow-y-auto space-y-1.5 scrollbar-thin">
+        {navGroups.map((group) => {
           const isGroupOpen = !!openGroups[group.id];
           const hasActiveItem = group.items.some(
             (item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
           );
+          const GroupIcon = group.icon;
 
           if (!isOpen) {
-            // Collapsed Sidebar View
+            // Collapsed Mode
             return (
-              <div key={group.id} className="space-y-1">
-                {groupIndex > 0 && <div className="my-2 mx-2 border-t border-slate-100" />}
+              <div key={group.id} className="space-y-1 py-1">
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -219,8 +187,8 @@ export const Sidebar = ({ isOpen }) => {
                       className={({ isActive }) =>
                         `flex items-center justify-center p-2.5 rounded-xl text-xs font-medium transition-all ${
                           isActive
-                            ? 'bg-indigo-50 text-indigo-600 font-bold shadow-xs'
-                            : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50'
                         }`
                       }
                       title={item.name}
@@ -233,36 +201,36 @@ export const Sidebar = ({ isOpen }) => {
             );
           }
 
-          // Expanded Sidebar View with Dropdown / Accordion
+          // Expanded Mode matching Image 1
           return (
             <div key={group.id} className="space-y-1">
-              {/* Group Header Button */}
+              {/* Group Trigger Button */}
               <button
                 type="button"
                 onClick={() => toggleGroup(group.id)}
-                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-colors select-none group ${
-                  hasActiveItem && !isGroupOpen
-                    ? 'text-indigo-600 bg-indigo-50/60'
-                    : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  hasActiveItem && isGroupOpen
+                    ? 'text-slate-800 bg-slate-50'
+                    : hasActiveItem && !isGroupOpen
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <span className="truncate">{group.title}</span>
-                <div className="flex items-center space-x-1.5">
-                  {/* Subtle active indicator dot if group is closed but contains the active route */}
-                  {!isGroupOpen && hasActiveItem && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
-                  )}
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 ${
-                      isGroupOpen ? 'rotate-0' : '-rotate-90'
-                    }`}
-                  />
+                <div className="flex items-center space-x-2.5 truncate">
+                  <GroupIcon className={`w-4 h-4 shrink-0 ${hasActiveItem && !isGroupOpen ? 'text-white' : 'text-slate-500'}`} />
+                  <span className="truncate">{group.title}</span>
                 </div>
+
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 ${
+                    hasActiveItem && !isGroupOpen ? 'text-white' : 'text-slate-400'
+                  } ${isGroupOpen ? 'rotate-0' : '-rotate-90'}`}
+                />
               </button>
 
-              {/* Group Items (Collapsible) */}
+              {/* Collapsible Submenu */}
               {isGroupOpen && (
-                <div className="space-y-0.5 pl-1 transition-all duration-200">
+                <div className="space-y-0.5 pl-4 pt-0.5">
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     return (
@@ -270,14 +238,14 @@ export const Sidebar = ({ isOpen }) => {
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) =>
-                          `flex items-center px-3 py-2 rounded-xl text-xs font-medium transition-all space-x-3 ${
+                          `flex items-center space-x-2.5 px-3 py-1.5 rounded-lg text-xs transition-colors ${
                             isActive
-                              ? 'bg-indigo-50 text-indigo-600 font-bold shadow-xs'
-                              : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
+                              ? 'bg-blue-50 text-blue-600 font-semibold'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                           }`
                         }
                       >
-                        <Icon className="w-4 h-4 shrink-0" />
+                        <Icon className="w-3.5 h-3.5 shrink-0 opacity-70" />
                         <span className="truncate">{item.name}</span>
                       </NavLink>
                     );
@@ -287,6 +255,34 @@ export const Sidebar = ({ isOpen }) => {
             </div>
           );
         })}
+      </div>
+
+      {/* Footer User Account Box Matching Bottom Left of Reference Image */}
+      <div className="p-3 border-t border-slate-100 shrink-0 bg-white">
+        <Link
+          to="/profile"
+          className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all text-left group cursor-pointer"
+          title={t('header.profileAndSettings')}
+        >
+          <div className="flex items-center space-x-2.5 overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-700 text-xs shrink-0">
+              {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
+            </div>
+            {isOpen && (
+              <div className="overflow-hidden">
+                <p className="text-xs font-bold text-slate-800 truncate">
+                  {user?.username || 'user'}
+                </p>
+                <p className="text-[11px] text-slate-400 truncate">
+                  {roleDisplay}
+                </p>
+              </div>
+            )}
+          </div>
+          {isOpen && (
+            <ChevronsUpDown className="w-4 h-4 text-slate-400 group-hover:text-slate-600 shrink-0" />
+          )}
+        </Link>
       </div>
     </aside>
   );

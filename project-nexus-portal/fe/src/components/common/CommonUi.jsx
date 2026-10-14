@@ -1,39 +1,52 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import {
-  Search,
+  Filter,
   RotateCcw,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   X,
   AlertCircle,
   CheckCircle,
-  Clock,
   HelpCircle,
-  Layers
 } from 'lucide-react';
 
 export const inputClass =
-  'w-full px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 disabled:bg-slate-100 disabled:text-slate-400 transition-all';
+  'w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm text-slate-800 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400 transition-all';
 
 export const selectClass =
-  'w-full px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 bg-slate-50 hover:bg-slate-100/80 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition-all';
+  'w-full px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer';
 
-export const buttonClass =
-  'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed';
+export const buttonClass = {
+  primary:
+    'inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed',
+  secondary:
+    'inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed',
+  danger:
+    'inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed',
+  actionRow:
+    'inline-flex items-center justify-center gap-1 p-1.5 rounded-lg text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 transition-all cursor-pointer',
+  actionRowDanger:
+    'inline-flex items-center justify-center gap-1 p-1.5 rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-all cursor-pointer',
+};
 
 /**
- * Standard Page Header with Title, Description, and Actions
+ * Standard Page Header Matching the Reference Design (Title 24px + Subtitle 14px + Action Button)
  */
-export function PageHeader({ title, description, actions, children }) {
+export function PageHeader({ title, description, action, actions, children }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{title}</h1>
-        {description && <p className="text-sm text-slate-500 leading-relaxed">{description}</p>}
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-1">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{title}</h1>
+        {description && (
+          <p className="text-sm text-slate-500 mt-1 leading-relaxed">{description}</p>
+        )}
       </div>
-      {(actions || children) && (
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+      {(action || actions || children) && (
+        <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-auto">
+          {action}
           {actions}
           {children}
         </div>
@@ -43,7 +56,104 @@ export function PageHeader({ title, description, actions, children }) {
 }
 
 /**
- * StatusBadge - Inherits localization and color semantics automatically
+ * Clean Enterprise Filter Card matching Image 1 & Image 3:
+ * - Collapsible filter header with funnel icon + "Filters" + "Reset Filter" button
+ * - Clean grid layout for filter fields with labels on top (14px)
+ */
+export function FilterCard({
+  children,
+  onReset,
+  onSearch,
+  title,
+  defaultExpanded = true,
+  className = '',
+}) {
+  const { t } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  return (
+    <div className={`bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs transition-all ${className}`}>
+      {/* Filter Header */}
+      <div className="flex items-center justify-between pb-3">
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 text-sm font-bold text-slate-800">
+            <Filter className="w-4 h-4 text-slate-600" />
+            <span>{title || t('common.filter') || 'Filters'}</span>
+          </div>
+
+          {onReset && (
+            <button
+              type="button"
+              onClick={onReset}
+              className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+              <span>{t('common.reset') || 'Reset Filter'}</span>
+            </button>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+          title={isExpanded ? 'Collapse filters' : 'Expand filters'}
+        >
+          {isExpanded ? (
+            <ChevronUp className="w-4 h-4" />
+          ) : (
+            <ChevronDown className="w-4 h-4" />
+          )}
+        </button>
+      </div>
+
+      {/* Filter Body (Inputs & Selects) */}
+      {isExpanded && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (onSearch) onSearch();
+          }}
+          className="pt-3 border-t border-slate-100 space-y-4"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {children}
+          </div>
+
+          {onSearch && (
+            <div className="flex justify-end pt-2">
+              <button type="submit" className={buttonClass.primary}>
+                {t('common.filter') || 'Search'}
+              </button>
+            </div>
+          )}
+        </form>
+      )}
+    </div>
+  );
+}
+
+// Backwards compatibility alias
+export const FilterBar = FilterCard;
+
+/**
+ * FilterField: Standardized field container for FilterCard with consistent 14px label
+ */
+export function FilterField({ label, children, className = '' }) {
+  return (
+    <div className={`space-y-1.5 ${className}`}>
+      {label && (
+        <label className="block text-sm font-semibold text-slate-700 tracking-tight">
+          {label}
+        </label>
+      )}
+      {children}
+    </div>
+  );
+}
+
+/**
+ * StatusBadge - Clean, soft enterprise badges matching the design images
  */
 export function StatusBadge({ value, type = 'status', className = '' }) {
   const { t } = useTranslation();
@@ -62,35 +172,50 @@ export function StatusBadge({ value, type = 'status', className = '' }) {
   } else if (type === 'councilRole') {
     label = t(`enums.councilRole.${upper}`) || t(`defense.${value.toLowerCase()}`) || value;
   } else if (type === 'role') {
-    label = t(`roles.${value}`) || value.replace('ROLE_', '');
+    label = t(`enums.role.${value}`) || t(`roles.${value}`) || value.replace('ROLE_', '');
   } else {
-    // Default: status enum
     label = t(`enums.status.${upper}`) || t(`defense.${value.toLowerCase()}`) || value;
   }
 
-  // 2. Resolve color theme based on semantic meaning
-  let colorStyle = 'bg-slate-100 text-slate-700 border-slate-200'; // Neutral fallback
+  // 2. Soft, clean Enterprise color styles
+  let colorStyle = 'bg-slate-50 text-slate-600 border-slate-200'; // Default tag/pill
 
-  // Green / Positive
-  if (['OPEN', 'APPROVED', 'ACTIVE', 'DONE', 'COMPLETED', 'SUCCESS', 'SUBMITTED', 'ACCEPTED', 'PASSED'].includes(upper)) {
-    colorStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
+  // Positive / Paid / Active / Done
+  if (
+    ['PAID', 'OPEN', 'APPROVED', 'ACTIVE', 'DONE', 'COMPLETED', 'SUCCESS', 'SUBMITTED', 'ACCEPTED', 'PASSED'].includes(
+      upper
+    )
+  ) {
+    colorStyle = 'bg-emerald-50 text-emerald-600 border-emerald-100';
   }
-  // Amber / Yellow / Pending
-  else if (['PENDING', 'IN_PROGRESS', 'TODO', 'DRAFT', 'SCHEDULED', 'REVIEW', 'DEFENSE'].includes(upper)) {
+  // Warning / Pending / Reviewing
+  else if (
+    ['PENDING', 'IN_PROGRESS', 'TODO', 'DRAFT', 'SCHEDULED', 'REVIEW', 'DEFENSE', 'CARD'].includes(
+      upper
+    )
+  ) {
     colorStyle = 'bg-amber-50 text-amber-700 border-amber-200/80';
   }
-  // Red / Danger
-  else if (['REJECTED', 'CLOSED', 'LOCKED', 'FAILURE', 'DENIED', 'CANCELLED', 'OVERDUE', 'FAILED', 'INACTIVE'].includes(upper)) {
-    colorStyle = 'bg-rose-50 text-rose-700 border-rose-200/80';
+  // Danger / Failed / Inactive
+  else if (
+    ['REJECTED', 'CLOSED', 'LOCKED', 'FAILURE', 'DENIED', 'CANCELLED', 'OVERDUE', 'FAILED', 'INACTIVE'].includes(
+      upper
+    )
+  ) {
+    colorStyle = 'bg-rose-50 text-rose-600 border-rose-100';
   }
-  // Indigo / Purple / Special
-  else if (['CAPSTONE', 'RESEARCH', 'THESIS', 'ROLE_ADMIN', 'ROLE_PRINCIPAL', 'ROLE_TEACHER', 'PRIMARY'].includes(upper)) {
-    colorStyle = 'bg-indigo-50 text-indigo-700 border-indigo-200/80';
+  // Primary / Info / Admin
+  else if (
+    ['CAPSTONE', 'RESEARCH', 'THESIS', 'ROLE_ADMIN', 'ROLE_PRINCIPAL', 'ROLE_TEACHER', 'PRIMARY'].includes(
+      upper
+    )
+  ) {
+    colorStyle = 'bg-blue-50 text-blue-600 border-blue-100';
   }
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${colorStyle} ${className}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border ${colorStyle} ${className}`}
     >
       {label}
     </span>
@@ -98,80 +223,175 @@ export function StatusBadge({ value, type = 'status', className = '' }) {
 }
 
 /**
- * Standard Pagination Component with localization
+ * MetricCard - Matches the Top KPI Summary Row from Image 2:
+ * Label, Large bold number, Colored icon square in top right, Subtitle with trend
  */
-export function Pagination({ page, totalPages, onPageChange, className = '' }) {
-  const { t } = useTranslation();
-
-  if (totalPages <= 1) return null;
-
+export function MetricCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  iconBg = 'bg-blue-600',
+  trend,
+  trendColor = 'text-emerald-600',
+  className = '',
+}) {
   return (
-    <div className={`flex justify-center items-center space-x-2 pt-4 ${className}`}>
-      <button
-        type="button"
-        disabled={page <= 0}
-        onClick={() => onPageChange(page - 1)}
-        className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center space-x-1"
-      >
-        <ChevronLeft className="w-3.5 h-3.5" />
-        <span>{t('common.previous')}</span>
-      </button>
+    <div
+      className={`bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-col justify-between ${className}`}
+    >
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-medium text-slate-500">{title}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-2 tracking-tight font-mono">
+            {value}
+          </p>
+        </div>
+        {Icon && (
+          <div
+            className={`w-9 h-9 rounded-xl ${iconBg} text-white flex items-center justify-center shrink-0 shadow-xs`}
+          >
+            <Icon className="w-4.5 h-4.5" />
+          </div>
+        )}
+      </div>
 
-      <span className="text-xs text-slate-500 font-medium px-2">
-        {t('common.pageOf', { current: page + 1, total: totalPages })}
-      </span>
-
-      <button
-        type="button"
-        disabled={page >= totalPages - 1}
-        onClick={() => onPageChange(page + 1)}
-        className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center space-x-1"
-      >
-        <span>{t('common.next')}</span>
-        <ChevronRight className="w-3.5 h-3.5" />
-      </button>
+      {(subtitle || trend) && (
+        <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+          <span className="text-slate-400">{subtitle}</span>
+          {trend && <span className={`font-semibold ${trendColor}`}>{trend}</span>}
+        </div>
+      )}
     </div>
   );
 }
 
 /**
- * Standard Filter Bar container
+ * TableCard: Card container for clean tables matching Image 1 & Image 3
  */
-export function FilterBar({ children, onSearch, onReset, className = '' }) {
-  const { t } = useTranslation();
+export function TableCard({ children, className = '' }) {
+  return (
+    <div
+      className={`bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
+ * TableHeaderBar: Header bar for tables matching Image 3 (e.g., "All Orders (367)" with actions)
+ */
+export function TableHeaderBar({ title, count, subtitle, actions, children }) {
+  return (
+    <div className="p-4 sm:px-6 sm:py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex items-center space-x-2">
+        <h3 className="text-base font-bold text-slate-900 tracking-tight">{title}</h3>
+        {typeof count !== 'undefined' && count !== null && (
+          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
+            {count}
+          </span>
+        )}
+        {subtitle && <span className="text-sm text-slate-400">· {subtitle}</span>}
+      </div>
+      {(actions || children) && (
+        <div className="flex items-center space-x-2 shrink-0">
+          {actions}
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Standard Pagination matching the enterprise design (Image 1 & Image 3)
+ * Supports page numbers, entries count: "Showing 1 to 10 of 367 entries"
+ */
+export function Pagination({
+  currentPage,
+  page,
+  totalPages,
+  totalElements,
+  pageSize = 10,
+  onPageChange,
+  className = '',
+}) {
+  const { t, language } = useTranslation();
+  const current = typeof currentPage === 'number' ? currentPage : typeof page === 'number' ? page : 0;
+
+  if (!totalPages || totalPages <= 1) return null;
+
+  const startEntry = current * pageSize + 1;
+  const endEntry = typeof totalElements === 'number' ? Math.min((current + 1) * pageSize, totalElements) : (current + 1) * pageSize;
+
+  // Generate page numbers array (showing max 5 numbered buttons)
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let start = Math.max(0, current - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible);
+    if (end - start < maxVisible) {
+      start = Math.max(0, end - maxVisible);
+    }
+    for (let i = start; i < end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
+  const pages = getPageNumbers();
 
   return (
-    <div className={`bg-white p-4 rounded-2xl border border-slate-200 shadow-xs ${className}`}>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (onSearch) onSearch();
-        }}
-        className="flex flex-wrap items-center gap-3"
-      >
-        <div className="flex-1 min-w-[240px] flex flex-wrap items-center gap-3">{children}</div>
+    <div className={`p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-600 ${className}`}>
+      <div>
+        {typeof totalElements === 'number' ? (
+          language === 'vi' ? (
+            <span>Hiển thị <strong className="font-semibold text-slate-900">{startEntry}</strong> đến <strong className="font-semibold text-slate-900">{endEntry}</strong> trong tổng số <strong className="font-semibold text-slate-900">{totalElements}</strong> mục</span>
+          ) : (
+            <span>Showing <strong className="font-semibold text-slate-900">{startEntry}</strong> to <strong className="font-semibold text-slate-900">{endEntry}</strong> of <strong className="font-semibold text-slate-900">{totalElements}</strong> entries</span>
+          )
+        ) : (
+          <span>{t('common.pageOf', { current: current + 1, total: totalPages })}</span>
+        )}
+      </div>
 
-        <div className="flex items-center space-x-2 shrink-0">
-          {onSearch && (
-            <button
-              type="submit"
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-medium transition-colors"
-            >
-              {t('common.filter')}
-            </button>
-          )}
-          {onReset && (
-            <button
-              type="button"
-              onClick={onReset}
-              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-medium transition-colors"
-              title={t('common.reset')}
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </form>
+      <div className="flex items-center space-x-1.5">
+        <button
+          type="button"
+          disabled={current <= 0}
+          onClick={() => onPageChange(current - 1)}
+          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          <span className="hidden sm:inline">{t('common.previous') || 'Previous'}</span>
+        </button>
+
+        {pages.map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => onPageChange(p)}
+            className={`w-8 h-8 rounded-lg text-sm font-semibold transition-all cursor-pointer flex items-center justify-center ${
+              p === current
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+            }`}
+          >
+            {p + 1}
+          </button>
+        ))}
+
+        <button
+          type="button"
+          disabled={current >= totalPages - 1}
+          onClick={() => onPageChange(current + 1)}
+          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+        >
+          <span className="hidden sm:inline">{t('common.next') || 'Next'}</span>
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -189,11 +409,11 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'ma
       >
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 text-base">{title}</h3>
+          <h3 className="font-bold text-slate-900 text-base">{title}</h3>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -203,7 +423,11 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'ma
         <div className="p-6 max-h-[75vh] overflow-y-auto space-y-4">{children}</div>
 
         {/* Footer */}
-        {footer && <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">{footer}</div>}
+        {footer && (
+          <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -212,12 +436,15 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'ma
 /**
  * Empty State Display
  */
-export function EmptyState({ message, icon: Icon = HelpCircle, action }) {
+export function EmptyState({ message, title, description, icon: Icon = HelpCircle, action }) {
   const { t } = useTranslation();
   return (
-    <div className="py-12 bg-white rounded-2xl border border-slate-200 text-center px-4">
-      <Icon className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-      <p className="text-slate-500 font-medium text-sm">{message || t('common.noData')}</p>
+    <div className="py-12 bg-white rounded-2xl border border-slate-200/80 text-center px-4">
+      <Icon className="w-10 h-10 text-slate-300 mx-auto mb-2.5" />
+      <h3 className="text-slate-700 font-semibold text-sm">
+        {title || message || t('common.noData')}
+      </h3>
+      {description && <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
@@ -234,27 +461,31 @@ export function Banner({ error, success, notice }) {
   return (
     <div
       role={isError ? 'alert' : 'status'}
-      className={`p-4 rounded-xl text-sm flex items-start space-x-2.5 border ${
+      className={`p-3.5 rounded-xl text-xs flex items-start space-x-2.5 border ${
         isError
           ? 'bg-rose-50 text-rose-800 border-rose-200'
           : 'bg-emerald-50 text-emerald-800 border-emerald-200'
       }`}
     >
       {isError ? (
-        <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+        <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
       ) : (
-        <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+        <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
       )}
-      <span className="flex-1 leading-relaxed">{msg}</span>
+      <span className="flex-1 leading-relaxed font-medium">{msg}</span>
     </div>
   );
 }
 
 export default {
   PageHeader,
-  StatusBadge,
-  Pagination,
+  FilterCard,
   FilterBar,
+  FilterField,
+  TableCard,
+  StatusBadge,
+  MetricCard,
+  Pagination,
   Modal,
   EmptyState,
   Banner,

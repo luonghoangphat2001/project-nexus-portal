@@ -3,7 +3,7 @@ import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
-import { Bell, Search, LogOut, User as UserIcon, Shield, Menu, Mail, Maximize } from 'lucide-react';
+import { LogOut, User as UserIcon, PanelLeft } from 'lucide-react';
 
 export const Header = ({ onToggleSidebar }) => {
   const { user, logout } = useAuth();
@@ -11,36 +11,22 @@ export const Header = ({ onToggleSidebar }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
-    <header className="h-16 bg-white border-b border-[#ebedf2] px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-      <div className="flex items-center space-x-4">
+    <header className="h-16 bg-white border-b border-slate-200/80 px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+      {/* Left: Sidebar Toggle Button */}
+      <div className="flex items-center space-x-3">
         <button
           onClick={onToggleSidebar}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
           title={t('header.toggleMenu')}
         >
-          <Menu className="w-5 h-5" />
+          <PanelLeft className="w-5 h-5" />
         </button>
-
-        {/* Global Search (Purple Admin Search style) */}
-        <div className="hidden sm:flex items-center relative">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 pointer-events-none" />
-          <input
-            type="text"
-            placeholder={t('header.searchPlaceholder')}
-            className="bg-transparent border-0 rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-0 w-64 md:w-80"
-          />
-        </div>
       </div>
 
-      <div className="flex items-center space-x-3 sm:space-x-4">
-        {/* Language Switcher */}
-        <LanguageSwitcher />
-
-        {/* Messages Icon */}
-        <button className="text-slate-400 hover:text-[#b66dff] transition-colors relative" title={t('header.messages')}>
-          <Mail className="w-4 h-4" />
-          <span className="w-1.5 h-1.5 bg-[#fe7c96] rounded-full absolute -top-0.5 -right-0.5"></span>
-        </button>
+      {/* Right: Language Switcher, Notifications & User Dropdown */}
+      <div className="flex items-center space-x-3.5">
+        {/* Language Switcher matching design image */}
+        <LanguageSwitcher variant="circle" />
 
         {/* Notifications Icon */}
         <NotificationBell />
@@ -51,20 +37,20 @@ export const Header = ({ onToggleSidebar }) => {
         <div className="relative">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center space-x-2.5 p-1 rounded-lg hover:bg-slate-50 transition-colors text-left"
+            className="flex items-center space-x-2 p-1 rounded-xl hover:bg-slate-50 transition-colors text-left cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#da8cff] to-[#9a55ff] flex items-center justify-center font-bold text-white text-xs shadow-xs">
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-xs shadow-xs">
               {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
             </div>
             <div className="hidden md:block">
-              <p className="text-xs font-semibold text-[#343a40]">
-                {user?.fullName || user?.username || 'David Greymaax'}
+              <p className="text-xs font-semibold text-slate-800">
+                {user?.fullName || user?.username || 'User'}
               </p>
             </div>
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-52 bg-white border border-[#ebedf2] rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="absolute right-0 mt-2 w-52 bg-white border border-slate-200 rounded-2xl shadow-lg py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-4 py-2 border-b border-slate-100">
                 <p className="text-[11px] text-slate-400">{t('header.signedInAs')}</p>
                 <p className="text-xs font-semibold text-slate-800 truncate">{user?.email || 'user@nexus.com'}</p>
@@ -76,7 +62,7 @@ export const Header = ({ onToggleSidebar }) => {
                     setDropdownOpen(false);
                     window.location.href = '/profile';
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 flex items-center space-x-2 transition-colors"
+                  className="w-full text-left px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 flex items-center space-x-2 transition-colors cursor-pointer"
                 >
                   <UserIcon className="w-3.5 h-3.5 text-slate-400" />
                   <span>{t('header.profileAndSettings')}</span>
@@ -89,9 +75,9 @@ export const Header = ({ onToggleSidebar }) => {
                     setDropdownOpen(false);
                     logout();
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-[#fe7c96] hover:bg-rose-50 flex items-center space-x-2 transition-colors"
+                  className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center space-x-2 transition-colors cursor-pointer"
                 >
-                  <LogOut className="w-3.5 h-3.5 text-[#fe7c96]" />
+                  <LogOut className="w-3.5 h-3.5 text-rose-500" />
                   <span>{t('header.signOut')}</span>
                 </button>
               </div>
@@ -102,3 +88,5 @@ export const Header = ({ onToggleSidebar }) => {
     </header>
   );
 };
+
+export default Header;

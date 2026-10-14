@@ -21,7 +21,16 @@ import {
   ToggleLeft,
   ToggleRight
 } from 'lucide-react';
-import { Modal, buttonClass, inputClass, selectClass } from '../components/common/CommonUi';
+import {
+  PageHeader,
+  MetricCard,
+  TableCard,
+  TableHeaderBar,
+  Modal,
+  buttonClass,
+  inputClass,
+  selectClass,
+} from '../components/common/CommonUi';
 
 export const SystemAdminPage = () => {
   const { t } = useTranslation();
@@ -218,84 +227,83 @@ export const SystemAdminPage = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl shadow-xs border border-slate-200">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2 tracking-tight">
-            <Server className="w-7 h-7 text-[#b66dff]" />
-            {t('systemAdmin.title')}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {t('systemAdmin.subtitle')}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
-          <button
-            onClick={() => setActiveTab('academic')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-lg transition cursor-pointer ${
-              activeTab === 'academic' ? 'bg-white text-[#b66dff] shadow-xs' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            {t('systemAdmin.tabAcademic')}
-          </button>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-lg transition cursor-pointer ${
-              activeTab === 'settings' ? 'bg-white text-[#b66dff] shadow-xs' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            {t('systemAdmin.tabSettings')}
-          </button>
-          <button
-            onClick={() => setActiveTab('health')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-lg transition cursor-pointer ${
-              activeTab === 'health' ? 'bg-white text-[#b66dff] shadow-xs' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            {t('systemAdmin.tabHealth')}
-          </button>
-        </div>
-      </div>
+      {/* Header */}
+      <PageHeader
+        title={t('systemAdmin.title')}
+        description={t('systemAdmin.subtitle')}
+        actions={
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+            <button
+              onClick={() => setActiveTab('academic')}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                activeTab === 'academic' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {t('systemAdmin.tabAcademic')}
+            </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                activeTab === 'settings' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {t('systemAdmin.tabSettings')}
+            </button>
+            <button
+              onClick={() => setActiveTab('health')}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                activeTab === 'health' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {t('systemAdmin.tabHealth')}
+            </button>
+          </div>
+        }
+      />
 
       {/* Notifications */}
       {successMessage && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-xl flex items-center gap-2">
           <CheckCircle className="w-5 h-5 shrink-0" />
-          {successMessage}
+          <span>{successMessage}</span>
         </div>
       )}
 
       {errorMessage && (
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 shrink-0" />
-          {errorMessage}
+          <span>{errorMessage}</span>
         </div>
       )}
 
       {/* TAB 1: ACADEMIC MASTER DATA */}
       {activeTab === 'academic' && (
-        <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-100">
-            {/* Subtabs */}
-            <div className="flex items-center gap-2">
+        <div className="space-y-4">
+          {/* Subtabs Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs">
+            <div className="flex flex-wrap items-center gap-2">
               {[
-                { id: 'faculties', label: `${t('systemAdmin.faculties')} (${faculties.length})`, icon: <Building className="w-4 h-4" /> },
-                { id: 'departments', label: `${t('systemAdmin.departments')} (${departments.length})`, icon: <Layers className="w-4 h-4" /> },
-                { id: 'majors', label: `${t('systemAdmin.majors')} (${majors.length})`, icon: <GraduationCap className="w-4 h-4" /> },
-                { id: 'cohorts', label: `${t('systemAdmin.cohorts')} (${cohorts.length})`, icon: <Calendar className="w-4 h-4" /> },
+                { id: 'faculties', label: `${t('systemAdmin.faculties')}`, count: faculties.length, icon: <Building className="w-4 h-4" /> },
+                { id: 'departments', label: `${t('systemAdmin.departments')}`, count: departments.length, icon: <Layers className="w-4 h-4" /> },
+                { id: 'majors', label: `${t('systemAdmin.majors')}`, count: majors.length, icon: <GraduationCap className="w-4 h-4" /> },
+                { id: 'cohorts', label: `${t('systemAdmin.cohorts')}`, count: cohorts.length, icon: <Calendar className="w-4 h-4" /> },
               ].map((sub) => (
                 <button
                   key={sub.id}
                   onClick={() => setAcademicSubTab(sub.id)}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
+                  className={`flex items-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-xl transition-all cursor-pointer ${
                     academicSubTab === sub.id
-                      ? 'bg-brand-50 text-[#b66dff] border border-[#e1c2ff]'
-                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                      ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60'
                   }`}
                 >
                   {sub.icon}
-                  {sub.label}
+                  <span>{sub.label}</span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full font-mono ${
+                    academicSubTab === sub.id ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600'
+                  }`}>
+                    {sub.count}
+                  </span>
                 </button>
               ))}
             </div>
@@ -324,227 +332,254 @@ export const SystemAdminPage = () => {
 
           {/* Subtab Content: Faculties */}
           {academicSubTab === 'faculties' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 font-bold text-slate-400 uppercase text-[11px]">
-                    <th className="py-3 px-4">{t('systemAdmin.colCode')}</th>
-                    <th className="py-3 px-4">{t('systemAdmin.colName')}</th>
-                    <th className="py-3 px-4 text-right">{t('systemAdmin.colActions')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {faculties.map((f) => (
-                    <tr key={f.id} className="hover:bg-slate-50/70 transition">
-                      <td className="py-3 px-4 font-mono font-bold text-[#b66dff]">{f.code}</td>
-                      <td className="py-3 px-4 font-semibold text-slate-800">{f.name}</td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="inline-flex items-center gap-1">
-                          <button
-                            onClick={() => openEditModal('faculty', f)}
-                            className="p-1.5 text-[#b66dff] hover:bg-brand-50 rounded-lg cursor-pointer"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteAcademic('faculty', f.id, f.name)}
-                            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
+            <TableCard>
+              <TableHeaderBar
+                title={t('systemAdmin.faculties')}
+                count={faculties.length}
+              />
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
+                      <th className="py-3.5 px-4">{t('systemAdmin.colCode')}</th>
+                      <th className="py-3.5 px-4">{t('systemAdmin.colName')}</th>
+                      <th className="py-3.5 px-4 text-right">{t('systemAdmin.colActions')}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {faculties.map((f) => (
+                      <tr key={f.id} className="hover:bg-slate-50/70 transition">
+                        <td className="py-3.5 px-4 font-mono font-bold text-blue-600">{f.code}</td>
+                        <td className="py-3.5 px-4 font-semibold text-slate-900">{f.name}</td>
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              onClick={() => openEditModal('faculty', f)}
+                              className={buttonClass.actionRow}
+                              title="Edit"
+                            >
+                              <Edit2 className="w-4 h-4 text-blue-600" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAcademic('faculty', f.id, f.name)}
+                              className={buttonClass.actionRowDanger}
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </TableCard>
           )}
 
           {/* Subtab Content: Departments */}
           {academicSubTab === 'departments' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 font-bold text-slate-400 uppercase text-[11px]">
-                    <th className="py-3 px-4">{t('systemAdmin.colCode')}</th>
-                    <th className="py-3 px-4">{t('systemAdmin.colName')}</th>
-                    <th className="py-3 px-4">{t('systemAdmin.colParentFaculty')}</th>
-                    <th className="py-3 px-4 text-right">{t('systemAdmin.colActions')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {departments.map((d) => {
-                    const faculty = faculties.find((f) => f.id === d.facultyId);
-                    return (
-                      <tr key={d.id} className="hover:bg-slate-50/70 transition">
-                        <td className="py-3 px-4 font-mono font-bold text-[#b66dff]">{d.code}</td>
-                        <td className="py-3 px-4 font-semibold text-slate-800">{d.name}</td>
-                        <td className="py-3 px-4 text-slate-600">{faculty ? faculty.name : '—'}</td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="inline-flex items-center gap-1">
-                            <button
-                              onClick={() => openEditModal('department', d)}
-                              className="p-1.5 text-[#b66dff] hover:bg-brand-50 rounded-lg cursor-pointer"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteAcademic('department', d.id, d.name)}
-                              className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <TableCard>
+              <TableHeaderBar
+                title={t('systemAdmin.departments')}
+                count={departments.length}
+              />
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
+                      <th className="py-3.5 px-4">{t('systemAdmin.colCode')}</th>
+                      <th className="py-3.5 px-4">{t('systemAdmin.colName')}</th>
+                      <th className="py-3.5 px-4">{t('systemAdmin.colParentFaculty')}</th>
+                      <th className="py-3.5 px-4 text-right">{t('systemAdmin.colActions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {departments.map((d) => {
+                      const faculty = faculties.find((f) => f.id === d.facultyId);
+                      return (
+                        <tr key={d.id} className="hover:bg-slate-50/70 transition">
+                          <td className="py-3.5 px-4 font-mono font-bold text-blue-600">{d.code}</td>
+                          <td className="py-3.5 px-4 font-semibold text-slate-900">{d.name}</td>
+                          <td className="py-3.5 px-4 text-slate-600">{faculty ? faculty.name : '—'}</td>
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="inline-flex items-center gap-1.5">
+                              <button
+                                onClick={() => openEditModal('department', d)}
+                                className={buttonClass.actionRow}
+                                title="Edit"
+                              >
+                                <Edit2 className="w-4 h-4 text-blue-600" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAcademic('department', d.id, d.name)}
+                                className={buttonClass.actionRowDanger}
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </TableCard>
           )}
 
           {/* Subtab Content: Majors */}
           {academicSubTab === 'majors' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 font-bold text-slate-400 uppercase text-[11px]">
-                    <th className="py-3 px-4">{t('systemAdmin.colCode')}</th>
-                    <th className="py-3 px-4">{t('systemAdmin.colName')}</th>
-                    <th className="py-3 px-4">{t('systemAdmin.colManagingDept')}</th>
-                    <th className="py-3 px-4 text-right">{t('systemAdmin.colActions')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {majors.map((m) => {
-                    const dept = departments.find((d) => d.id === m.departmentId);
-                    return (
-                      <tr key={m.id} className="hover:bg-slate-50/70 transition">
-                        <td className="py-3 px-4 font-mono font-bold text-[#b66dff]">{m.code}</td>
-                        <td className="py-3 px-4 font-semibold text-slate-800">{m.name}</td>
-                        <td className="py-3 px-4 text-slate-600">{dept ? dept.name : '—'}</td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="inline-flex items-center gap-1">
-                            <button
-                              onClick={() => openEditModal('major', m)}
-                              className="p-1.5 text-[#b66dff] hover:bg-brand-50 rounded-lg cursor-pointer"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteAcademic('major', m.id, m.name)}
-                              className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <TableCard>
+              <TableHeaderBar
+                title={t('systemAdmin.majors')}
+                count={majors.length}
+              />
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
+                      <th className="py-3.5 px-4">{t('systemAdmin.colCode')}</th>
+                      <th className="py-3.5 px-4">{t('systemAdmin.colName')}</th>
+                      <th className="py-3.5 px-4">{t('systemAdmin.colManagingDept')}</th>
+                      <th className="py-3.5 px-4 text-right">{t('systemAdmin.colActions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {majors.map((m) => {
+                      const dept = departments.find((d) => d.id === m.departmentId);
+                      return (
+                        <tr key={m.id} className="hover:bg-slate-50/70 transition">
+                          <td className="py-3.5 px-4 font-mono font-bold text-blue-600">{m.code}</td>
+                          <td className="py-3.5 px-4 font-semibold text-slate-900">{m.name}</td>
+                          <td className="py-3.5 px-4 text-slate-600">{dept ? dept.name : '—'}</td>
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="inline-flex items-center gap-1.5">
+                              <button
+                                onClick={() => openEditModal('major', m)}
+                                className={buttonClass.actionRow}
+                                title="Edit"
+                              >
+                                <Edit2 className="w-4 h-4 text-blue-600" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAcademic('major', m.id, m.name)}
+                                className={buttonClass.actionRowDanger}
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </TableCard>
           )}
 
           {/* Subtab Content: Cohorts */}
           {academicSubTab === 'cohorts' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 font-bold text-slate-400 uppercase text-[11px]">
-                    <th className="py-3 px-4">{t('systemAdmin.colCode')}</th>
-                    <th className="py-3 px-4">{t('systemAdmin.colName')}</th>
-                    <th className="py-3 px-4">{t('systemAdmin.colAdmissionYear')}</th>
-                    <th className="py-3 px-4">{t('systemAdmin.colGraduationYear')}</th>
-                    <th className="py-3 px-4 text-right">{t('systemAdmin.colActions')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {cohorts.map((c) => (
-                    <tr key={c.id} className="hover:bg-slate-50/70 transition">
-                      <td className="py-3 px-4 font-mono font-bold text-[#b66dff]">{c.code}</td>
-                      <td className="py-3 px-4 font-semibold text-slate-800">{c.name}</td>
-                      <td className="py-3 px-4 text-slate-600 font-mono">{c.admissionYear}</td>
-                      <td className="py-3 px-4 text-slate-600 font-mono">{c.graduationYear}</td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="inline-flex items-center gap-1">
-                          <button
-                            onClick={() => openEditModal('cohort', c)}
-                            className="p-1.5 text-[#b66dff] hover:bg-brand-50 rounded-lg cursor-pointer"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteAcademic('cohort', c.id, c.name)}
-                            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
+            <TableCard>
+              <TableHeaderBar
+                title={t('systemAdmin.cohorts')}
+                count={cohorts.length}
+              />
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
+                      <th className="py-3.5 px-4">{t('systemAdmin.colCode')}</th>
+                      <th className="py-3.5 px-4">{t('systemAdmin.colName')}</th>
+                      <th className="py-3.5 px-4">{t('systemAdmin.colAdmissionYear')}</th>
+                      <th className="py-3.5 px-4">{t('systemAdmin.colGraduationYear')}</th>
+                      <th className="py-3.5 px-4 text-right">{t('systemAdmin.colActions')}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {cohorts.map((c) => (
+                      <tr key={c.id} className="hover:bg-slate-50/70 transition">
+                        <td className="py-3.5 px-4 font-mono font-bold text-blue-600">{c.code}</td>
+                        <td className="py-3.5 px-4 font-semibold text-slate-900">{c.name}</td>
+                        <td className="py-3.5 px-4 text-slate-600 font-mono">{c.admissionYear}</td>
+                        <td className="py-3.5 px-4 text-slate-600 font-mono">{c.graduationYear}</td>
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              onClick={() => openEditModal('cohort', c)}
+                              className={buttonClass.actionRow}
+                              title="Edit"
+                            >
+                              <Edit2 className="w-4 h-4 text-blue-600" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAcademic('cohort', c.id, c.name)}
+                              className={buttonClass.actionRowDanger}
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </TableCard>
           )}
         </div>
       )}
 
       {/* TAB 2: SYSTEM SETTINGS */}
       {activeTab === 'settings' && (
-        <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div>
-              <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                <Sliders className="w-5 h-5 text-[#b66dff]" />
-                {t('systemAdmin.settingsTitle')}
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {t('systemAdmin.settingsSub')}
-              </p>
-            </div>
-            <button
-              onClick={fetchSettings}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${settingsLoading ? 'animate-spin' : ''}`} />
-              {t('systemAdmin.refreshSettings')}
-            </button>
-          </div>
+        <TableCard>
+          <TableHeaderBar
+            title={t('systemAdmin.settingsTitle')}
+            subtitle={t('systemAdmin.settingsSub')}
+            actions={
+              <button
+                onClick={fetchSettings}
+                className={buttonClass.secondary}
+              >
+                <RefreshCw className={`w-4 h-4 ${settingsLoading ? 'animate-spin' : ''}`} />
+                <span>{t('systemAdmin.refreshSettings')}</span>
+              </button>
+            }
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
             {settings.map((s) => (
-              <div key={s.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
+              <div key={s.id} className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="font-mono text-xs font-bold text-[#b66dff] bg-brand-50 px-2 py-0.5 rounded border border-[#e1c2ff]">
+                    <span className="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                       {s.settingKey}
                     </span>
-                    <p className="text-xs text-slate-500 mt-1">{s.description}</p>
+                    <p className="text-sm text-slate-500 mt-1.5">{s.description}</p>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded border border-slate-200">
+                  <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                     {s.category}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 pt-2">
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
                   {s.settingValue === 'true' || s.settingValue === 'false' ? (
                     <button
                       onClick={() =>
                         handleUpdateSetting(s.settingKey, s.settingValue === 'true' ? 'false' : 'true', s.description)
                       }
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                         s.settingValue === 'true'
                           ? 'bg-emerald-600 text-white'
                           : 'bg-slate-200 text-slate-700'
                       }`}
                     >
                       {s.settingValue === 'true' ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                      {s.settingValue === 'true' ? t('systemAdmin.enabled') : t('systemAdmin.disabled')}
+                      <span>{s.settingValue === 'true' ? t('systemAdmin.enabled') : t('systemAdmin.disabled')}</span>
                     </button>
                   ) : (
                     <input
@@ -562,46 +597,46 @@ export const SystemAdminPage = () => {
               </div>
             ))}
           </div>
-        </div>
+        </TableCard>
       )}
 
       {/* TAB 3: SERVER HEALTH & METRICS */}
       {activeTab === 'health' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between bg-white p-4 rounded-2xl shadow-xs border border-slate-200">
+          <div className="flex items-center justify-between bg-white p-4 rounded-2xl shadow-xs border border-slate-200/80">
             <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5 text-[#b66dff]" />
-              <span className="text-sm font-bold text-slate-800">{t('systemAdmin.serverHealthTitle')}</span>
+              <Activity className="w-5 h-5 text-blue-600" />
+              <span className="text-base font-bold text-slate-900">{t('systemAdmin.serverHealthTitle')}</span>
             </div>
             <button
               onClick={fetchMetrics}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition cursor-pointer"
+              className={buttonClass.secondary}
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${metricsLoading ? 'animate-spin' : ''}`} />
-              {t('systemAdmin.refreshMetrics')}
+              <RefreshCw className={`w-4 h-4 ${metricsLoading ? 'animate-spin' : ''}`} />
+              <span>{t('systemAdmin.refreshMetrics')}</span>
             </button>
           </div>
 
           {metrics ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Card 1: JVM & System Resources */}
-              <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 space-y-4">
+              <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                  <Cpu className="w-5 h-5 text-[#b66dff]" />
-                  <h3 className="font-bold text-slate-800 text-sm">{t('systemAdmin.jvmTitle')}</h3>
+                  <Cpu className="w-5 h-5 text-blue-600" />
+                  <h3 className="font-bold text-slate-900 text-sm">{t('systemAdmin.jvmTitle')}</h3>
                 </div>
 
-                <div className="space-y-3 text-xs">
+                <div className="space-y-3 text-sm">
                   <div>
                     <div className="flex justify-between text-slate-600 mb-1">
                       <span>{t('systemAdmin.usedMemory')}</span>
-                      <strong className="text-slate-800 font-mono">
+                      <strong className="text-slate-900 font-mono">
                         {formatBytes(metrics.usedMemoryBytes)} / {formatBytes(metrics.totalMemoryBytes)}
                       </strong>
                     </div>
                     <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-[#da8cff] to-[#9a55ff] h-full rounded-full transition-all"
+                        className="bg-blue-600 h-full rounded-full transition-all"
                         style={{
                           width: `${Math.min(
                             100,
@@ -614,17 +649,17 @@ export const SystemAdminPage = () => {
 
                   <div className="flex justify-between text-slate-600">
                     <span>{t('systemAdmin.maxMemory')}</span>
-                    <strong className="text-slate-800 font-mono">{formatBytes(metrics.maxMemoryBytes)}</strong>
+                    <strong className="text-slate-900 font-mono">{formatBytes(metrics.maxMemoryBytes)}</strong>
                   </div>
 
                   <div className="flex justify-between text-slate-600">
                     <span>{t('systemAdmin.cpuProcessors')}</span>
-                    <strong className="text-slate-800 font-mono">{metrics.availableProcessors} Cores</strong>
+                    <strong className="text-slate-900 font-mono">{metrics.availableProcessors} Cores</strong>
                   </div>
 
                   <div className="flex justify-between text-slate-600">
                     <span>{t('systemAdmin.javaRuntime')}</span>
-                    <strong className="text-[#b66dff] font-mono">JDK {metrics.jvmVersion}</strong>
+                    <strong className="text-blue-600 font-mono">JDK {metrics.jvmVersion}</strong>
                   </div>
 
                   <div className="flex justify-between text-slate-600">
@@ -635,84 +670,84 @@ export const SystemAdminPage = () => {
               </div>
 
               {/* Card 2: Database Connectivity */}
-              <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 space-y-4">
+              <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
                   <Database className="w-5 h-5 text-emerald-600" />
-                  <h3 className="font-bold text-slate-800 text-sm">{t('systemAdmin.dbTitle')}</h3>
+                  <h3 className="font-bold text-slate-900 text-sm">{t('systemAdmin.dbTitle')}</h3>
                 </div>
 
-                <div className="space-y-3 text-xs">
+                <div className="space-y-3 text-sm">
                   <div className="flex justify-between items-center text-slate-600">
                     <span>{t('systemAdmin.connStatus')}</span>
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                       {t('systemAdmin.connected')}
                     </span>
                   </div>
 
                   <div className="flex justify-between text-slate-600">
                     <span>{t('systemAdmin.totalUsers')}</span>
-                    <strong className="text-slate-800 font-mono">
+                    <strong className="text-slate-900 font-mono">
                       {metrics.totalUsers} ({t('systemAdmin.activeUsers')} {metrics.activeUsers})
                     </strong>
                   </div>
 
                   <div className="flex justify-between text-slate-600">
                     <span>{t('systemAdmin.totalTopics')}</span>
-                    <strong className="text-slate-800 font-mono">{metrics.totalTopics}</strong>
+                    <strong className="text-slate-900 font-mono">{metrics.totalTopics}</strong>
                   </div>
 
                   <div className="flex justify-between text-slate-600">
                     <span>{t('systemAdmin.totalTeams')}</span>
-                    <strong className="text-slate-800 font-mono">{metrics.totalTeams}</strong>
+                    <strong className="text-slate-900 font-mono">{metrics.totalTeams}</strong>
                   </div>
 
                   <div className="flex justify-between text-slate-600">
                     <span>{t('systemAdmin.matchmakingPosts')}</span>
-                    <strong className="text-slate-800 font-mono">{metrics.totalMatchmakingPosts}</strong>
+                    <strong className="text-slate-900 font-mono">{metrics.totalMatchmakingPosts}</strong>
                   </div>
 
                   <div className="flex justify-between text-slate-600">
                     <span>{t('systemAdmin.recordedLogs')}</span>
-                    <strong className="text-[#b66dff] font-mono">{metrics.totalAuditLogs} events</strong>
+                    <strong className="text-blue-600 font-mono">{metrics.totalAuditLogs} events</strong>
                   </div>
                 </div>
               </div>
 
               {/* Card 3: Academic Counts */}
-              <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 space-y-4">
+              <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
                   <GraduationCap className="w-5 h-5 text-amber-600" />
-                  <h3 className="font-bold text-slate-800 text-sm">{t('systemAdmin.academicCountsTitle')}</h3>
+                  <h3 className="font-bold text-slate-900 text-sm">{t('systemAdmin.academicCountsTitle')}</h3>
                 </div>
 
-                <div className="space-y-3 text-xs">
+                <div className="space-y-3 text-sm">
                   <div className="flex justify-between text-slate-600">
                     <span>{t('systemAdmin.faculties')}:</span>
-                    <strong className="text-slate-800 font-mono">{metrics.totalFaculties}</strong>
+                    <strong className="text-slate-900 font-mono">{metrics.totalFaculties}</strong>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>{t('systemAdmin.departments')}:</span>
-                    <strong className="text-slate-800 font-mono">{metrics.totalDepartments}</strong>
+                    <strong className="text-slate-900 font-mono">{metrics.totalDepartments}</strong>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>{t('systemAdmin.majors')}:</span>
-                    <strong className="text-slate-800 font-mono">{metrics.totalMajors}</strong>
+                    <strong className="text-slate-900 font-mono">{metrics.totalMajors}</strong>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>{t('systemAdmin.cohorts')}:</span>
-                    <strong className="text-slate-800 font-mono">{metrics.totalCohorts}</strong>
+                    <strong className="text-slate-900 font-mono">{metrics.totalCohorts}</strong>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>{t('systemAdmin.systemRolesCount')}</span>
-                    <strong className="text-slate-800 font-mono">{metrics.totalRoles}</strong>
+                    <strong className="text-slate-900 font-mono">{metrics.totalRoles}</strong>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="bg-white p-8 rounded-2xl text-center text-slate-400">
-              <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#b66dff]" />
-              {t('common.loading')}
+            <div className="bg-white p-12 rounded-2xl text-center text-slate-400">
+              <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
+              <span>{t('common.loading')}</span>
             </div>
           )}
         </div>

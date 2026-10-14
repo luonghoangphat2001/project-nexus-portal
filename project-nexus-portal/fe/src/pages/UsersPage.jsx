@@ -21,7 +21,18 @@ import {
   Trash2,
   Phone,
 } from 'lucide-react';
-import { StatusBadge, Modal, buttonClass, inputClass, selectClass } from '../components/common/CommonUi';
+import {
+  PageHeader,
+  FilterCard,
+  FilterField,
+  TableCard,
+  TableHeaderBar,
+  StatusBadge,
+  Modal,
+  buttonClass,
+  inputClass,
+  selectClass,
+} from '../components/common/CommonUi';
 
 export const UsersPage = () => {
   const { hasRole } = useAuth();
@@ -257,252 +268,249 @@ export const UsersPage = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl shadow-xs border border-slate-200">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2 tracking-tight">
-            <Users className="w-7 h-7 text-[#b66dff]" />
-            {t('users.title')}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {t('users.subtitle')}
-          </p>
-        </div>
+      {/* Header */}
+      <PageHeader
+        title={t('users.title')}
+        description={t('users.subtitle')}
+        actions={
+          <>
+            <button
+              onClick={fetchUsers}
+              className={buttonClass.secondary}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>{t('users.refresh')}</span>
+            </button>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            onClick={fetchUsers}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            {t('users.refresh')}
-          </button>
+            {isAdmin && (
+              <>
+                <button
+                  onClick={handleExportUsers}
+                  className={buttonClass.secondary}
+                >
+                  <Download className="w-4 h-4" />
+                  <span>{t('users.exportCsv')}</span>
+                </button>
 
-          {isAdmin && (
-            <>
-              <button
-                onClick={handleExportUsers}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" />
-                {t('users.exportCsv')}
-              </button>
-
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-[#da8cff] to-[#9a55ff] hover:opacity-95 rounded-xl shadow-xs transition cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                {t('users.addUser')}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className={buttonClass.primary}
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{t('users.addUser')}</span>
+                </button>
+              </>
+            )}
+          </>
+        }
+      />
 
       {/* Alerts */}
       {successMessage && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-xl flex items-center gap-2">
           <CheckCircle className="w-5 h-5 shrink-0" />
-          {successMessage}
+          <span>{successMessage}</span>
         </div>
       )}
 
       {error && (
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 shrink-0" />
-          {error}
+          <span>{error}</span>
         </div>
       )}
 
-      {/* Tabs & Filters */}
-      <div className="bg-white p-4 rounded-2xl shadow-xs border border-slate-200 space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          {/* Tabs */}
-          {isAdmin && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab('all')}
-                className={`px-4 py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
-                  activeTab === 'all'
-                    ? 'bg-gradient-to-r from-[#da8cff] to-[#9a55ff] text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {t('users.allUsers')} ({users.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('lecturers')}
-                className={`px-4 py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
-                  activeTab === 'lecturers'
-                    ? 'bg-gradient-to-r from-[#da8cff] to-[#9a55ff] text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {t('users.advisors')}
-              </button>
-            </div>
-          )}
-
-          {/* Search Bar */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
+      {/* Filter Card */}
+      <FilterCard
+        onReset={() => {
+          setSearchQuery('');
+          setSelectedRoleFilter('ALL');
+          setSelectedStatusFilter('ALL');
+        }}
+      >
+        <FilterField label={t('common.search') || 'Search'}>
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
             <input
               type="text"
               placeholder={t('users.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#b66dff]"
+              className={`${inputClass} pl-9`}
             />
           </div>
+        </FilterField>
 
-          {/* Dropdown Filters */}
-          <div className="flex items-center gap-2">
-            <select
-              value={selectedRoleFilter}
-              onChange={(e) => setSelectedRoleFilter(e.target.value)}
-              className="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-[#b66dff]"
-            >
-              <option value="ALL">{t('users.allRoles')}</option>
-              <option value="ROLE_ADMIN">{t('enums.role.ROLE_ADMIN')}</option>
-              <option value="ROLE_PRINCIPAL">{t('enums.role.ROLE_PRINCIPAL')}</option>
-              <option value="ROLE_TEACHER">{t('enums.role.ROLE_TEACHER')}</option>
-              <option value="ROLE_COUNCIL">{t('enums.role.ROLE_COUNCIL')}</option>
-              <option value="ROLE_USER">{t('enums.role.ROLE_USER')}</option>
-            </select>
+        <FilterField label={t('users.colRoles') || 'Role'}>
+          <select
+            value={selectedRoleFilter}
+            onChange={(e) => setSelectedRoleFilter(e.target.value)}
+            className={selectClass}
+          >
+            <option value="ALL">{t('users.allRoles')}</option>
+            <option value="ROLE_ADMIN">{t('enums.role.ROLE_ADMIN')}</option>
+            <option value="ROLE_PRINCIPAL">{t('enums.role.ROLE_PRINCIPAL')}</option>
+            <option value="ROLE_TEACHER">{t('enums.role.ROLE_TEACHER')}</option>
+            <option value="ROLE_COUNCIL">{t('enums.role.ROLE_COUNCIL')}</option>
+            <option value="ROLE_USER">{t('enums.role.ROLE_USER')}</option>
+          </select>
+        </FilterField>
 
-            <select
-              value={selectedStatusFilter}
-              onChange={(e) => setSelectedStatusFilter(e.target.value)}
-              className="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-[#b66dff]"
-            >
-              <option value="ALL">{t('users.allStatuses')}</option>
-              <option value="ACTIVE">{t('users.activeStatus')}</option>
-              <option value="INACTIVE">{t('users.inactiveStatus')}</option>
-            </select>
-          </div>
-        </div>
+        <FilterField label={t('users.colStatus') || 'Status'}>
+          <select
+            value={selectedStatusFilter}
+            onChange={(e) => setSelectedStatusFilter(e.target.value)}
+            className={selectClass}
+          >
+            <option value="ALL">{t('users.allStatuses')}</option>
+            <option value="ACTIVE">{t('users.activeStatus')}</option>
+            <option value="INACTIVE">{t('users.inactiveStatus')}</option>
+          </select>
+        </FilterField>
+      </FilterCard>
 
-        {/* Users Table */}
+      {/* Users Table Card */}
+      <TableCard>
+        <TableHeaderBar
+          title={activeTab === 'all' ? t('users.allUsers') : t('users.advisors')}
+          count={filteredUsers.length}
+          actions={
+            isAdmin && (
+              <div className="flex items-center space-x-1 p-0.5 bg-slate-100 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('all')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                    activeTab === 'all'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {t('users.allUsers')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('lecturers')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                    activeTab === 'lecturers'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {t('users.advisors')}
+                </button>
+              </div>
+            )
+          }
+        />
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                <th className="py-3 px-4">{t('users.colUser')}</th>
-                <th className="py-3 px-4">{t('users.colIdCode')}</th>
-                <th className="py-3 px-4">{t('users.colEmailPhone')}</th>
-                <th className="py-3 px-4">{t('users.colRoles')}</th>
-                <th className="py-3 px-4">{t('users.colStatus')}</th>
-                {isAdmin && <th className="py-3 px-4 text-right">{t('users.colActions')}</th>}
+              <tr className="bg-slate-50/70 border-b border-slate-100 text-sm font-semibold text-slate-600">
+                <th className="py-3.5 px-4">{t('users.colUser')}</th>
+                <th className="py-3.5 px-4">{t('users.colIdCode')}</th>
+                <th className="py-3.5 px-4">{t('users.colEmailPhone')}</th>
+                <th className="py-3.5 px-4">{t('users.colRoles')}</th>
+                <th className="py-3.5 px-4">{t('users.colStatus')}</th>
+                {isAdmin && <th className="py-3.5 px-4 text-right">{t('users.colActions')}</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+            <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#b66dff]" />
-                    {t('common.loading')}
+                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
+                    <span>{t('common.loading')}</span>
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">
+                  <td colSpan={6} className="py-12 text-center text-slate-400">
                     {t('common.noData')}
                   </td>
                 </tr>
               ) : (
                 filteredUsers.map((u) => (
                   <tr key={u.id} className="hover:bg-slate-50/70 transition">
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || u.username)}&background=b66dff&color=fff`}
+                          src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || u.username)}&background=2563eb&color=fff`}
                           alt="Avatar"
-                          className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-100"
+                          className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200"
                         />
                         <div>
-                          <p className="font-bold text-slate-800">{u.fullName || u.username}</p>
-                          <p className="text-[11px] text-slate-400 font-mono">@{u.username}</p>
+                          <p className="font-semibold text-slate-900">{u.fullName || u.username}</p>
+                          <p className="text-xs text-slate-400 font-mono">@{u.username}</p>
                         </div>
                       </div>
                     </td>
 
-                    <td className="py-3 px-4 font-mono font-medium text-slate-600">
+                    <td className="py-3.5 px-4 font-mono font-medium text-slate-600">
                       {u.studentCode || '—'}
                     </td>
 
-                    <td className="py-3 px-4 space-y-0.5">
+                    <td className="py-3.5 px-4 space-y-0.5">
                       <div className="flex items-center gap-1.5 text-slate-600">
-                        <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <Mail className="w-4 h-4 text-slate-400 shrink-0" />
                         <span className="truncate max-w-[180px]">{u.email}</span>
                       </div>
                       {u.phone && (
-                        <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
-                          <Phone className="w-3 h-3 shrink-0" />
+                        <div className="flex items-center gap-1.5 text-slate-400 text-xs">
+                          <Phone className="w-3.5 h-3.5 shrink-0" />
                           <span>{u.phone}</span>
                         </div>
                       )}
                     </td>
 
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4">
                       <div className="flex flex-wrap gap-1">
                         {u.roles && u.roles.length > 0 ? (
                           u.roles.map((r) => (
                             <StatusBadge key={r} value={r} type="role" />
                           ))
                         ) : (
-                          <span className="text-slate-400 italic">{t('users.unassignedRole')}</span>
+                          <span className="text-slate-400 italic text-xs">{t('users.unassignedRole')}</span>
                         )}
                       </div>
                     </td>
 
-                    <td className="py-3 px-4">
-                      {u.active ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 rounded-full border border-emerald-200">
-                          <UserCheck className="w-3 h-3" /> {t('users.activeBadge')}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-rose-700 bg-rose-50 rounded-full border border-rose-200">
-                          <UserX className="w-3 h-3" /> {t('users.lockedBadge')}
-                        </span>
-                      )}
+                    <td className="py-3.5 px-4">
+                      <StatusBadge value={u.active ? 'ACTIVE' : 'INACTIVE'} />
                     </td>
 
                     {isAdmin && (
-                      <td className="py-3 px-4 text-right">
-                        <div className="inline-flex items-center gap-1">
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="inline-flex items-center gap-1.5">
                           <button
                             title="Assign Roles"
                             onClick={() => handleOpenRoleModal(u)}
-                            className="p-1.5 text-[#b66dff] hover:bg-brand-50 rounded-lg transition cursor-pointer"
+                            className={buttonClass.actionRow}
                           >
-                            <Shield className="w-4 h-4" />
+                            <Shield className="w-4 h-4 text-blue-600" />
                           </button>
 
                           <button
                             title="Reset Password"
                             onClick={() => handleOpenResetPasswordModal(u)}
-                            className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer"
+                            className={buttonClass.actionRow}
                           >
-                            <Key className="w-4 h-4" />
+                            <Key className="w-4 h-4 text-amber-600" />
                           </button>
 
                           <button
                             title={u.active ? t('users.lockedBadge') : t('users.activeBadge')}
                             onClick={() => handleToggleStatus(u.id, u.active)}
-                            className={`p-1.5 rounded-lg transition cursor-pointer ${
-                              u.active
-                                ? 'text-rose-600 hover:bg-rose-50'
-                                : 'text-emerald-600 hover:bg-emerald-50'
-                            }`}
+                            className={buttonClass.actionRow}
                           >
-                            {u.active ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                            {u.active ? <UserX className="w-4 h-4 text-rose-600" /> : <UserCheck className="w-4 h-4 text-emerald-600" />}
                           </button>
 
                           <button
                             title="Delete account"
                             onClick={() => handleDeleteUser(u.id, u.username)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                            className={buttonClass.actionRowDanger}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -515,7 +523,7 @@ export const UsersPage = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </TableCard>
 
       {/* Modal 1: Create User Modal */}
       <Modal

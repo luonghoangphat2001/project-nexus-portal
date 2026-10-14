@@ -9,7 +9,19 @@ import {
 import matchmakingService from '../services/matchmakingService';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
-import { PageHeader, StatusBadge, Modal, EmptyState, buttonClass, inputClass, selectClass } from '../components/common/CommonUi';
+import {
+  PageHeader,
+  FilterCard,
+  FilterField,
+  TableCard,
+  TableHeaderBar,
+  StatusBadge,
+  Modal,
+  EmptyState,
+  buttonClass,
+  inputClass,
+  selectClass,
+} from '../components/common/CommonUi';
 
 export const MatchmakingPage = () => {
   const { user } = useAuth();
@@ -157,33 +169,33 @@ export const MatchmakingPage = () => {
       />
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-200 space-x-8 text-sm">
+      <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl self-start max-w-fit">
         <button
           onClick={() => setActiveTab('feed')}
-          className={`py-3 font-semibold border-b-2 transition-colors cursor-pointer ${
+          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
             activeTab === 'feed'
-              ? 'border-[#b66dff] text-[#b66dff]'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'bg-white text-blue-600 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           {t('matchmaking.tabFeed')}
         </button>
         <button
           onClick={() => setActiveTab('candidates')}
-          className={`py-3 font-semibold border-b-2 transition-colors cursor-pointer ${
+          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
             activeTab === 'candidates'
-              ? 'border-[#b66dff] text-[#b66dff]'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'bg-white text-blue-600 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           {t('matchmaking.tabCandidates')}
         </button>
         <button
           onClick={() => setActiveTab('my-requests')}
-          className={`py-3 font-semibold border-b-2 transition-colors cursor-pointer ${
+          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
             activeTab === 'my-requests'
-              ? 'border-[#b66dff] text-[#b66dff]'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'bg-white text-blue-600 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           {t('matchmaking.tabMyRequests')}
@@ -193,21 +205,29 @@ export const MatchmakingPage = () => {
       {/* Tab 1: Collaboration Feed */}
       {activeTab === 'feed' && (
         <div className="space-y-4">
-          {/* Filter Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-[#ebedf2] flex flex-col sm:flex-row gap-3 shadow-xs">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-              <input
-                type="text"
-                placeholder={t('matchmaking.searchPlaceholder')}
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && fetchPosts()}
-                className={`${inputClass} pl-9`}
-              />
-            </div>
+          {/* Filter Card */}
+          <FilterCard
+            onReset={() => {
+              setSearchFilter('');
+              setPostTypeFilter('');
+              fetchPosts();
+            }}
+            onSearch={fetchPosts}
+          >
+            <FilterField label={t('common.search') || 'Search'}>
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder={t('matchmaking.searchPlaceholder')}
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  className={`${inputClass} pl-9`}
+                />
+              </div>
+            </FilterField>
 
-            <div className="flex space-x-2">
+            <FilterField label={t('matchmaking.postType') || 'Type'}>
               <select
                 value={postTypeFilter}
                 onChange={(e) => setPostTypeFilter(e.target.value)}
@@ -217,15 +237,8 @@ export const MatchmakingPage = () => {
                 <option value="STUDENT_LOOKING_FOR_TEAM">{t('matchmaking.studentLooking')}</option>
                 <option value="TEAM_LOOKING_FOR_MEMBER">{t('matchmaking.teamLooking')}</option>
               </select>
-
-              <button
-                onClick={fetchPosts}
-                className={buttonClass.secondary}
-              >
-                {t('matchmaking.filterBtn')}
-              </button>
-            </div>
-          </div>
+            </FilterField>
+          </FilterCard>
 
           {/* Posts List */}
           {loadingPosts ? (
@@ -369,29 +382,30 @@ export const MatchmakingPage = () => {
 
       {/* Tab 3: My Applications */}
       {activeTab === 'my-requests' && (
-        <div className="bg-white rounded-2xl border border-[#ebedf2] overflow-hidden shadow-xs">
-          <div className="p-5 border-b border-slate-100">
-            <h3 className="font-bold text-slate-800 text-base">{t('matchmaking.myRequestsTitle')}</h3>
-            <p className="text-xs text-slate-400 mt-0.5">{t('matchmaking.myRequestsSub')}</p>
-          </div>
+        <TableCard>
+          <TableHeaderBar
+            title={t('matchmaking.myRequestsTitle')}
+            count={myRequests.length}
+            subtitle={t('matchmaking.myRequestsSub')}
+          />
 
           {loadingRequests ? (
-            <div className="p-8 text-center text-slate-400">{t('common.loading')}</div>
+            <div className="p-12 text-center text-slate-400">{t('common.loading')}</div>
           ) : myRequests.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-sm">
+            <div className="p-12 text-center text-slate-400 text-sm">
               {t('matchmaking.noRequests')}
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
               {myRequests.map((req) => (
-                <div key={req.id} className="p-4 flex items-center justify-between hover:bg-slate-50/50">
+                <div key={req.id} className="p-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
                   <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-bold text-slate-800 text-sm">{req.postTitle}</span>
+                    <div className="flex items-center space-x-2.5">
+                      <span className="font-bold text-slate-900 text-base">{req.postTitle}</span>
                       <StatusBadge value={req.status} type="status" />
                     </div>
-                    {req.message && <p className="text-xs text-slate-500 mt-1 italic">"{req.message}"</p>}
-                    <p className="text-[11px] text-slate-400 font-mono mt-1">
+                    {req.message && <p className="text-sm text-slate-600 mt-1.5 italic">"{req.message}"</p>}
+                    <p className="text-xs text-slate-400 font-mono mt-1">
                       {t('matchmaking.submitted')}: {req.createdAt?.replace('T', ' ').substring(0, 16)}
                     </p>
                   </div>
@@ -399,7 +413,7 @@ export const MatchmakingPage = () => {
               ))}
             </div>
           )}
-        </div>
+        </TableCard>
       )}
 
       {/* Publish Post Modal */}

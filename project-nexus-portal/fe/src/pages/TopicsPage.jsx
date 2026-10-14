@@ -17,6 +17,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
   PageHeader,
+  FilterCard,
+  FilterField,
   StatusBadge,
   Pagination,
   Modal,
@@ -174,7 +176,7 @@ export const TopicsPage = () => {
               <button
                 type="button"
                 onClick={() => setCreateModalOpen(true)}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl text-xs flex items-center space-x-2 transition-all cursor-pointer shadow-xs"
+                className={buttonClass.primary}
               >
                 <Plus className="w-4 h-4" />
                 <span>{t('topics.proposeTopic')}</span>
@@ -184,11 +186,22 @@ export const TopicsPage = () => {
         }
       />
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
-        <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Filter and Search Card */}
+      <FilterCard
+        onReset={() => {
+          setSearchQuery('');
+          setSelectedDept('');
+          setSelectedMajor('');
+          fetchTopics(0);
+        }}
+        onSearch={() => {
+          setPage(0);
+          fetchTopics(0);
+        }}
+      >
+        <FilterField label={t('common.search') || 'Search'}>
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
             <input
               type="text"
               placeholder={t('topics.searchPlaceholder')}
@@ -197,60 +210,38 @@ export const TopicsPage = () => {
               className={`${inputClass} pl-9`}
             />
           </div>
+        </FilterField>
 
-          <div>
-            <select
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-              className={selectClass}
-            >
-              <option value="">{t('topics.allDepartments')}</option>
-              {departments.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name} ({d.code})
-                </option>
-              ))}
-            </select>
-          </div>
+        <FilterField label={t('topics.allDepartments') || 'Department'}>
+          <select
+            value={selectedDept}
+            onChange={(e) => setSelectedDept(e.target.value)}
+            className={selectClass}
+          >
+            <option value="">{t('topics.allDepartments')}</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name} ({d.code})
+              </option>
+            ))}
+          </select>
+        </FilterField>
 
-          <div>
-            <select
-              value={selectedMajor}
-              onChange={(e) => setSelectedMajor(e.target.value)}
-              className={selectClass}
-            >
-              <option value="">{t('topics.allMajors')}</option>
-              {majors.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} ({m.code})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex space-x-2">
-            <button
-              type="submit"
-              className="flex-1 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-            >
-              {t('common.filter')}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedDept('');
-                setSelectedMajor('');
-                fetchTopics(0);
-              }}
-              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-medium transition-colors cursor-pointer"
-              title={t('common.reset')}
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-          </div>
-        </form>
-      </div>
+        <FilterField label={t('topics.allMajors') || 'Major'}>
+          <select
+            value={selectedMajor}
+            onChange={(e) => setSelectedMajor(e.target.value)}
+            className={selectClass}
+          >
+            <option value="">{t('topics.allMajors')}</option>
+            {majors.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} ({m.code})
+              </option>
+            ))}
+          </select>
+        </FilterField>
+      </FilterCard>
 
       {/* Topics Grid */}
       {loading ? (
@@ -341,7 +332,7 @@ export const TopicsPage = () => {
                     <button
                       type="button"
                       onClick={() => setSelectedTopic(topic)}
-                      className="text-xs px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors cursor-pointer"
+                      className={buttonClass.secondary}
                     >
                       {t('common.details')}
                     </button>
@@ -352,7 +343,7 @@ export const TopicsPage = () => {
                           setSelectedTopic(topic);
                           setRegisterModalOpen(true);
                         }}
-                        className="text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors cursor-pointer shadow-xs"
+                        className={buttonClass.primary}
                       >
                         {t('topics.register')}
                       </button>
@@ -367,7 +358,7 @@ export const TopicsPage = () => {
 
       {/* Pagination with Inheritance */}
       <Pagination
-        page={page}
+        currentPage={page}
         totalPages={totalPages}
         onPageChange={(p) => {
           setPage(p);
@@ -386,7 +377,7 @@ export const TopicsPage = () => {
             <button
               type="button"
               onClick={() => setSelectedTopic(null)}
-              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
+              className={buttonClass.secondary}
             >
               {t('common.close')}
             </button>
@@ -394,7 +385,7 @@ export const TopicsPage = () => {
               <button
                 type="button"
                 onClick={() => setRegisterModalOpen(true)}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer shadow-xs"
+                className={buttonClass.primary}
               >
                 {t('topics.registerTopic')}
               </button>

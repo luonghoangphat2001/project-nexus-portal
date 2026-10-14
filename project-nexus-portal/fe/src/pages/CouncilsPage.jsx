@@ -7,7 +7,7 @@ import reportService from '../services/reportService';
 import { CouncilForm } from '../components/common/CouncilForm';
 import { useTranslation } from '../i18n/LanguageContext';
 import { Banner, Button, Empty, Panel, formatDate, inputClass } from '../components/common/DefenseUi';
-import { StatusBadge } from '../components/common/CommonUi';
+import { PageHeader, StatusBadge, buttonClass } from '../components/common/CommonUi';
 
 export function CouncilsPage() {
   const { user } = useAuth();
@@ -70,24 +70,34 @@ export function CouncilsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{t('councils.title')}</h1>
-          <p className="mt-1 text-sm text-slate-500">{t('councils.subtitle')}</p>
-        </div>
-        <div className="flex gap-2">
-          <Button secondary disabled={busy || loading} onClick={() => setRefresh((n) => n + 1)}>
-            <RefreshCw size={16} />
-            <span>{t('councils.refresh')}</span>
-          </Button>
-          {manager && options?.departments?.length > 0 && (
-            <Button disabled={busy || loading} onClick={() => setEditor({ mode: 'create' })}>
-              <Plus size={16} />
-              <span>{t('councils.createCouncil')}</span>
-            </Button>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        title={t('councils.title')}
+        description={t('councils.subtitle')}
+        actions={
+          <>
+            <button
+              type="button"
+              disabled={busy || loading}
+              onClick={() => setRefresh((n) => n + 1)}
+              className={buttonClass.secondary}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>{t('councils.refresh')}</span>
+            </button>
+            {manager && options?.departments?.length > 0 && (
+              <button
+                type="button"
+                disabled={busy || loading}
+                onClick={() => setEditor({ mode: 'create' })}
+                className={buttonClass.primary}
+              >
+                <Plus className="w-4 h-4" />
+                <span>{t('councils.createCouncil')}</span>
+              </button>
+            )}
+          </>
+        }
+      />
 
       <Banner error={error} notice={notice} />
 
@@ -123,7 +133,7 @@ export function CouncilsPage() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <CalendarDays className="text-[#b66dff]" size={20} />
+                  <CalendarDays className="text-blue-600" size={20} />
                   <h2 className="font-semibold text-slate-800">{c.name}</h2>
                   <StatusBadge value={c.status} type="status" />
                 </div>
@@ -207,14 +217,14 @@ export function CouncilsPage() {
 
                       <div className="flex flex-wrap gap-3 text-sm">
                         <Link
-                          className="self-center text-[#b66dff] hover:underline font-medium"
+                          className="self-center text-blue-600 hover:underline font-semibold"
                           to={`/reports?registrationId=${a.registration.id}`}
                         >
                           {t('councils.documentsLink')}
                         </Link>
                         {(a.canReview || a.canDefense || c.canManage) && (
                           <Link
-                            className="self-center text-[#b66dff] hover:underline font-medium"
+                            className="self-center text-blue-600 hover:underline font-semibold"
                             to={`/assessments?assignmentId=${a.id}`}
                           >
                             {t('councils.assessmentsLink')}

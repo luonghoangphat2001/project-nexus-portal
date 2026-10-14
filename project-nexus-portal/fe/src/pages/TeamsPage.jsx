@@ -10,8 +10,15 @@ import {
 } from 'lucide-react';
 import teamService from '../services/teamService';
 import { useAuth } from '../context/AuthContext';
-import { useTranslation } from '../i18n/LanguageContext';
-import { PageHeader, StatusBadge, Modal, buttonClass, inputClass } from '../components/common/CommonUi';
+import {
+  PageHeader,
+  TableCard,
+  TableHeaderBar,
+  StatusBadge,
+  Modal,
+  buttonClass,
+  inputClass,
+} from '../components/common/CommonUi';
 
 export const TeamsPage = () => {
   const { user } = useAuth();
@@ -154,18 +161,18 @@ export const TeamsPage = () => {
       {team ? (
         <div className="space-y-6">
           {/* Team Overview Card */}
-          <div className="bg-white rounded-2xl border border-[#ebedf2] p-6 shadow-xs">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#f8f2ff] border border-[#e1c2ff] flex items-center justify-center text-[#b66dff] font-bold text-lg">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
                   {team.name?.charAt(0) || 'T'}
                 </div>
                 <div>
-                  <div className="flex items-center space-x-2">
-                    <h2 className="text-xl font-bold text-slate-800">{team.name}</h2>
+                  <div className="flex items-center space-x-2.5">
+                    <h2 className="text-xl font-bold text-slate-900">{team.name}</h2>
                     <StatusBadge value={team.status || 'FORMING'} type="status" />
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-sm text-slate-500 mt-0.5">
                     {team.members?.length || 1} / 3 {t('teams.membersEnrolled')}
                   </p>
                 </div>
@@ -175,7 +182,7 @@ export const TeamsPage = () => {
                 {isLeader && (team.members?.length || 0) < 3 && (
                   <button
                     onClick={() => setInviteModalOpen(true)}
-                    className="px-3.5 py-2 bg-[#f8f2ff] hover:bg-brand-100 text-[#b66dff] rounded-xl text-sm font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer"
+                    className={buttonClass.primary}
                   >
                     <UserPlus className="w-4 h-4" />
                     <span>{t('teams.inviteMember')}</span>
@@ -185,7 +192,7 @@ export const TeamsPage = () => {
                 {!isLeader && (
                   <button
                     onClick={handleLeaveTeam}
-                    className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-sm font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer"
+                    className={buttonClass.danger}
                   >
                     <LogOut className="w-4 h-4" />
                     <span>{t('teams.leaveTeam')}</span>
@@ -196,13 +203,11 @@ export const TeamsPage = () => {
           </div>
 
           {/* Members Roster */}
-          <div className="bg-white rounded-2xl border border-[#ebedf2] overflow-hidden shadow-xs">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-slate-800 text-base">
-                {t('teams.teamRoster')} ({team.members?.length || 0}/3)
-              </h3>
-              <span className="text-xs text-slate-400">{t('teams.allowedRange')}</span>
-            </div>
+          <TableCard>
+            <TableHeaderBar
+              title={`${t('teams.teamRoster')} (${team.members?.length || 0}/3)`}
+              subtitle={t('teams.allowedRange')}
+            />
 
             <div className="divide-y divide-slate-100">
               {team.members?.map((m) => {
@@ -216,10 +221,10 @@ export const TeamsPage = () => {
                       </div>
                       <div>
                         <div className="flex items-center space-x-2">
-                          <span className="font-semibold text-slate-800 text-sm">{m.fullName || m.username}</span>
+                          <span className="font-semibold text-slate-900 text-sm">{m.fullName || m.username}</span>
                           {isMemberLeader && (
-                            <span className="flex items-center space-x-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                              <Crown className="w-3 h-3 text-amber-500" />
+                            <span className="flex items-center space-x-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                              <Crown className="w-3.5 h-3.5 text-amber-500" />
                               <span>{t('teams.leader')}</span>
                             </span>
                           )}
@@ -245,17 +250,17 @@ export const TeamsPage = () => {
                 );
               })}
             </div>
-          </div>
+          </TableCard>
         </div>
       ) : (
         /* No Team View: Empty State + Pending Invitations Inbox */
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-[#ebedf2] p-8 text-center max-w-xl mx-auto shadow-xs">
-            <div className="w-12 h-12 rounded-2xl bg-[#f8f2ff] border border-[#e1c2ff] flex items-center justify-center text-[#b66dff] mx-auto mb-4">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-8 text-center max-w-xl mx-auto shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mx-auto mb-4">
               <Users className="w-6 h-6" />
             </div>
-            <h2 className="text-lg font-bold text-slate-800">{t('teams.noTeamTitle')}</h2>
-            <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
+            <h2 className="text-lg font-bold text-slate-900">{t('teams.noTeamTitle')}</h2>
+            <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
               {t('teams.noTeamDesc')}
             </p>
             <div className="mt-5 flex justify-center space-x-3">
@@ -269,27 +274,23 @@ export const TeamsPage = () => {
           </div>
 
           {/* Pending Invitations Inbox */}
-          <div className="bg-white rounded-2xl border border-[#ebedf2] overflow-hidden shadow-xs">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4 text-[#b66dff]" />
-                <h3 className="font-bold text-slate-800 text-base">
-                  {t('teams.pendingInvitations')} ({invitations.length})
-                </h3>
-              </div>
-              <span className="text-xs text-slate-400">{t('teams.invitationNote')}</span>
-            </div>
+          <TableCard>
+            <TableHeaderBar
+              title={t('teams.pendingInvitations')}
+              count={invitations.length}
+              subtitle={t('teams.invitationNote')}
+            />
 
             {invitations.length === 0 ? (
               <div className="p-8 text-center text-slate-400 text-sm">{t('teams.noInvitations')}</div>
             ) : (
               <div className="divide-y divide-slate-100">
                 {invitations.map((inv) => (
-                  <div key={inv.id} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-slate-50/50">
+                  <div key={inv.id} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-slate-50/50 transition-colors">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="font-semibold text-slate-800 text-sm">{inv.teamName}</span>
-                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-mono">
+                        <span className="font-semibold text-slate-900 text-sm">{inv.teamName}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-mono">
                           {t('teams.invitedBy')} {inv.inviterName}
                         </span>
                       </div>
@@ -299,14 +300,14 @@ export const TeamsPage = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleRespondInvitation(inv.id, true)}
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center space-x-1 shadow-xs cursor-pointer"
+                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center space-x-1 shadow-xs cursor-pointer transition-all"
                       >
                         <Check className="w-3.5 h-3.5" />
                         <span>{t('teams.acceptAndJoin')}</span>
                       </button>
                       <button
                         onClick={() => handleRespondInvitation(inv.id, false)}
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-medium cursor-pointer"
+                        className={buttonClass.secondary}
                       >
                         {t('teams.decline')}
                       </button>
@@ -315,7 +316,7 @@ export const TeamsPage = () => {
                 ))}
               </div>
             )}
-          </div>
+          </TableCard>
         </div>
       )}
 
