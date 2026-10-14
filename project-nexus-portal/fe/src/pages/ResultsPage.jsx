@@ -1,20 +1,24 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Download, RefreshCw } from 'lucide-react';
+import { Download, RefreshCw, BarChart2, PieChart as PieChartIcon, TrendingUp, CheckCircle, XCircle, Award, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import councilService from '../services/councilService';
 import scoreCalculationService from '../services/scoreCalculationService';
 import resultsService from '../services/resultsService';
 import { useTranslation } from '../i18n/LanguageContext';
-import { Banner, Button, Empty, Field, Panel, inputClass } from '../components/common/DefenseUi';
 import {
   PageHeader,
+  FilterCard,
+  FilterField,
   TableCard,
   TableHeaderBar,
+  MetricCard,
   StatusBadge,
   buttonClass,
+  inputClass,
+  selectClass
 } from '../components/common/CommonUi';
 
-const formatScore = (value) => Number(value).toFixed(2);
+const formatScore = (value) => (value != null ? Number(value).toFixed(2) : '—');
 const selectedFilters = (filters) => Object.fromEntries(
   Object.entries(filters).filter(([, value]) => value),
 );
@@ -136,18 +140,66 @@ export function ResultsPage() {
       ...(key === 'departmentId' || key === 'periodId' ? { topicId: '' } : {}),
     }));
 
+  // === BIỂU ĐỒ & SỐ LIỆU TỔNG HỢP DỰA TRÊN DỮ LIỆU BÁO CÁO THẬT ===
+  const totalStudents = report.reduce((sum, r) => sum + (Number(r.studentCount) || 0), 0);
+  const totalPassed = report.reduce((sum, r) => sum + (Number(r.passCount) || 0), 0);
+  const totalFailed = report.reduce((sum, r) => sum + (Number(r.failCount) || 0), 0);
+  const overallAvg = totalStudents > 0
+    ? (report.reduce((sum, r) => sum + (Number(r.averageFinalScore) || 0) * (Number(r.studentCount) || 0), 0) / totalStudents).toFixed(2)
+    : '0.00';
+  const passRate = totalStudents > 0 ? Math.round((totalPassed / totalStudents) * 100) : 0;
+
+  // Tính tổng phân bổ phổ điểm
+  const aggregatedBands = {
+    BELOW_FIVE: 0,
+    FIVE_TO_SIX: 0,
+    SIX_TO_SEVEN: 0,
+    SEVEN_TO_EIGHT: 0,
+    EIGHT_TO_NINE: 0,
+    NINE_TO_TEN: 0,
+  };
+
+  report.forEach(r => {
+    if (r.scoreDistribution) {
+      Object.entries(r.scoreDistribution).forEach(([k, v]) => {
+        if (aggregatedBands[k] !== undefined) {
+          aggregatedBands[k] += Number(v) || 0;
+        }
+      });
+    }
+  });
+
+  const bandConfigs = [
+    { key: 'BELOW_FIVE', label: '< 5.0 (Kém)', color: 'bg-rose-500', barColor: 'bg-rose-500' },
+    { key: 'FIVE_TO_SIX', label: '5.0 - 6.4 (Trung bình)', color: 'bg-amber-500', barColor: 'bg-amber-500' },
+    { key: 'SIX_TO_SEVEN', label: '6.5 - 6.9 (Khá TB)', color: 'bg-yellow-500', barColor: 'bg-yellow-500' },
+    { key: 'SEVEN_TO_EIGHT', label: '7.0 - 7.9 (Khá)', color: 'bg-blue-500', barColor: 'bg-blue-500' },
+    { key: 'EIGHT_TO_NINE', label: '8.0 - 8.9 (Giỏi)', color: 'bg-indigo-600', barColor: 'bg-indigo-600' },
+    { key: 'NINE_TO_TEN', label: '9.0 - 10.0 (Xuất sắc)', color: 'bg-emerald-600', barColor: 'bg-emerald-600' },
+  ];
+
+  const maxBandCount = Math.max(...Object.values(aggregatedBands), 1);
+
   if (isStudent) {
     return (
-      <div className="space-y-6 animate-in fade-in duration-200">
+      <div className="space-y-6">
         <PageHeader
           title={t('results.studentTitle')}
           description={t('results.studentSubtitle')}
         />
-        <Banner error={error} notice={notice} />
+        {error && (
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm">
+            {error}
+          </div>
+        )}
         {loading ? (
-          <Empty>{t('common.loading')}</Empty>
+          <div className="p-12 text-center text-sm text-slate-500 bg-white rounded-2xl border border-slate-200">
+            {t('common.loading')}
+          </div>
         ) : myGrades.length === 0 ? (
-          <Panel><Empty>{t('results.noPublishedStudent')}</Empty></Panel>
+          <div className="p-12 text-center text-sm text-slate-500 bg-white rounded-2xl border border-slate-200">
+            {t('results.noPublishedStudent')}
+          </div>
         ) : (
           <TableCard>
             <TableHeaderBar
@@ -155,26 +207,29 @@ export function ResultsPage() {
               count={myGrades.length}
             />
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm border-collapse">
                 <thead>
-                  <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
+                  <tr className="bg-slate-50/70 border-b border-slate-200 font-semibold text-slate-600">
                     <th className="py-3.5 px-4">{t('results.periodCol')}</th>
                     <th className="py-3.5 px-4">{t('results.topicCol')}</th>
-                    <th className="py-3.5 px-4">{t('results.reviewerScore')}</th>
-                    <th className="py-3.5 px-4">{t('results.defenseScore')}</th>
-                    <th className="py-3.5 px-4">{t('results.finalScore')}</th>
-                    <th className="py-3.5 px-4">{t('results.resultCol')}</th>
+                    <th className="py-3.5 px-4 text-center">{t('results.reviewerScore', 'Điểm phản biện')}</th>
+                    <th className="py-3.5 px-4 text-center">{t('results.defenseScore')}</th>
+                    <th className="py-3.5 px-4 text-center font-bold text-slate-900">{t('results.finalScore', 'Điểm tổng kết')}</th>
+                    <th className="py-3.5 px-4 text-center">{t('results.resultCol')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {myGrades.map((grade) => (
-                    <tr key={`${grade.assignmentId}-${grade.studentId}`} className="hover:bg-slate-50/70 transition">
-                      <td className="py-3.5 px-4">{grade.periodName}</td>
-                      <td className="py-3.5 px-4 font-semibold text-slate-900">{grade.topicTitle} · <span className="text-slate-500 font-normal">{grade.teamName}</span></td>
-                      <td className="py-3.5 px-4 font-mono">{formatScore(grade.reviewScore)}</td>
-                      <td className="py-3.5 px-4 font-mono">{formatScore(grade.defenseScore)}</td>
-                      <td className="py-3.5 px-4 font-semibold font-mono text-blue-600">{formatScore(grade.finalScore)}</td>
+                    <tr key={`${grade.assignmentId}-${grade.studentId}`} className="hover:bg-slate-50/60 transition">
+                      <td className="py-3.5 px-4 font-medium text-slate-800">{grade.periodName}</td>
                       <td className="py-3.5 px-4">
+                        <div className="font-semibold text-slate-900">{grade.topicTitle}</div>
+                        <div className="text-xs text-slate-500 font-normal">{grade.teamName}</div>
+                      </td>
+                      <td className="py-3.5 px-4 text-center font-mono">{formatScore(grade.reviewScore)}</td>
+                      <td className="py-3.5 px-4 text-center font-mono">{formatScore(grade.defenseScore)}</td>
+                      <td className="py-3.5 px-4 text-center font-semibold font-mono text-blue-600 text-base">{formatScore(grade.finalScore)}</td>
+                      <td className="py-3.5 px-4 text-center">
                         <StatusBadge value={grade.passed ? 'PASSED' : 'FAILED'} type="status" />
                       </td>
                     </tr>
@@ -189,7 +244,7 @@ export function ResultsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6">
       <PageHeader
         title={t('results.adminTitle')}
         description={t('results.adminSubtitle')}
@@ -198,16 +253,26 @@ export function ResultsPage() {
             type="button"
             disabled={busy || loading}
             onClick={() => setRefresh((n) => n + 1)}
-            className={buttonClass.secondary}
+            className={buttonClass('secondary')}
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>{t('results.refresh')}</span>
+            <span>{t('results.refresh', 'Làm mới')}</span>
           </button>
         }
       />
 
-      <Banner error={error} notice={notice} />
+      {error && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm">
+          {error}
+        </div>
+      )}
+      {notice && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm">
+          {notice}
+        </div>
+      )}
 
+      {/* KHỐI 1: TÍNH ĐIỂM & CÔNG BỐ KẾT QUẢ CHO HỘI ĐỒNG */}
       <TableCard>
         <TableHeaderBar
           title={t('results.calcPublishTitle')}
@@ -216,14 +281,17 @@ export function ResultsPage() {
 
         <div className="p-5 space-y-4">
           {loading ? (
-            <Empty>{t('common.loading')}</Empty>
+            <div className="p-8 text-center text-sm text-slate-500">{t('common.loading')}</div>
           ) : completedAssignments.length === 0 ? (
-            <Empty>{t('results.noCompletedCouncils')}</Empty>
+            <div className="p-8 text-center text-sm text-slate-500">{t('results.noCompletedCouncils')}</div>
           ) : (
             <>
-              <Field label={t('results.councilTeamTopic')}>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  {t('results.councilTeamTopic')}
+                </label>
                 <select
-                  className={inputClass}
+                  className={selectClass}
                   disabled={busy}
                   value={selectedId}
                   onChange={(e) => setSelectedId(e.target.value)}
@@ -234,32 +302,39 @@ export function ResultsPage() {
                     </option>
                   ))}
                 </select>
-              </Field>
+              </div>
 
               {gradesLoading ? (
-                <Empty>{t('results.calculatingScores')}</Empty>
+                <div className="p-8 text-center text-sm text-slate-500">{t('results.calculatingScores')}</div>
               ) : grades.length === 0 ? (
-                <Empty>{t('results.noStudentResults')}</Empty>
+                <div className="p-8 text-center text-sm text-slate-500">{t('results.noStudentResults')}</div>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-slate-200">
-                  <table className="w-full text-left text-sm">
+                  <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
+                      <tr className="bg-slate-50/70 border-b border-slate-200 font-semibold text-slate-600">
                         <th className="py-3 px-4">{t('results.studentCol')}</th>
-                        <th className="py-3 px-4">{t('results.reviewerScore')}</th>
-                        <th className="py-3 px-4">{t('results.defenseScore')}</th>
-                        <th className="py-3 px-4">{t('results.finalScore')}</th>
-                        <th className="py-3 px-4">{t('results.resultCol')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.reviewerScore', 'Điểm phản biện')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.defenseScore')}</th>
+                        <th className="py-3 px-4 text-center font-bold text-slate-900">{t('results.finalScore', 'Điểm tổng kết')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.resultCol')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700">
                       {grades.map((grade) => (
-                        <tr key={grade.studentId} className="hover:bg-slate-50/70 transition">
-                          <td className="py-3 px-4 font-semibold text-slate-900">{grade.studentName} · <span className="text-slate-400 font-mono text-xs">{grade.studentCode || grade.studentId}</span></td>
-                          <td className="py-3 px-4 font-mono">{formatScore(grade.reviewScore)}</td>
-                          <td className="py-3 px-4 font-mono">{formatScore(grade.defenseScore)}</td>
-                          <td className="py-3 px-4 font-semibold font-mono text-blue-600">{formatScore(grade.finalScore)}</td>
-                          <td className="py-3 px-4">
+                        <tr key={grade.studentId} className="hover:bg-slate-50/60 transition">
+                          <td className="py-3 px-4 font-semibold text-slate-900">
+                            <div>{grade.studentName}</div>
+                            <div className="text-xs font-mono text-slate-400 font-normal">
+                              {grade.studentCode || grade.studentId}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-center font-mono">{formatScore(grade.reviewScore)}</td>
+                          <td className="py-3 px-4 text-center font-mono">{formatScore(grade.defenseScore)}</td>
+                          <td className="py-3 px-4 text-center font-semibold font-mono text-blue-600 text-base">
+                            {formatScore(grade.finalScore)}
+                          </td>
+                          <td className="py-3 px-4 text-center">
                             <StatusBadge value={grade.passed ? 'PASSED' : 'FAILED'} type="status" />
                           </td>
                         </tr>
@@ -270,12 +345,12 @@ export function ResultsPage() {
               )}
 
               {grades.length > 0 && (
-                <div className="pt-2">
+                <div className="pt-2 flex justify-end">
                   <button
                     type="button"
                     disabled={busy || grades.every((grade) => grade.published)}
                     onClick={publish}
-                    className={buttonClass.primary}
+                    className={buttonClass('primary')}
                   >
                     {grades.every((grade) => grade.published) ? t('results.publishedBtn') : t('results.publishBtn')}
                   </button>
@@ -286,16 +361,184 @@ export function ResultsPage() {
         </div>
       </TableCard>
 
+      {/* KHỐI 2: BIỂU ĐỒ TRỰC QUAN HÓA THỐNG KÊ HỌC VỤ (DYNAMIC ANALYTICS CHARTS) */}
+      <div className="space-y-4">
+        {/* KPI Summary Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <MetricCard
+            title="Tổng sinh viên đánh giá"
+            value={reportLoading ? '—' : totalStudents}
+            subtitle="Đã hoàn thành khóa luận"
+            trend={`${report.length} đề tài`}
+            trendColor="text-blue-600"
+            icon={Users}
+            iconBg="bg-blue-600"
+          />
+          <MetricCard
+            title="Điểm trung bình toàn khóa"
+            value={reportLoading ? '—' : overallAvg}
+            subtitle="Thang điểm 10 quy chuẩn"
+            trend="Toàn trường"
+            trendColor="text-indigo-600"
+            icon={Award}
+            iconBg="bg-indigo-600"
+          />
+          <MetricCard
+            title="Tỷ lệ đạt chuẩn tốt nghiệp"
+            value={reportLoading ? '—' : `${passRate}%`}
+            subtitle={`${totalPassed} sinh viên đạt`}
+            trend=">= 5.0 điểm"
+            trendColor="text-emerald-600"
+            icon={CheckCircle}
+            iconBg="bg-emerald-600"
+          />
+          <MetricCard
+            title="Số sinh viên không đạt"
+            value={reportLoading ? '—' : totalFailed}
+            subtitle={`${100 - passRate}% chưa đạt`}
+            trend="< 5.0 điểm"
+            trendColor="text-rose-600"
+            icon={XCircle}
+            iconBg="bg-rose-600"
+          />
+        </div>
+
+        {/* Biểu đồ Cột động (Bar Chart) Phổ điểm Khóa luận */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center space-x-2">
+                <BarChart2 className="w-5 h-5 text-blue-600" />
+                <h3 className="text-base font-bold text-slate-900">
+                  Biểu đồ phân bố phổ điểm khóa luận (Grade Distribution)
+                </h3>
+              </div>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                {totalStudents} sinh viên
+              </span>
+            </div>
+
+            {totalStudents === 0 ? (
+              <div className="h-60 flex items-center justify-center text-sm text-slate-400">
+                Chưa có dữ liệu điểm để vẽ biểu đồ
+              </div>
+            ) : (
+              <div className="py-4 space-y-4">
+                <div className="h-52 flex items-end justify-between gap-3 px-2 pt-6">
+                  {bandConfigs.map((band) => {
+                    const count = aggregatedBands[band.key] || 0;
+                    const percent = totalStudents > 0 ? Math.round((count / totalStudents) * 100) : 0;
+                    const barHeightPercent = Math.max(Math.round((count / maxBandCount) * 100), 4);
+
+                    return (
+                      <div key={band.key} className="flex-1 flex flex-col items-center h-full justify-end group">
+                        {/* Tooltip / Value on top */}
+                        <div className="text-xs font-bold text-slate-700 mb-1.5 opacity-90 group-hover:scale-110 transition-transform font-mono">
+                          {count} ({percent}%)
+                        </div>
+
+                        {/* Bar */}
+                        <div className="w-full max-w-[56px] bg-slate-100 rounded-t-xl overflow-hidden h-full flex items-end">
+                          <div
+                            style={{ height: `${barHeightPercent}%` }}
+                            className={`w-full ${band.barColor} rounded-t-lg transition-all duration-500 shadow-xs group-hover:opacity-90`}
+                          />
+                        </div>
+
+                        {/* Label underneath */}
+                        <span className="text-[11px] font-medium text-slate-600 mt-2 text-center line-clamp-1">
+                          {band.label.split(' ')[0]}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Chú thích biểu đồ */}
+                <div className="flex flex-wrap items-center justify-center gap-4 pt-3 border-t border-slate-100 text-xs">
+                  {bandConfigs.map((b) => (
+                    <div key={b.key} className="flex items-center gap-1.5">
+                      <span className={`w-2.5 h-2.5 rounded-full ${b.color}`}></span>
+                      <span className="text-slate-600">{b.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Biểu đồ tròn / Thống kê tỷ lệ Đạt vs Không đạt */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center space-x-2 pb-3 border-b border-slate-100">
+              <PieChartIcon className="w-5 h-5 text-blue-600" />
+              <h3 className="text-base font-bold text-slate-900">
+                Tỷ lệ Hoàn thành & Đạt chuẩn
+              </h3>
+            </div>
+
+            {totalStudents === 0 ? (
+              <div className="h-60 flex items-center justify-center text-sm text-slate-400">
+                Chưa có dữ liệu
+              </div>
+            ) : (
+              <div className="py-4 space-y-5 flex-1 flex flex-col justify-center">
+                {/* Visual Progress Bars */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm font-semibold text-slate-800">
+                    <span className="flex items-center gap-1.5 text-emerald-700">
+                      <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      <span>Đạt chuẩn ({passRate}%)</span>
+                    </span>
+                    <span className="font-mono">{totalPassed}/{totalStudents}</span>
+                  </div>
+                  <div className="h-3 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      style={{ width: `${passRate}%` }}
+                      className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm font-semibold text-slate-800">
+                    <span className="flex items-center gap-1.5 text-rose-700">
+                      <XCircle className="w-4 h-4 text-rose-600" />
+                      <span>Không đạt ({100 - passRate}%)</span>
+                    </span>
+                    <span className="font-mono">{totalFailed}/{totalStudents}</span>
+                  </div>
+                  <div className="h-3 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      style={{ width: `${100 - passRate}%` }}
+                      className="h-full bg-rose-500 rounded-full transition-all duration-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200/80 text-xs text-blue-800 space-y-1 mt-auto">
+                  <span className="font-semibold block">Quy chế đánh giá khóa luận:</span>
+                  <p className="leading-relaxed">
+                    Sinh viên đạt điểm tổng kết từ <strong>5.0/10</strong> trở lên được công nhận hoàn thành khóa luận tốt nghiệp.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* KHỐI 3: BẢNG BÁO CÁO HỌC VỤ CHI TIẾT THEO BỘ MÔN & ĐỀ TÀI */}
       <TableCard>
         <TableHeaderBar
           title={t('results.academicStatsTitle')}
           subtitle={t('results.academicStatsSub')}
+          count={report.length}
           actions={
             <button
               type="button"
               disabled={busy || reportLoading}
               onClick={exportReport}
-              className={buttonClass.secondary}
+              className={buttonClass('secondary')}
             >
               <Download className="w-4 h-4" />
               <span>{t('results.exportCsv')}</span>
@@ -303,44 +546,54 @@ export function ResultsPage() {
           }
         />
 
+        {/* Filter Card for Academic Stats */}
         <div className="p-5 border-b border-slate-100 grid gap-4 md:grid-cols-3 bg-slate-50/50">
-          <Field label={t('results.periodCol')}>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              {t('results.periodCol')}
+            </label>
             <select
-              className={inputClass}
+              className={selectClass}
               value={filters.periodId}
               onChange={(e) => updateFilter('periodId', e.target.value)}
             >
-              <option value="">{t('results.allPeriods')}</option>
+              <option value="">{t('common.all', 'Tất cả đợt')}</option>
               {options.periods.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name}
                 </option>
               ))}
             </select>
-          </Field>
+          </div>
 
-          <Field label={t('results.departmentCol')}>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              {t('results.departmentCol')}
+            </label>
             <select
-              className={inputClass}
+              className={selectClass}
               value={filters.departmentId}
               onChange={(e) => updateFilter('departmentId', e.target.value)}
             >
-              <option value="">{t('results.allDepartments')}</option>
+              <option value="">{t('common.all', 'Tất cả bộ môn')}</option>
               {options.departments.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name}
                 </option>
               ))}
             </select>
-          </Field>
+          </div>
 
-          <Field label={t('results.topicCol')}>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              {t('results.topicCol')}
+            </label>
             <select
-              className={inputClass}
+              className={selectClass}
               value={filters.topicId}
               onChange={(e) => updateFilter('topicId', e.target.value)}
             >
-              <option value="">{t('results.allTopics')}</option>
+              <option value="">{t('common.all', 'Tất cả đề tài')}</option>
               {options.topics
                 .filter(
                   (topic) =>
@@ -349,48 +602,59 @@ export function ResultsPage() {
                 )
                 .map((option) => (
                   <option key={option.id} value={option.id}>
-                    {option.name}
+                    {option.title || option.name}
                   </option>
                 ))}
             </select>
-          </Field>
+          </div>
         </div>
 
         {reportLoading ? (
-          <Empty>{t('results.loadingReport')}</Empty>
+          <div className="p-12 text-center text-sm text-slate-500">{t('results.loadingReport')}</div>
         ) : report.length === 0 ? (
-          <Empty>{t('results.noReportData')}</Empty>
+          <div className="p-12 text-center text-sm text-slate-500">{t('results.noReportData')}</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
+                <tr className="bg-slate-50/70 border-b border-slate-200 font-semibold text-slate-600">
                   <th className="py-3.5 px-4">{t('results.periodCol')}</th>
                   <th className="py-3.5 px-4">{t('results.departmentCol')}</th>
                   <th className="py-3.5 px-4">{t('results.topicCol')}</th>
-                  <th className="py-3.5 px-4">{t('results.studentsCountCol')}</th>
-                  <th className="py-3.5 px-4">{t('results.avgScoreCol')}</th>
-                  <th className="py-3.5 px-4">{t('results.passedCountCol')}</th>
-                  <th className="py-3.5 px-4">{t('results.failedCountCol')}</th>
+                  <th className="py-3.5 px-3 text-center">{t('results.studentsCountCol')}</th>
+                  <th className="py-3.5 px-3 text-center">{t('results.avgScoreCol')}</th>
+                  <th className="py-3.5 px-3 text-center">{t('results.passedCountCol')}</th>
+                  <th className="py-3.5 px-3 text-center">{t('results.failedCountCol')}</th>
                   <th className="py-3.5 px-4">{t('results.scoreDistCol')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {report.map((row) => (
-                  <tr key={`${row.periodId}-${row.departmentId}-${row.topicId}`} className="hover:bg-slate-50/70 transition">
-                    <td className="py-3.5 px-4">{row.periodName}</td>
+                  <tr key={`${row.periodId}-${row.departmentId}-${row.topicId}`} className="hover:bg-slate-50/60 transition">
+                    <td className="py-3.5 px-4 font-medium text-slate-800">{row.periodName}</td>
                     <td className="py-3.5 px-4">{row.departmentName}</td>
                     <td className="py-3.5 px-4 font-semibold text-slate-900">{row.topicTitle}</td>
-                    <td className="py-3.5 px-4 font-mono">{row.studentCount}</td>
-                    <td className="py-3.5 px-4 font-semibold font-mono text-blue-600">{formatScore(row.averageFinalScore)}</td>
-                    <td className="py-3.5 px-4 font-semibold text-emerald-600 font-mono">{row.passCount}</td>
-                    <td className="py-3.5 px-4 font-semibold text-rose-600 font-mono">{row.failCount}</td>
+                    <td className="py-3.5 px-3 text-center font-mono font-medium">{row.studentCount}</td>
+                    <td className="py-3.5 px-3 text-center font-semibold font-mono text-blue-600 text-base">
+                      {formatScore(row.averageFinalScore)}
+                    </td>
+                    <td className="py-3.5 px-3 text-center font-semibold text-emerald-600 font-mono">
+                      {row.passCount}
+                    </td>
+                    <td className="py-3.5 px-3 text-center font-semibold text-rose-600 font-mono">
+                      {row.failCount}
+                    </td>
                     <td className="py-3.5 px-4 text-xs">
-                      {Object.entries(row.scoreDistribution).map(([band, count]) => (
-                        <span key={band} className="block text-slate-600 font-mono">
-                          {band}: <strong>{count}</strong>
-                        </span>
-                      ))}
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(row.scoreDistribution || {}).map(([band, count]) => {
+                          if (!count) return null;
+                          return (
+                            <span key={band} className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[11px]">
+                              {band.replace('BELOW_FIVE', '<5').replace('FIVE_TO_SIX', '5-6.4').replace('SIX_TO_SEVEN', '6.5-6.9').replace('SEVEN_TO_EIGHT', '7-7.9').replace('EIGHT_TO_NINE', '8-8.9').replace('NINE_TO_TEN', '9-10')}: <strong>{count}</strong>
+                            </span>
+                          );
+                        })}
+                      </div>
                     </td>
                   </tr>
                 ))}
