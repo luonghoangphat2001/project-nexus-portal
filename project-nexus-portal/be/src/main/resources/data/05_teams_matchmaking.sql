@@ -2,12 +2,12 @@
 -- 05_teams_matchmaking.sql: Sample Teams and Matchmaking Collaboration Data
 -- ==========================================================
 
--- 1. Student Team (Created by student id=5 - Lê Anh Tuấn)
+-- 1. Student Team (Created by student id=5 - Le Anh Tuan)
 INSERT INTO teams (id, name, leader_id, period_id, faculty_id, cohort_id, major_id, status, created_at, updated_at) VALUES
-  (2, 'Team Nexus Alpha (3 SV)', 5, 1, 1, 1, 1, 'READY', NOW(6), NOW(6))
+  (2, 'Team Nexus Alpha (3 Students)', 5, 1, 1, 1, 1, 'READY', NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
--- 2. Team Members (3 Sinh Viên: Lê Anh Tuấn, Phạm Minh Quân, Võ Hoàng Yến)
+-- 2. Team Members (3 Students: Le Anh Tuan, Pham Minh Quan, Vo Hoang Yen)
 INSERT INTO team_members (team_id, user_id, role_in_team, joined_at, created_at, updated_at) VALUES
   (2, 5, 'LEADER', NOW(), NOW(6), NOW(6)),
   (2, 6, 'MEMBER', NOW(), NOW(6), NOW(6)),
@@ -16,10 +16,12 @@ ON DUPLICATE KEY UPDATE team_id = VALUES(team_id);
 
 -- 3. Topic Registration for Topic 1
 INSERT INTO topic_registrations (id, topic_id, team_id, message, status, registered_at, created_at, updated_at) VALUES
-  (1, 1, 2, 'Nhóm 3 sinh viên K21 KTPM đã hoàn thành các môn tiên quyết và xin đăng ký đề tài hướng dẫn.', 'PENDING', NOW(), NOW(6), NOW(6))
-ON DUPLICATE KEY UPDATE id = VALUES(id);
+  (1, 1, 2, 'Team of 3 K21 Software Engineering students who completed all prerequisites and apply for topic guidance under advisor.', 'PENDING', NOW(), NOW(6), NOW(6))
+ON DUPLICATE KEY UPDATE 
+  message = VALUES(message),
+  status = VALUES(status);
 
--- 4. Matchmaking Posts
+-- 4. Matchmaking Collaboration Posts
 DELETE FROM matchmaking_post_skills WHERE post_id IN (1, 2);
 DELETE FROM team_join_requests WHERE post_id IN (1, 2);
 DELETE FROM matchmaking_posts WHERE id IN (1, 2);

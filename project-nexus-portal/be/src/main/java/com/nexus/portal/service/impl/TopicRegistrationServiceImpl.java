@@ -84,6 +84,11 @@ public class TopicRegistrationServiceImpl implements TopicRegistrationService {
             throw new IllegalArgumentException("Team already has an approved topic registration");
         }
 
+        // Check if team already has an active pending registration
+        if (topicRegistrationRepository.existsByTeamIdAndStatus(team.getId(), RegistrationStatus.PENDING)) {
+            throw new IllegalArgumentException("Your team already has an active or pending topic registration");
+        }
+
         // Check if team already submitted for this topic
         topicRegistrationRepository.findByTopicIdAndTeamId(topic.getId(), team.getId())
                 .ifPresent(existing -> {
@@ -146,6 +151,11 @@ public class TopicRegistrationServiceImpl implements TopicRegistrationService {
             Team team = registration.getTeam();
             team.setStatus(TeamStatus.LOCKED);
             teamRepository.save(team);
+
+            // Update topic status to ASSIGNED and close registration
+            topic.setStatus(TopicStatus.ASSIGNED);
+            topic.setIsRegistrationOpen(false);
+            topicRepository.save(topic);
 
             // Reject/cancel other pending registrations of this team
             List<TopicRegistration> otherTeamRegistrations = topicRegistrationRepository.findByTeamId(team.getId());

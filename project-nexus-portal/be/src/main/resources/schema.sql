@@ -86,6 +86,8 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE KEY uk_users_email (email),
   KEY fk_users_cohort_id (cohort_id),
   KEY fk_users_major_id (major_id),
+  KEY idx_users_student_code (student_code),
+  KEY idx_users_cohort_major_active (cohort_id, major_id, is_active),
   CONSTRAINT fk_users_cohort_id FOREIGN KEY (cohort_id) REFERENCES cohorts (id) ON DELETE SET NULL,
   CONSTRAINT fk_users_major_id FOREIGN KEY (major_id) REFERENCES majors (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -152,7 +154,8 @@ CREATE TABLE IF NOT EXISTS registration_periods (
   status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  KEY idx_periods_status_dates (status, start_date, end_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 13. Registration Period Targeted Faculties (Multi-Faculty)
@@ -194,6 +197,9 @@ CREATE TABLE IF NOT EXISTS topics (
   PRIMARY KEY (id),
   KEY fk_topics_department_id (department_id),
   KEY fk_topics_period_id (period_id),
+  KEY idx_topics_dept_status (department_id, status),
+  KEY idx_topics_period_status (period_id, status),
+  KEY idx_topics_status_open (status, is_registration_open),
   CONSTRAINT fk_topics_department_id FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE RESTRICT,
   CONSTRAINT fk_topics_period_id FOREIGN KEY (period_id) REFERENCES registration_periods (id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -239,6 +245,8 @@ CREATE TABLE IF NOT EXISTS teams (
   KEY fk_teams_faculty_id (faculty_id),
   KEY fk_teams_cohort_id (cohort_id),
   KEY fk_teams_major_id (major_id),
+  KEY idx_teams_period_status (period_id, status),
+  KEY idx_teams_leader_status (leader_id, status),
   CONSTRAINT fk_teams_leader_id FOREIGN KEY (leader_id) REFERENCES users (id) ON DELETE RESTRICT,
   CONSTRAINT fk_teams_period_id FOREIGN KEY (period_id) REFERENCES registration_periods (id) ON DELETE RESTRICT,
   CONSTRAINT fk_teams_faculty_id FOREIGN KEY (faculty_id) REFERENCES faculties (id) ON DELETE RESTRICT,
@@ -258,6 +266,7 @@ CREATE TABLE IF NOT EXISTS team_members (
   PRIMARY KEY (id),
   UNIQUE KEY uk_team_members_team_user (team_id, user_id),
   KEY fk_team_members_user_id (user_id),
+  KEY idx_team_members_user_role (user_id, role_in_team),
   CONSTRAINT fk_team_members_team_id FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE,
   CONSTRAINT fk_team_members_user_id FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -277,6 +286,8 @@ CREATE TABLE IF NOT EXISTS team_invitations (
   KEY fk_team_invitations_team_id (team_id),
   KEY fk_team_invitations_inviter_id (inviter_id),
   KEY fk_team_invitations_invitee_id (invitee_id),
+  KEY idx_team_inv_invitee_status (invitee_id, status),
+  KEY idx_team_inv_team_status (team_id, status),
   CONSTRAINT fk_team_invitations_team_id FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE,
   CONSTRAINT fk_team_invitations_inviter_id FOREIGN KEY (inviter_id) REFERENCES users (id) ON DELETE CASCADE,
   CONSTRAINT fk_team_invitations_invitee_id FOREIGN KEY (invitee_id) REFERENCES users (id) ON DELETE CASCADE
@@ -299,6 +310,9 @@ CREATE TABLE IF NOT EXISTS topic_registrations (
   KEY fk_topic_registrations_topic_id (topic_id),
   KEY fk_topic_registrations_team_id (team_id),
   KEY fk_topic_registrations_reviewed_by (reviewed_by),
+  KEY idx_topic_reg_team_status (team_id, status),
+  KEY idx_topic_reg_topic_status (topic_id, status),
+  KEY idx_topic_reg_topic_team (topic_id, team_id),
   CONSTRAINT fk_topic_registrations_topic_id FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
   CONSTRAINT fk_topic_registrations_team_id FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE,
   CONSTRAINT fk_topic_registrations_reviewed_by FOREIGN KEY (reviewed_by) REFERENCES users (id) ON DELETE SET NULL
@@ -326,6 +340,9 @@ CREATE TABLE IF NOT EXISTS matchmaking_posts (
   KEY fk_matchmaking_posts_dept_id (department_id),
   KEY fk_matchmaking_posts_faculty_id (faculty_id),
   KEY fk_matchmaking_posts_cohort_id (cohort_id),
+  KEY idx_matchmaking_status_type (status, post_type),
+  KEY idx_matchmaking_dept_status (department_id, status),
+  KEY idx_matchmaking_fac_status (faculty_id, status),
   CONSTRAINT fk_matchmaking_posts_author_id FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE CASCADE,
   CONSTRAINT fk_matchmaking_posts_team_id FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE SET NULL,
   CONSTRAINT fk_matchmaking_posts_dept_id FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE SET NULL,
@@ -372,6 +389,8 @@ CREATE TABLE IF NOT EXISTS notifications (
   author_id BIGINT NOT NULL,
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  KEY idx_notifications_faculty_created (faculty_id, created_at),
+  KEY idx_notifications_author_created (author_id, created_at),
   CONSTRAINT fk_notifications_faculty FOREIGN KEY (faculty_id) REFERENCES faculties(id),
   CONSTRAINT fk_notifications_author FOREIGN KEY (author_id) REFERENCES users(id)
 );
@@ -399,6 +418,9 @@ CREATE TABLE IF NOT EXISTS progress_tasks (
   feedback TEXT,
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  KEY idx_progress_tasks_team_status (team_id, status),
+  KEY idx_progress_tasks_assignee_status (assignee_id, status),
+  KEY idx_progress_tasks_team_due (team_id, due_date),
   CONSTRAINT fk_progress_tasks_team FOREIGN KEY (team_id) REFERENCES teams(id),
   CONSTRAINT fk_progress_tasks_assignee FOREIGN KEY (assignee_id) REFERENCES users(id)
 );
@@ -418,6 +440,7 @@ CREATE TABLE IF NOT EXISTS report_documents (
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   UNIQUE KEY uk_report_version (registration_id, document_type, document_version),
+  KEY idx_report_documents_submitter (submitted_by, created_at),
   CONSTRAINT fk_report_registration FOREIGN KEY (registration_id) REFERENCES topic_registrations(id),
   CONSTRAINT fk_report_submitter FOREIGN KEY (submitted_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -433,6 +456,8 @@ CREATE TABLE IF NOT EXISTS defense_councils (
   status VARCHAR(30) NOT NULL DEFAULT 'SCHEDULED',
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  KEY idx_councils_period_dept (period_id, department_id, status),
+  KEY idx_councils_schedule (starts_at, ends_at),
   CONSTRAINT fk_council_department FOREIGN KEY (department_id) REFERENCES departments(id),
   CONSTRAINT fk_council_period FOREIGN KEY (period_id) REFERENCES registration_periods(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -456,6 +481,7 @@ CREATE TABLE IF NOT EXISTS defense_assignments (
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   UNIQUE KEY uk_defense_registration (registration_id),
+  KEY idx_defense_assignments_council (council_id, registration_id),
   CONSTRAINT fk_assignment_council FOREIGN KEY (council_id) REFERENCES defense_councils(id),
   CONSTRAINT fk_assignment_registration FOREIGN KEY (registration_id) REFERENCES topic_registrations(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -478,6 +504,9 @@ CREATE TABLE IF NOT EXISTS assessments (
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   UNIQUE KEY uk_individual_assessment (assignment_id, evaluator_id, student_id, assessment_type),
+  KEY idx_assessments_assignment_type (assignment_id, assessment_type, status),
+  KEY idx_assessments_evaluator_status (evaluator_id, status),
+  KEY idx_assessments_student_type (student_id, assessment_type),
   CONSTRAINT fk_assessment_assignment FOREIGN KEY (assignment_id) REFERENCES defense_assignments(id),
   CONSTRAINT fk_assessment_evaluator FOREIGN KEY (evaluator_id) REFERENCES users(id),
   CONSTRAINT fk_assessment_student FOREIGN KEY (student_id) REFERENCES users(id)
@@ -496,6 +525,7 @@ CREATE TABLE IF NOT EXISTS published_results (
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   UNIQUE KEY uk_published_result_student (assignment_id, student_id),
+  KEY idx_published_results_student (student_id),
   CONSTRAINT fk_published_result_assignment FOREIGN KEY (assignment_id) REFERENCES defense_assignments(id),
   CONSTRAINT fk_published_result_student FOREIGN KEY (student_id) REFERENCES users(id),
   CONSTRAINT fk_published_result_publisher FOREIGN KEY (published_by) REFERENCES users(id)

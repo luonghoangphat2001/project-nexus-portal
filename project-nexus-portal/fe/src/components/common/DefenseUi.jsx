@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 export const inputClass = 'w-full px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:bg-slate-100';
 
@@ -35,11 +36,32 @@ export function Panel({ children, className = '' }) {
   return <section className={`p-5 rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}>{children}</section>;
 }
 
+const labelKeyMap = {
+  REPORT: 'defense.report',
+  SLIDES: 'defense.slides',
+  SOURCE_CODE: 'defense.sourceCode',
+  OTHER: 'defense.other',
+  CHAIR: 'defense.chair',
+  SECRETARY: 'defense.secretary',
+  REVIEWER: 'defense.reviewer',
+  MEMBER: 'defense.member',
+  SCHEDULED: 'defense.scheduled',
+  COMPLETED: 'defense.completed',
+  CANCELLED: 'defense.cancelled',
+  REVIEW: 'defense.review',
+  DEFENSE: 'defense.defenseAssessment',
+  DRAFT: 'defense.draft',
+  SUBMITTED: 'defense.submitted',
+};
+
 export function Badge({ value }) {
+  const { t } = useTranslation();
+  const displayText = labelKeyMap[value] ? t(labelKeyMap[value]) : (labels[value] || value);
+
   return <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
     value === 'CANCELLED' ? 'text-rose-700 bg-rose-50' : ['COMPLETED', 'SUBMITTED'].includes(value)
       ? 'text-emerald-700 bg-emerald-50' : 'text-indigo-700 bg-indigo-50'
-  }`}>{labels[value] || value}</span>;
+  }`}>{displayText}</span>;
 }
 
 export function Empty({ children }) {

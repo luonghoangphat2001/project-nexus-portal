@@ -14,9 +14,11 @@ import {
   UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 export const Sidebar = ({ isOpen }) => {
   const { user, hasRole } = useAuth();
+  const { t } = useTranslation();
 
   const isStudent = hasRole('ROLE_USER');
   const isAdmin = hasRole('ROLE_ADMIN');
@@ -24,46 +26,46 @@ export const Sidebar = ({ isOpen }) => {
   const isTeacher = hasRole('ROLE_TEACHER');
 
   const navItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Registration Periods', path: '/periods', icon: BookmarkCheck },
-    { name: 'Academic Structure', path: '/academic', icon: Layers },
-    { name: 'Notifications', path: '/notifications', icon: FileText },
-    { name: 'Project Progress', path: '/progress', icon: LayoutDashboard },
-    { name: 'Capstone Topics', path: '/topics', icon: FileText },
+    { name: t('nav.dashboard'), path: '/dashboard', icon: LayoutDashboard },
+    { name: t('nav.periods'), path: '/periods', icon: BookmarkCheck },
+    { name: t('nav.academic'), path: '/academic', icon: Layers },
+    { name: t('nav.notifications'), path: '/notifications', icon: FileText },
+    { name: t('nav.progress'), path: '/progress', icon: LayoutDashboard },
+    { name: t('nav.topics'), path: '/topics', icon: FileText },
     ...(isStudent
       ? [
-          { name: 'My Team', path: '/teams', icon: Users2 },
-          { name: 'Matchmaking Board', path: '/matchmaking', icon: Compass },
+          { name: t('nav.teams'), path: '/teams', icon: Users2 },
+          { name: t('nav.matchmaking'), path: '/matchmaking', icon: Compass },
         ]
       : []),
-    { name: 'Topic Registrations', path: '/registrations', icon: BookmarkCheck },
-    { name: 'Reports & Documents', path: '/reports', icon: FileText },
-    { name: 'Council Assignments', path: '/councils', icon: Users2 },
+    { name: t('nav.registrations'), path: '/registrations', icon: BookmarkCheck },
+    { name: t('nav.reports'), path: '/reports', icon: FileText },
+    { name: t('nav.councils'), path: '/councils', icon: Users2 },
     ...(isAdmin || isPrincipal || isTeacher || hasRole('ROLE_COUNCIL')
-      ? [{ name: 'Reviews & Grading', path: '/assessments', icon: BookmarkCheck }]
+      ? [{ name: t('nav.assessments'), path: '/assessments', icon: BookmarkCheck }]
       : []),
     ...(isAdmin || isPrincipal || isStudent
-      ? [{ name: 'Results & Reports', path: '/results', icon: FileText }]
+      ? [{ name: t('nav.results'), path: '/results', icon: FileText }]
       : []),
-    { name: 'User Profile', path: '/profile', icon: UserCheck },
+    { name: t('nav.profile'), path: '/profile', icon: UserCheck },
     ...(isAdmin || isPrincipal || isTeacher
       ? [
           {
-            name: isAdmin ? 'User Management' : 'Academic Staff',
+            name: isAdmin ? t('nav.users') : t('nav.academicStaff'),
             path: '/users',
             icon: Users,
           },
-          { name: 'Roles & Permissions', path: '/roles', icon: ShieldCheck },
+          { name: t('nav.roles'), path: '/roles', icon: ShieldCheck },
         ]
       : []),
     ...(isAdmin || isPrincipal
       ? [
-          { name: 'System Administration', path: '/admin/system', icon: Server },
+          { name: t('nav.systemAdmin'), path: '/admin/system', icon: Server },
         ]
       : []),
     ...(isAdmin
       ? [
-          { name: 'Security & Audit Logs', path: '/admin/security', icon: ShieldAlert },
+          { name: t('nav.security'), path: '/admin/security', icon: ShieldAlert },
         ]
       : []),
   ];

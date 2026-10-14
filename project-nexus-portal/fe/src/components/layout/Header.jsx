@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from '../../i18n/LanguageContext';
+import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { Bell, Search, LogOut, User as UserIcon, Shield, Menu, Mail, Maximize } from 'lucide-react';
 
 export const Header = ({ onToggleSidebar }) => {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
@@ -13,7 +16,7 @@ export const Header = ({ onToggleSidebar }) => {
         <button
           onClick={onToggleSidebar}
           className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-          title="Toggle Navigation Menu"
+          title={t('header.toggleMenu')}
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -23,15 +26,18 @@ export const Header = ({ onToggleSidebar }) => {
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search projects, topics, users..."
+            placeholder={t('header.searchPlaceholder')}
             className="bg-transparent border-0 rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-0 w-64 md:w-80"
           />
         </div>
       </div>
 
-      <div className="flex items-center space-x-3 sm:space-x-5">
+      <div className="flex items-center space-x-3 sm:space-x-4">
+        {/* Language Switcher */}
+        <LanguageSwitcher />
+
         {/* Messages Icon */}
-        <button className="text-slate-400 hover:text-[#b66dff] transition-colors relative">
+        <button className="text-slate-400 hover:text-[#b66dff] transition-colors relative" title={t('header.messages')}>
           <Mail className="w-4 h-4" />
           <span className="w-1.5 h-1.5 bg-[#fe7c96] rounded-full absolute -top-0.5 -right-0.5"></span>
         </button>
@@ -60,7 +66,7 @@ export const Header = ({ onToggleSidebar }) => {
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-52 bg-white border border-[#ebedf2] rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="px-4 py-2 border-b border-slate-100">
-                <p className="text-[11px] text-slate-400">Signed in as</p>
+                <p className="text-[11px] text-slate-400">{t('header.signedInAs')}</p>
                 <p className="text-xs font-semibold text-slate-800 truncate">{user?.email || 'user@nexus.com'}</p>
               </div>
 
@@ -73,7 +79,7 @@ export const Header = ({ onToggleSidebar }) => {
                   className="w-full text-left px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 flex items-center space-x-2 transition-colors"
                 >
                   <UserIcon className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Profile & Settings</span>
+                  <span>{t('header.profileAndSettings')}</span>
                 </button>
               </div>
 
@@ -86,7 +92,7 @@ export const Header = ({ onToggleSidebar }) => {
                   className="w-full text-left px-4 py-2 text-xs text-[#fe7c96] hover:bg-rose-50 flex items-center space-x-2 transition-colors"
                 >
                   <LogOut className="w-3.5 h-3.5 text-[#fe7c96]" />
-                  <span>Sign Out</span>
+                  <span>{t('header.signOut')}</span>
                 </button>
               </div>
             </div>

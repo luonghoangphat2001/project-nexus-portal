@@ -15,7 +15,7 @@ import java.util.List;
  * Subclasses provide the file name, column headers, and row mapping; this class handles CSV encoding,
  * escaping, the UTF-8 BOM, and HTTP headers.
  *
- * @param <T> kiểu bản ghi được xuất
+ * @param <T> type of exported records
  */
 public abstract class CsvExportController<T> {
 

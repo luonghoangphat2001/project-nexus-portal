@@ -23,6 +23,8 @@ api.interceptors.request.use(
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
+    const lang = localStorage.getItem('nexus_lang') || 'vi';
+    config.headers['Accept-Language'] = lang;
     return config;
   },
   (error) => {

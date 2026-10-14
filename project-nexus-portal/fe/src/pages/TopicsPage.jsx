@@ -16,9 +16,11 @@ import topicService from '../services/topicService';
 import academicService from '../services/academicService';
 import registrationService from '../services/registrationService';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../i18n/LanguageContext';
 
 export const TopicsPage = () => {
   const { user, hasRole } = useAuth();
+  const { t } = useTranslation();
   const isLecturerOrAdmin = hasRole('ROLE_ADMIN') || hasRole('ROLE_TEACHER');
 
   // Topics list state
@@ -144,9 +146,9 @@ export const TopicsPage = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Thesis & Capstone Topics</h1>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{t('topics.title')}</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Discover graduation topics, compare multiple options, and submit your team proposal.
+            {t('topics.desc')}
           </p>
         </div>
 
@@ -157,7 +159,7 @@ export const TopicsPage = () => {
               className="px-4 py-2 bg-[#f8f2ff] hover:bg-[#f1e2ff] text-[#b66dff] font-semibold rounded-xl text-xs flex items-center space-x-2 transition-all shadow-xs"
             >
               <ArrowRightLeft className="w-4 h-4" />
-              <span>Compare Selected ({compareList.length}/3)</span>
+              <span>{t('topics.compareTopics')} ({compareList.length}/3)</span>
             </button>
           )}
 
@@ -167,7 +169,7 @@ export const TopicsPage = () => {
               className="px-4 py-2 bg-gradient-to-r from-[#da8cff] to-[#9a55ff] hover:opacity-90 text-white font-medium rounded-xl text-xs flex items-center space-x-2 transition-all shadow-sm"
             >
               <Plus className="w-4 h-4" />
-              <span>Propose Topic</span>
+              <span>{t('topics.proposeTopic')}</span>
             </button>
           )}
         </div>
@@ -180,7 +182,7 @@ export const TopicsPage = () => {
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             <input
               type="text"
-              placeholder="Search by title, keywords..."
+              placeholder={t('topics.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#b66dff] transition-colors"
@@ -193,7 +195,7 @@ export const TopicsPage = () => {
               onChange={(e) => setSelectedDept(e.target.value)}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:border-[#b66dff] transition-colors"
             >
-              <option value="">All Departments</option>
+              <option value="">{t('common.all')} {t('topics.department')}</option>
               {departments.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name} ({d.code})
@@ -208,7 +210,7 @@ export const TopicsPage = () => {
               onChange={(e) => setSelectedMajor(e.target.value)}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:border-[#b66dff] transition-colors"
             >
-              <option value="">All Majors</option>
+              <option value="">{t('common.all')} {t('topics.major')}</option>
               {majors.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name} ({m.code})
@@ -222,7 +224,7 @@ export const TopicsPage = () => {
               type="submit"
               className="flex-1 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-sm font-medium transition-colors"
             >
-              Filter Topics
+              {t('common.filter')}
             </button>
             <button
               type="button"
@@ -234,7 +236,7 @@ export const TopicsPage = () => {
               }}
               className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-sm font-medium transition-colors"
             >
-              Reset
+              {t('common.reset')}
             </button>
           </div>
         </form>
@@ -242,14 +244,13 @@ export const TopicsPage = () => {
 
       {/* Topics Grid */}
       {loading ? (
-        <div className="py-16 text-center text-slate-400">Loading topics...</div>
+        <div className="py-16 text-center text-slate-400">{t('common.loading')}</div>
       ) : error ? (
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-sm">{error}</div>
       ) : topics.length === 0 ? (
         <div className="py-16 bg-white rounded-2xl border border-[#ebedf2] text-center">
           <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-600 font-medium">No topics found</p>
-          <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or keyword query.</p>
+          <p className="text-slate-600 font-medium">{t('topics.noTopicsFound')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

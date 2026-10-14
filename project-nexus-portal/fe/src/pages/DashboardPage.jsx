@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import api from '../services/api';
+import { useTranslation } from '../i18n/LanguageContext';
 import {
   Home,
   Users,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 
 export const DashboardPage = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -48,30 +50,30 @@ export const DashboardPage = () => {
   // The 3 iconic Purple Admin metric cards with exact gradients and circular watermarks
   const cards = [
     {
-      title: 'Total Enrolled Users',
+      title: t('dashboard.totalUsers'),
       value: stats ? stats.totalUsers : '0',
-      subtitle: 'Increased by 60%',
+      subtitle: t('dashboard.increasedBy', { value: '60%' }),
       gradient: 'bg-gradient-to-r from-[#ffbf96] to-[#fe7096]', // Purple Admin Danger Gradient
       icon: TrendingUp,
     },
     {
-      title: 'Active Accounts',
+      title: t('dashboard.activeAccounts'),
       value: stats ? stats.activeUsers : '0',
-      subtitle: 'Decreased by 10%',
+      subtitle: t('dashboard.decreasedBy', { value: '10%' }),
       gradient: 'bg-gradient-to-r from-[#90caf9] to-[#047edf]', // Purple Admin Info Gradient
       icon: Bookmark,
     },
     {
-      title: 'Security Roles',
+      title: t('dashboard.securityRoles'),
       value: stats ? stats.totalRoles : '0',
-      subtitle: 'Increased by 5%',
+      subtitle: t('dashboard.increasedBy', { value: '5%' }),
       gradient: 'bg-gradient-to-r from-[#84d9d2] to-[#07cdae]', // Purple Admin Success Gradient
       icon: Gem,
     },
     {
-      title: 'System Uptime',
+      title: t('dashboard.systemUptime'),
       value: stats ? `${Math.floor(stats.systemUptimeSeconds / 60)} min` : '0 min',
-      subtitle: 'JVM Online',
+      subtitle: t('dashboard.jvmOnline'),
       gradient: 'bg-gradient-to-r from-[#da8cff] to-[#9a55ff]', // Purple Admin Primary Gradient
       icon: Clock,
     },
@@ -86,13 +88,13 @@ export const DashboardPage = () => {
             <Home className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-[#343a40]">Dashboard</h1>
+            <h1 className="text-xl font-bold text-[#343a40]">{t('dashboard.title')}</h1>
           </div>
         </div>
 
         <div className="flex items-center space-x-2 text-xs text-slate-400">
-          <span>Overview</span>
-          <span className="text-[#b66dff] font-semibold">• Live Telemetry</span>
+          <span>{t('dashboard.overview')}</span>
+          <span className="text-[#b66dff] font-semibold">• {t('dashboard.liveTelemetry')}</span>
         </div>
       </div>
 
@@ -101,7 +103,7 @@ export const DashboardPage = () => {
         <div className="p-4 rounded-xl bg-[#fe7c96]/10 border border-[#fe7c96]/30 flex items-start space-x-3 text-[#fe7c96] text-sm">
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold">Backend Offline</p>
+            <p className="font-semibold">{t('dashboard.backendOffline')}</p>
             <p className="text-xs mt-0.5">{error}</p>
           </div>
         </div>
@@ -146,8 +148,8 @@ export const DashboardPage = () => {
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-[#343a40] text-sm">Thesis Topics</h3>
-            <p className="text-[11px] text-slate-400">Discover & compare</p>
+            <h3 className="font-semibold text-[#343a40] text-sm">{t('dashboard.thesisTopics')}</h3>
+            <p className="text-[11px] text-slate-400">{t('dashboard.discoverCompare')}</p>
           </div>
         </NavLink>
 
@@ -159,8 +161,8 @@ export const DashboardPage = () => {
             <Users2 className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-[#343a40] text-sm">Team Roster</h3>
-            <p className="text-[11px] text-slate-400">1-3 students per team</p>
+            <h3 className="font-semibold text-[#343a40] text-sm">{t('dashboard.teamRoster')}</h3>
+            <p className="text-[11px] text-slate-400">{t('dashboard.teamRosterDesc')}</p>
           </div>
         </NavLink>
 
@@ -172,8 +174,8 @@ export const DashboardPage = () => {
             <BookmarkCheck className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-[#343a40] text-sm">Registrations</h3>
-            <p className="text-[11px] text-slate-400">Proposals & reviews</p>
+            <h3 className="font-semibold text-[#343a40] text-sm">{t('dashboard.registrations')}</h3>
+            <p className="text-[11px] text-slate-400">{t('dashboard.registrationsDesc')}</p>
           </div>
         </NavLink>
 
@@ -185,8 +187,8 @@ export const DashboardPage = () => {
             <Compass className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-[#343a40] text-sm">Matchmaking</h3>
-            <p className="text-[11px] text-slate-400">Find team in faculty</p>
+            <h3 className="font-semibold text-[#343a40] text-sm">{t('dashboard.matchmaking')}</h3>
+            <p className="text-[11px] text-slate-400">{t('dashboard.matchmakingDesc')}</p>
           </div>
         </NavLink>
       </div>
@@ -197,9 +199,9 @@ export const DashboardPage = () => {
         <div className="bg-white border border-[#ebedf2] rounded-xl p-6 shadow-xs">
           <h2 className="text-sm font-bold text-[#343a40] flex items-center space-x-2">
             <ShieldCheck className="w-4 h-4 text-[#b66dff]" />
-            <span>Role Distribution</span>
+            <span>{t('dashboard.roleDistribution')}</span>
           </h2>
-          <p className="text-slate-400 text-xs mt-1">Configured permissions & user categorization</p>
+          <p className="text-slate-400 text-xs mt-1">{t('dashboard.roleDistributionDesc')}</p>
 
           <div className="mt-5 space-y-4">
             {stats && stats.userRoleDistribution ? (
@@ -207,7 +209,7 @@ export const DashboardPage = () => {
                 <div key={role} className="space-y-1.5">
                   <div className="flex justify-between text-xs">
                     <span className="font-medium text-slate-700">{role.replace('ROLE_', '')}</span>
-                    <span className="text-slate-500 font-semibold">{count} user(s)</span>
+                    <span className="text-slate-500 font-semibold">{count} {t('dashboard.userUnit')}</span>
                   </div>
                   <div className="w-full h-1.5 bg-[#f2f4f9] rounded-full overflow-hidden">
                     <div
@@ -218,7 +220,7 @@ export const DashboardPage = () => {
                 </div>
               ))
             ) : (
-              <p className="text-xs text-slate-400 py-4 text-center">No role metrics available.</p>
+              <p className="text-xs text-slate-400 py-4 text-center">{t('dashboard.noRoleMetrics')}</p>
             )}
           </div>
         </div>
@@ -229,9 +231,9 @@ export const DashboardPage = () => {
             <div>
               <h2 className="text-sm font-bold text-[#343a40] flex items-center space-x-2">
                 <Activity className="w-4 h-4 text-[#b66dff]" />
-                <span>Recent System Activities</span>
+                <span>{t('dashboard.recentActivities')}</span>
               </h2>
-              <p className="text-slate-400 text-xs mt-1">Audit trail of proposals and administrative events</p>
+              <p className="text-slate-400 text-xs mt-1">{t('dashboard.recentActivitiesDesc')}</p>
             </div>
           </div>
 
@@ -250,7 +252,7 @@ export const DashboardPage = () => {
                 </div>
               ))
             ) : (
-              <div className="py-8 text-center text-slate-400 text-xs">No recent activity records.</div>
+              <div className="py-8 text-center text-slate-400 text-xs">{t('dashboard.noRecentActivities')}</div>
             )}
           </div>
         </div>

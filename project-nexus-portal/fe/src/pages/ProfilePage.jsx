@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../i18n/LanguageContext';
+import { LanguageSwitcher } from '../components/common/LanguageSwitcher';
 import { userService } from '../services/userService';
 import { authService } from '../services/authService';
 import {
@@ -13,11 +15,13 @@ import {
   Save,
   Lock,
   IdCard,
-  UserCheck
+  UserCheck,
+  Globe
 } from 'lucide-react';
 
 export const ProfilePage = () => {
   const { user: authUser, updateUser } = useAuth();
+  const { t } = useTranslation();
 
   const [profile, setProfile] = useState({
     fullName: '',
@@ -121,16 +125,16 @@ export const ProfilePage = () => {
         <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
             <User className="w-7 h-7 text-indigo-600" />
-            User Profile & Security
+            {t('profile.title')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage your academic identity profile and update your sign-in credentials
+            {t('profile.desc')}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: User Profile Card */}
+        {/* Left Column: User Profile Card & Language Preferences */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center">
             <div className="relative inline-block mb-4">
@@ -171,6 +175,18 @@ export const ProfilePage = () => {
               </div>
             </div>
           </div>
+
+          {/* Language Preference Card */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
+              <Globe className="w-5 h-5 text-indigo-600" />
+              <h2 className="text-base font-bold text-slate-800">{t('profile.languagePreference')}</h2>
+            </div>
+            <p className="text-xs text-slate-500 mb-4">{t('profile.languagePreferenceDesc')}</p>
+            <div className="flex justify-center">
+              <LanguageSwitcher variant="pill" className="w-full justify-around py-1" />
+            </div>
+          </div>
         </div>
 
         {/* Right Column: Forms */}
@@ -179,7 +195,7 @@ export const ProfilePage = () => {
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
               <Shield className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-lg font-bold text-slate-800">Update Identity Profile</h2>
+              <h2 className="text-lg font-bold text-slate-800">{t('profile.personalInfo')}</h2>
             </div>
 
             {profileSuccess && (
@@ -199,36 +215,36 @@ export const ProfilePage = () => {
             <form onSubmit={handleProfileSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Full Name *</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t('profile.fullName')} *</label>
                   <input
                     type="text"
                     required
                     value={profile.fullName}
                     onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                    placeholder="John Doe"
+                    placeholder={t('profile.fullName')}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contact Phone</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t('profile.phone')}</label>
                   <input
                     type="tel"
                     value={profile.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                    placeholder="+1 234 567 8900"
+                    placeholder={t('profile.phonePlaceholder')}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Student / Lecturer Code</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t('profile.studentCode')}</label>
                   <input
                     type="text"
                     value={profile.studentCode}
                     onChange={(e) => setProfile({ ...profile, studentCode: e.target.value })}
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                    placeholder="STD2026001"
+                    placeholder={t('profile.studentCodePlaceholder')}
                   />
                 </div>
 
@@ -251,7 +267,7 @@ export const ProfilePage = () => {
                   className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm transition disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
-                  {profileLoading ? 'Saving...' : 'Save Profile'}
+                  {profileLoading ? t('common.saving') : t('profile.saveProfile')}
                 </button>
               </div>
             </form>
@@ -261,7 +277,7 @@ export const ProfilePage = () => {
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
               <Key className="w-5 h-5 text-amber-600" />
-              <h2 className="text-lg font-bold text-slate-800">Change Password</h2>
+              <h2 className="text-lg font-bold text-slate-800">{t('profile.changePassword')}</h2>
             </div>
 
             {passwordSuccess && (
@@ -280,7 +296,7 @@ export const ProfilePage = () => {
 
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Current Password *</label>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{t('profile.currentPassword')} *</label>
                 <div className="relative">
                   <input
                     type="password"
@@ -296,7 +312,7 @@ export const ProfilePage = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">New Password (Min. 6 characters) *</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t('profile.newPassword')} *</label>
                   <div className="relative">
                     <input
                       type="password"
@@ -312,7 +328,7 @@ export const ProfilePage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Confirm New Password *</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t('profile.confirmPassword')} *</label>
                   <div className="relative">
                     <input
                       type="password"
@@ -335,7 +351,7 @@ export const ProfilePage = () => {
                   className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-xl shadow-sm transition disabled:opacity-50"
                 >
                   <Key className="w-4 h-4" />
-                  {passwordLoading ? 'Processing...' : 'Update Password'}
+                  {passwordLoading ? t('common.saving') : t('profile.updatePassword')}
                 </button>
               </div>
             </form>
