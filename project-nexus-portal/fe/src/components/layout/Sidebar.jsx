@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
-  UserCheck,
   CalendarRange,
   GraduationCap,
   BookOpen,
@@ -41,7 +40,6 @@ export const Sidebar = ({ isOpen }) => {
       title: t('navGroups.overview'),
       items: [
         { name: t('nav.dashboard'), path: '/dashboard', icon: LayoutDashboard },
-        { name: t('nav.profile'), path: '/profile', icon: UserCheck },
       ],
     },
     {
@@ -160,23 +158,42 @@ export const Sidebar = ({ isOpen }) => {
         </div>
       </div>
 
-      {/* Profile Card */}
-      {isOpen && (
-        <div className="px-5 py-4 border-b border-[#f3f3f3] flex items-center space-x-3 shrink-0">
-          <div className="relative shrink-0">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-xs">
+      {/* Profile Card / Clickable Avatar */}
+      {isOpen ? (
+        <div className="p-3 border-b border-[#ebedf2] shrink-0">
+          <Link
+            to="/profile"
+            className="p-2.5 rounded-xl border border-slate-100 flex items-center space-x-3 hover:bg-slate-50/90 hover:border-indigo-100 transition-all group"
+            title={t('header.profileAndSettings')}
+          >
+            <div className="relative shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-xs group-hover:shadow-md transition-shadow">
+                {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
+              </div>
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+            </div>
+            <div className="overflow-hidden flex-1 min-w-0">
+              <p className="text-xs font-bold text-slate-800 truncate leading-tight group-hover:text-indigo-600 transition-colors">
+                {user?.fullName || user?.username || 'Nexus User'}
+              </p>
+              <p className="text-[11px] font-medium text-slate-400 truncate mt-0.5">
+                {roleDisplay}
+              </p>
+            </div>
+          </Link>
+        </div>
+      ) : (
+        <div className="py-3 flex justify-center border-b border-[#ebedf2] shrink-0">
+          <Link
+            to="/profile"
+            className="relative p-1 rounded-xl hover:bg-slate-50 transition-colors group"
+            title={`${user?.fullName || 'User'} (${roleDisplay}) - ${t('header.profileAndSettings')}`}
+          >
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-xs group-hover:scale-105 transition-transform">
               {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
             </div>
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
-          </div>
-          <div className="overflow-hidden">
-            <p className="text-xs font-bold text-slate-800 truncate leading-tight">
-              {user?.fullName || user?.username || 'Nexus User'}
-            </p>
-            <p className="text-[11px] font-medium text-slate-500 truncate mt-0.5">
-              {roleDisplay}
-            </p>
-          </div>
+            <span className="absolute bottom-1 right-1 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+          </Link>
         </div>
       )}
 
