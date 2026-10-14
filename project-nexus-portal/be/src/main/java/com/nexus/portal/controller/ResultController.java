@@ -4,8 +4,7 @@ import com.nexus.portal.controller.base.CsvExportController;
 import com.nexus.portal.dto.response.ApiResponse;
 import com.nexus.portal.dto.response.ResultResponse;
 import com.nexus.portal.enums.ScoreRange;
-import com.nexus.portal.service.ResultPublicationService;
-import com.nexus.portal.service.ResultStatisticsService;
+import com.nexus.portal.service.ResultService;
 import com.nexus.portal.service.ScoreCalculationService.ScoreRangeClassifier;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -26,14 +25,10 @@ import java.util.List;
 @RequestMapping("/results")
 @Tag(name = "Results", description = "Endpoints for publishing results and viewing academic statistics")
 public class ResultController extends CsvExportController<ResultResponse.Statistics.Row> {
-    private final ResultPublicationService resultPublication;
-    private final ResultStatisticsService resultStatistics;
+    private final ResultService results;
 
-    public ResultController(
-            ResultPublicationService resultPublication,
-            ResultStatisticsService resultStatistics) {
-        this.resultPublication = resultPublication;
-        this.resultStatistics = resultStatistics;
+    public ResultController(ResultService results) {
+        this.results = results;
     }
 
     @PostMapping("/assignments/{assignmentId}/publish")
@@ -41,19 +36,19 @@ public class ResultController extends CsvExportController<ResultResponse.Statist
     public ResponseEntity<ApiResponse<List<ResultResponse.Defense>>> publishAssignmentResults(
             @PathVariable Long assignmentId, Authentication auth) {
         return ResponseEntity.ok(ApiResponse.success(
-                resultPublication.publishAssignmentResults(assignmentId, auth.getName()), "Results published"));
+                    results.publishAssignmentResults(assignmentId, auth.getName()), "Results published"));
     }
 
     @GetMapping("/me")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<List<ResultResponse.Defense>>> getMyPublishedResults(Authentication auth) {
-        return ResponseEntity.ok(ApiResponse.success(resultPublication.getMyPublishedResults(auth.getName())));
+        return ResponseEntity.ok(ApiResponse.success(results.getMyPublishedResults(auth.getName())));
     }
 
     @GetMapping("/reports/options")
     @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
     public ResponseEntity<ApiResponse<ResultResponse.Statistics.Options>> getFilterOptions(Authentication auth) {
-        return ResponseEntity.ok(ApiResponse.success(resultStatistics.getFilterOptions(auth.getName())));
+        return ResponseEntity.ok(ApiResponse.success(results.getFilterOptions(auth.getName())));
     }
 
     @GetMapping("/reports")
@@ -64,7 +59,7 @@ public class ResultController extends CsvExportController<ResultResponse.Statist
             @RequestParam(required = false) Long topicId,
             Authentication auth) {
         return ResponseEntity.ok(ApiResponse.success(
-                resultStatistics.getStatistics(periodId, departmentId, topicId, auth.getName())));
+                    results.getStatistics(periodId, departmentId, topicId, auth.getName())));
     }
 
     @GetMapping(value = "/reports.csv", produces = "text/csv")
@@ -74,7 +69,7 @@ public class ResultController extends CsvExportController<ResultResponse.Statist
             @RequestParam(required = false) Long departmentId,
             @RequestParam(required = false) Long topicId,
             Authentication auth) {
-        return buildCsvResponse(resultStatistics.getStatistics(periodId, departmentId, topicId, auth.getName()));
+        return buildCsvResponse(results.getStatistics(periodId, departmentId, topicId, auth.getName()));
     }
 
     @Override

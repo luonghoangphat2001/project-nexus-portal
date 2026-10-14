@@ -103,7 +103,7 @@ class ScoreCalculationServiceImplTest {
     @Test
     void returnsPublishedGradesWithoutRecalculating() {
         givenManagerAccess();
-        PublishedResult saved = new PublishedResult();
+        Result saved = new Result();
         saved.setAssignment(assignment);
         saved.setStudent(student);
         saved.setReviewScore(new BigDecimal("8.00"));

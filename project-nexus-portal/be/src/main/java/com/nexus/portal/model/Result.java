@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "published_results", uniqueConstraints =
         @UniqueConstraint(columnNames = {"assignment_id", "student_id"}))
-public class PublishedResult extends BaseEntity {
+public class Result extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

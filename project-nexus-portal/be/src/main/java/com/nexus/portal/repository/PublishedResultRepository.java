@@ -1,6 +1,6 @@
 package com.nexus.portal.repository;
 
-import com.nexus.portal.model.PublishedResult;
+import com.nexus.portal.model.Result;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -9,10 +9,10 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Set;
 
-public interface PublishedResultRepository extends JpaRepository<PublishedResult, Long> {
+public interface PublishedResultRepository extends JpaRepository<Result, Long> {
     boolean existsByAssignmentId(Long assignmentId);
-    List<PublishedResult> findByAssignmentIdOrderByStudentIdAsc(Long assignmentId);
-    List<PublishedResult> findByStudentIdAndPublishedAtIsNotNullOrderByPublishedAtDesc(Long studentId);
+    List<Result> findByAssignmentIdOrderByStudentIdAsc(Long assignmentId);
+    List<Result> findByStudentIdAndPublishedAtIsNotNullOrderByPublishedAtDesc(Long studentId);
 
     @EntityGraph(attributePaths = {
             "assignment.registration.topic",
@@ -20,7 +20,7 @@ public interface PublishedResultRepository extends JpaRepository<PublishedResult
             "assignment.registration.topic.period"
     })
     @Query("""
-            select result from PublishedResult result
+            select result from Result result
             join result.assignment assignment
             join assignment.registration registration
             join registration.topic topic
@@ -30,7 +30,7 @@ public interface PublishedResultRepository extends JpaRepository<PublishedResult
               and (:departmentId is null or topic.department.id = :departmentId)
               and (:topicId is null or topic.id = :topicId)
             """)
-    List<PublishedResult> findPublishedForReport(
+    List<Result> findPublishedForReport(
             @Param("departmentIds") Set<Long> departmentIds,
             @Param("periodId") Long periodId,
             @Param("departmentId") Long departmentId,

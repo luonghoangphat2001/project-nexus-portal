@@ -53,7 +53,7 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
         DefenseAssignment assignment = assignments.findById(assignmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Defense assignment not found"));
         requireManager(manager, assignment.getRegistration().getTopic().getDepartment());
-        List<PublishedResult> published = publishedResults.findByAssignmentIdOrderByStudentIdAsc(assignmentId);
+        List<Result> published = publishedResults.findByAssignmentIdOrderByStudentIdAsc(assignmentId);
         if (!published.isEmpty()) {
             return published.stream().map(this::toResponse).toList();
         }
@@ -142,7 +142,7 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
                 score.defenseScore(), score.finalScore(), score.passed(), published, publishedAt);
     }
 
-    private ResultResponse.Defense toResponse(PublishedResult result) {
+    private ResultResponse.Defense toResponse(Result result) {
         DefenseAssignment assignment = result.getAssignment();
         Topic topic = assignment.getRegistration().getTopic();
         User student = result.getStudent();

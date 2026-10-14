@@ -96,7 +96,7 @@ class ResultStatisticsServiceImplTest {
         verify(results, never()).findPublishedForReport(anySet(), any(), any(), any());
     }
 
-    private PublishedResult publishedResult(String score, boolean passed) {
+    private Result publishedResult(String score, boolean passed) {
         User student = new User();
         student.setId(7L);
         DefenseCouncil council = new DefenseCouncil();
@@ -104,7 +104,7 @@ class ResultStatisticsServiceImplTest {
         assignment.setRegistration(registration(topic));
         assignment.setCouncil(council);
 
-        PublishedResult result = new PublishedResult();
+        Result result = new Result();
         result.setAssignment(assignment);
         result.setStudent(student);
         result.setReviewScore(new BigDecimal("8.00"));

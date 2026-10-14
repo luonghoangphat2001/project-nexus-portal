@@ -28,4 +28,4 @@ The following endpoints require JWT authentication and use the configured API pr
 
 ## Persistence
 
-The `published_results` table stores published score snapshots and enforces uniqueness for each assignment/student pair. It is declared in `be/src/main/resources/schema.sql` and mapped by the `PublishedResult` entity.
+The `published_results` table stores published score snapshots and enforces uniqueness for each assignment/student pair. It is declared in `be/src/main/resources/schema.sql` and mapped by the `Result` entity.

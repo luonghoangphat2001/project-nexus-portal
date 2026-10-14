@@ -15,8 +15,7 @@ import com.nexus.portal.repository.RegistrationPeriodRepository;
 import com.nexus.portal.repository.TopicRepository;
 import com.nexus.portal.service.AuditLogService;
 import com.nexus.portal.service.CalculatedScore;
-import com.nexus.portal.service.ResultPublicationService;
-import com.nexus.portal.service.ResultStatisticsService;
+import com.nexus.portal.service.ResultService;
 import com.nexus.portal.service.ScoreCalculationService;
 import com.nexus.portal.service.ScoreCalculationService.ScoreRangeClassifier;
 import org.springframework.security.access.AccessDeniedException;
@@ -33,7 +32,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
-public class ResultsServiceImpl implements ResultPublicationService, ResultStatisticsService {
+public class ResultsServiceImpl implements ResultService {
     private final DefenseAssignmentRepository assignments;
     private final DefenseCouncilRepository councils;
     private final PublishedResultRepository results;
@@ -82,8 +81,8 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
 
         LocalDateTime publishedAt = LocalDateTime.now(clock);
         List<CalculatedScore> calculatedScores = scoreCalculation.calculateScores(assignment);
-        List<PublishedResult> published = calculatedScores.stream().map(score -> {
-            PublishedResult result = new PublishedResult();
+        List<Result> published = calculatedScores.stream().map(score -> {
+            Result result = new Result();
             result.setAssignment(assignment);
             result.setStudent(score.student());
             result.setReviewScore(score.reviewScore());
@@ -94,7 +93,7 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
             result.setPublishedAt(publishedAt);
             return result;
         }).toList();
-        List<PublishedResult> saved = results.saveAllAndFlush(published);
+        List<Result> saved = results.saveAllAndFlush(published);
         audit.log(manager.getId(), manager.getUsername(), "PUBLISH_RESULTS",
                 "results/assignments/" + assignmentId,
                 "Published " + saved.size() + " results for registration "
@@ -156,7 +155,7 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
             }
         }
 
-        Map<ReportKey, List<PublishedResult>> grouped = new HashMap<>();
+        Map<ReportKey, List<Result>> grouped = new HashMap<>();
         results.findPublishedForReport(allowedDepartmentIds, periodId, departmentId, topicId)
                 .forEach(result -> {
                     Topic topic = result.getAssignment().getRegistration().getTopic();
@@ -175,14 +174,14 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
                 .toList();
     }
 
-    private ResultResponse.Statistics.Row toReportRow(ReportKey key, List<PublishedResult> rows) {
-        BigDecimal total = rows.stream().map(PublishedResult::getFinalScore)
+    private ResultResponse.Statistics.Row toReportRow(ReportKey key, List<Result> rows) {
+        BigDecimal total = rows.stream().map(Result::getFinalScore)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        long passCount = rows.stream().filter(PublishedResult::isPassed).count();
+        long passCount = rows.stream().filter(Result::isPassed).count();
         Map<String, Long> distribution = new LinkedHashMap<>();
         Arrays.stream(ScoreRange.values())
                 .forEach(range -> distribution.put(ScoreRangeClassifier.labelOf(range), 0L));
-        for (PublishedResult result : rows) {
+        for (Result result : rows) {
             String label = ScoreRangeClassifier.labelOf(ScoreRangeClassifier.classify(result.getFinalScore()));
             distribution.merge(label, 1L, Long::sum);
         }
@@ -218,7 +217,7 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
                 .orElseThrow(() -> new ResourceNotFoundException("Defense assignment not found"));
     }
 
-    private ResultResponse.Defense toResponse(PublishedResult result) {
+    private ResultResponse.Defense toResponse(Result result) {
         DefenseAssignment assignment = result.getAssignment();
         Topic topic = assignment.getRegistration().getTopic();
         User student = result.getStudent();
