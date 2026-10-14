@@ -40,6 +40,14 @@ export const en = {
     reset: 'Reset',
   },
 
+  navGroups: {
+    overview: 'Overview',
+    academic: 'Academic & Periods',
+    thesis: 'Thesis & Capstone',
+    evaluation: 'Councils & Evaluation',
+    system: 'System Administration',
+  },
+
   nav: {
     dashboard: 'Dashboard',
     periods: 'Registration Periods',
@@ -196,6 +204,20 @@ export const en = {
     title: 'Resource Not Found',
     desc: 'The route or view you are attempting to access does not exist on this Nexus Portal server.',
     returnDashboard: 'Return to Dashboard',
+  },
+
+  roles: {
+    ROLE_ADMIN: 'Administrator',
+    ROLE_PRINCIPAL: 'Dean / Department Head',
+    ROLE_TEACHER: 'Lecturer',
+    ROLE_COUNCIL: 'Council Member',
+    ROLE_USER: 'Student',
+    admin: 'Administrator',
+    principal: 'Dean / Department Head',
+    teacher: 'Lecturer',
+    council: 'Council Member',
+    student: 'Student',
+    user: 'User',
   },
 };
 

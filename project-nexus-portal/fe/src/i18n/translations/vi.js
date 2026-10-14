@@ -40,6 +40,14 @@ export const vi = {
     reset: 'Đặt lại',
   },
 
+  navGroups: {
+    overview: 'Tổng quan',
+    academic: 'Học vụ & Đợt đăng ký',
+    thesis: 'Đề tài & Khóa luận',
+    evaluation: 'Hội đồng & Đánh giá',
+    system: 'Quản trị hệ thống',
+  },
+
   nav: {
     dashboard: 'Bảng điều khiển',
     periods: 'Đợt đăng ký',
@@ -196,6 +204,20 @@ export const vi = {
     title: 'Không tìm thấy trang',
     desc: 'Đường dẫn hoặc trang bạn đang truy cập không tồn tại trên hệ thống Nexus Portal.',
     returnDashboard: 'Quay lại Bảng điều khiển',
+  },
+
+  roles: {
+    ROLE_ADMIN: 'Quản trị viên',
+    ROLE_PRINCIPAL: 'Trưởng khoa / Bộ môn',
+    ROLE_TEACHER: 'Giảng viên',
+    ROLE_COUNCIL: 'Hội đồng chấm',
+    ROLE_USER: 'Sinh viên',
+    admin: 'Quản trị viên',
+    principal: 'Trưởng khoa / Bộ môn',
+    teacher: 'Giảng viên',
+    council: 'Hội đồng chấm',
+    student: 'Sinh viên',
+    user: 'Người dùng',
   },
 };
 

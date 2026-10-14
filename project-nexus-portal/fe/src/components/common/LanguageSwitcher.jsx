@@ -3,7 +3,7 @@ import { useLanguage } from '../../i18n/LanguageContext';
 import { Globe, Check, ChevronDown } from 'lucide-react';
 
 export const LanguageSwitcher = ({ variant = 'dropdown', className = '' }) => {
-  const { language, setLanguage, languages, currentLanguageInfo } = useLanguage();
+  const { language, setLanguage, languages, currentLanguageInfo, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -59,7 +59,7 @@ export const LanguageSwitcher = ({ variant = 'dropdown', className = '' }) => {
         className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-all focus:outline-none"
         aria-expanded={isOpen}
         aria-haspopup="true"
-        title="Change Language"
+        title={t('header.language')}
       >
         <span className="text-sm leading-none">{currentLanguageInfo.flag}</span>
         <span className="font-semibold text-slate-700">{currentLanguageInfo.shortLabel}</span>
@@ -70,7 +70,7 @@ export const LanguageSwitcher = ({ variant = 'dropdown', className = '' }) => {
         <div className="absolute right-0 mt-2 w-44 bg-white border border-[#ebedf2] rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="px-3 py-1.5 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center space-x-1">
             <Globe className="w-3 h-3 text-indigo-500" />
-            <span>Select Language</span>
+            <span>{t('header.language')}</span>
           </div>
 
           <div className="py-1">

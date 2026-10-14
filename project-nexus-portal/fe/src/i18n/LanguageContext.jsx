@@ -22,10 +22,7 @@ export const LanguageProvider = ({ children }) => {
     if (saved && (saved === 'vi' || saved === 'en')) {
       return saved;
     }
-    // Default to Vietnamese if browser is in Vietnamese, or default 'vi'
-    if (typeof navigator !== 'undefined' && navigator.language?.startsWith('en')) {
-      return 'en';
-    }
+    // Default to Vietnamese ('vi') as default system language
     return 'vi';
   });
 
