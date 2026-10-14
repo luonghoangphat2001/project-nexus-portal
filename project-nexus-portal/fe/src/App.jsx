@@ -23,6 +23,7 @@ import { ProgressPage } from './pages/ProgressPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { CouncilsPage } from './pages/CouncilsPage';
 import { AssessmentsPage } from './pages/AssessmentsPage';
+import { ResultsPage } from './pages/ResultsPage';
 
 export const App = () => {
   return (
@@ -61,6 +62,11 @@ export const App = () => {
             <Route path="assessments" element={
               <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_PRINCIPAL', 'ROLE_TEACHER', 'ROLE_COUNCIL']}>
                 <AssessmentsPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="results" element={
+              <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_PRINCIPAL', 'ROLE_USER']}>
+                <ResultsPage />
               </RoleBasedRoute>
             } />
 

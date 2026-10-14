@@ -482,3 +482,21 @@ CREATE TABLE IF NOT EXISTS assessments (
   CONSTRAINT fk_assessment_evaluator FOREIGN KEY (evaluator_id) REFERENCES users(id),
   CONSTRAINT fk_assessment_student FOREIGN KEY (student_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS published_results (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  assignment_id BIGINT NOT NULL,
+  student_id BIGINT NOT NULL,
+  review_score DECIMAL(4,2) NOT NULL,
+  defense_score DECIMAL(4,2) NOT NULL,
+  final_score DECIMAL(4,2) NOT NULL,
+  passed BOOLEAN NOT NULL,
+  published_by BIGINT NOT NULL,
+  published_at DATETIME(6) NOT NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  UNIQUE KEY uk_published_result_student (assignment_id, student_id),
+  CONSTRAINT fk_published_result_assignment FOREIGN KEY (assignment_id) REFERENCES defense_assignments(id),
+  CONSTRAINT fk_published_result_student FOREIGN KEY (student_id) REFERENCES users(id),
+  CONSTRAINT fk_published_result_publisher FOREIGN KEY (published_by) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
