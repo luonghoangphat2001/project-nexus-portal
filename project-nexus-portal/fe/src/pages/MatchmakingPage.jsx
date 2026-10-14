@@ -4,23 +4,16 @@ import {
   UserCheck,
   Plus,
   Send,
-  CheckCircle,
-  XCircle,
-  MessageSquare,
-  Tag,
-  Phone,
-  Mail,
-  GraduationCap,
-  Users,
   Search,
-  X
 } from 'lucide-react';
 import matchmakingService from '../services/matchmakingService';
-import teamService from '../services/teamService';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../i18n/LanguageContext';
+import { PageHeader, StatusBadge, Modal, EmptyState, buttonClass, inputClass, selectClass } from '../components/common/CommonUi';
 
 export const MatchmakingPage = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('feed'); // 'feed' | 'candidates' | 'my-requests'
 
   // Posts State
@@ -126,7 +119,7 @@ export const MatchmakingPage = () => {
       setContactInfo('');
       fetchPosts();
     } catch (err) {
-      alert(err.message || 'Failed to create post');
+      alert(err.message || t('common.error'));
     }
   };
 
@@ -137,66 +130,63 @@ export const MatchmakingPage = () => {
       await matchmakingService.submitJoinRequest(selectedPost.id, {
         message: applyMessage,
       });
-      alert('Application submitted successfully!');
+      alert(t('matchmaking.applySuccess'));
       setApplyModalOpen(false);
       setSelectedPost(null);
       setApplyMessage('');
     } catch (err) {
-      alert(err.message || 'Failed to submit application');
+      alert(err.message || t('common.error'));
     }
   };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Team Matchmaking</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Connect with students in your faculty and cohort to form graduation thesis teams.
-          </p>
-        </div>
-
-        <button
-          onClick={() => setCreatePostModalOpen(true)}
-          className="px-4 py-2 bg-gradient-to-r from-[#da8cff] to-[#9a55ff] hover:opacity-95 text-white font-medium rounded-xl text-sm flex items-center space-x-2 transition-all shadow-xs self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Publish Post</span>
-        </button>
-      </div>
+      <PageHeader
+        title={t('matchmaking.title')}
+        description={t('matchmaking.subtitle')}
+        action={
+          <button
+            onClick={() => setCreatePostModalOpen(true)}
+            className={buttonClass.primary}
+          >
+            <Plus className="w-4 h-4" />
+            <span>{t('matchmaking.publishPost')}</span>
+          </button>
+        }
+      />
 
       {/* Tabs */}
       <div className="flex border-b border-slate-200 space-x-8 text-sm">
         <button
           onClick={() => setActiveTab('feed')}
-          className={`py-3 font-semibold border-b-2 transition-colors ${
+          className={`py-3 font-semibold border-b-2 transition-colors cursor-pointer ${
             activeTab === 'feed'
               ? 'border-[#b66dff] text-[#b66dff]'
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
-          Collaboration Feed
+          {t('matchmaking.tabFeed')}
         </button>
         <button
           onClick={() => setActiveTab('candidates')}
-          className={`py-3 font-semibold border-b-2 transition-colors ${
+          className={`py-3 font-semibold border-b-2 transition-colors cursor-pointer ${
             activeTab === 'candidates'
               ? 'border-[#b66dff] text-[#b66dff]'
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
-          Student Candidates
+          {t('matchmaking.tabCandidates')}
         </button>
         <button
           onClick={() => setActiveTab('my-requests')}
-          className={`py-3 font-semibold border-b-2 transition-colors ${
+          className={`py-3 font-semibold border-b-2 transition-colors cursor-pointer ${
             activeTab === 'my-requests'
               ? 'border-[#b66dff] text-[#b66dff]'
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
-          My Applications
+          {t('matchmaking.tabMyRequests')}
         </button>
       </div>
 
@@ -204,16 +194,16 @@ export const MatchmakingPage = () => {
       {activeTab === 'feed' && (
         <div className="space-y-4">
           {/* Filter Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-[#ebedf2] flex flex-col sm:flex-row gap-3">
+          <div className="bg-white p-4 rounded-2xl border border-[#ebedf2] flex flex-col sm:flex-row gap-3 shadow-xs">
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <input
                 type="text"
-                placeholder="Search posts by skill, keywords..."
+                placeholder={t('matchmaking.searchPlaceholder')}
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && fetchPosts()}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#b66dff]"
+                className={`${inputClass} pl-9`}
               />
             </div>
 
@@ -221,31 +211,31 @@ export const MatchmakingPage = () => {
               <select
                 value={postTypeFilter}
                 onChange={(e) => setPostTypeFilter(e.target.value)}
-                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:border-[#b66dff]"
+                className={selectClass}
               >
-                <option value="">All Types</option>
-                <option value="STUDENT_LOOKING_FOR_TEAM">Student Seeking Team</option>
-                <option value="TEAM_LOOKING_FOR_MEMBER">Team Seeking Member</option>
+                <option value="">{t('matchmaking.allTypes')}</option>
+                <option value="STUDENT_LOOKING_FOR_TEAM">{t('matchmaking.studentLooking')}</option>
+                <option value="TEAM_LOOKING_FOR_MEMBER">{t('matchmaking.teamLooking')}</option>
               </select>
 
               <button
                 onClick={fetchPosts}
-                className="px-4 py-2 bg-slate-800 text-white rounded-xl text-sm font-medium hover:bg-slate-900"
+                className={buttonClass.secondary}
               >
-                Filter
+                {t('matchmaking.filterBtn')}
               </button>
             </div>
           </div>
 
           {/* Posts List */}
           {loadingPosts ? (
-            <div className="py-12 text-center text-slate-400">Loading matchmaking posts...</div>
+            <div className="py-12 text-center text-slate-400">{t('common.loading')}</div>
           ) : posts.length === 0 ? (
-            <div className="py-12 bg-white rounded-2xl border border-[#ebedf2] text-center">
-              <Compass className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-              <p className="text-slate-600 font-medium">No posts found</p>
-              <p className="text-xs text-slate-400 mt-1">Be the first to publish a collaboration post!</p>
-            </div>
+            <EmptyState
+              icon={Compass}
+              title={t('matchmaking.noPosts')}
+              description={t('matchmaking.noPostsSub')}
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {posts.map((post) => (
@@ -255,15 +245,7 @@ export const MatchmakingPage = () => {
                 >
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <span
-                        className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
-                          post.postType === 'TEAM_LOOKING_FOR_MEMBER'
-                            ? 'bg-indigo-50 text-indigo-700'
-                            : 'bg-emerald-50 text-emerald-700'
-                        }`}
-                      >
-                        {post.postType === 'TEAM_LOOKING_FOR_MEMBER' ? 'Team Seeking Member' : 'Student Seeking Team'}
-                      </span>
+                      <StatusBadge value={post.postType} type="postType" />
 
                       <span className="text-[11px] text-slate-400 font-mono">
                         {post.createdAt?.replace('T', ' ').substring(0, 10)}
@@ -289,14 +271,16 @@ export const MatchmakingPage = () => {
 
                     {/* Author & Meta */}
                     <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                      <span>Author: {post.authorName}</span>
-                      <span>Slots: {post.slotsNeeded} open</span>
+                      <span>{t('matchmaking.author')}: {post.authorName}</span>
+                      <span>
+                        {t('matchmaking.slots')}: {post.slotsNeeded} {t('matchmaking.slotsOpen')}
+                      </span>
                     </div>
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                     <span className="text-xs text-slate-400 font-mono truncate max-w-[200px]">
-                      Contact: {post.contactInfo}
+                      {t('matchmaking.contact')}: {post.contactInfo}
                     </span>
 
                     {post.authorId !== user?.id && post.status === 'OPEN' && (
@@ -305,10 +289,10 @@ export const MatchmakingPage = () => {
                           setSelectedPost(post);
                           setApplyModalOpen(true);
                         }}
-                        className="px-3 py-1.5 bg-gradient-to-r from-[#da8cff] to-[#9a55ff] hover:opacity-95 text-white rounded-xl text-xs font-semibold flex items-center space-x-1 shadow-xs"
+                        className="px-3 py-1.5 bg-gradient-to-r from-[#da8cff] to-[#9a55ff] hover:opacity-95 text-white rounded-xl text-xs font-semibold flex items-center space-x-1 shadow-xs cursor-pointer"
                       >
                         <Send className="w-3 h-3" />
-                        <span>Apply</span>
+                        <span>{t('matchmaking.applyBtn')}</span>
                       </button>
                     )}
                   </div>
@@ -323,12 +307,12 @@ export const MatchmakingPage = () => {
       {activeTab === 'candidates' && (
         <div className="space-y-4">
           {loadingCandidates ? (
-            <div className="py-12 text-center text-slate-400">Loading candidates...</div>
+            <div className="py-12 text-center text-slate-400">{t('common.loading')}</div>
           ) : candidates.length === 0 ? (
-            <div className="py-12 bg-white rounded-2xl border border-[#ebedf2] text-center">
-              <UserCheck className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-              <p className="text-slate-600 font-medium">No candidates currently listed</p>
-            </div>
+            <EmptyState
+              icon={UserCheck}
+              title={t('matchmaking.noCandidates')}
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {candidates.map((cand) => (
@@ -349,10 +333,10 @@ export const MatchmakingPage = () => {
 
                     <div className="text-xs text-slate-500 space-y-1 mb-3">
                       <p>
-                        <span className="font-semibold text-slate-600">Major:</span> {cand.major || 'Software Eng.'}
+                        <span className="font-semibold text-slate-600">{t('matchmaking.major')}:</span> {cand.major || 'Software Eng.'}
                       </p>
                       <p>
-                        <span className="font-semibold text-slate-600">Cohort:</span> {cand.cohort || 'K21'}
+                        <span className="font-semibold text-slate-600">{t('matchmaking.cohort')}:</span> {cand.cohort || 'K21'}
                       </p>
                       {cand.goals && (
                         <p className="italic text-slate-600 line-clamp-2 mt-1">"{cand.goals}"</p>
@@ -387,17 +371,15 @@ export const MatchmakingPage = () => {
       {activeTab === 'my-requests' && (
         <div className="bg-white rounded-2xl border border-[#ebedf2] overflow-hidden shadow-xs">
           <div className="p-5 border-b border-slate-100">
-            <h3 className="font-bold text-slate-800 text-base">My Submitted Join Requests</h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Applications you sent to collaborate with teams or peers
-            </p>
+            <h3 className="font-bold text-slate-800 text-base">{t('matchmaking.myRequestsTitle')}</h3>
+            <p className="text-xs text-slate-400 mt-0.5">{t('matchmaking.myRequestsSub')}</p>
           </div>
 
           {loadingRequests ? (
-            <div className="p-8 text-center text-slate-400">Loading your applications...</div>
+            <div className="p-8 text-center text-slate-400">{t('common.loading')}</div>
           ) : myRequests.length === 0 ? (
             <div className="p-8 text-center text-slate-400 text-sm">
-              You haven't submitted any applications yet.
+              {t('matchmaking.noRequests')}
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
@@ -406,23 +388,11 @@ export const MatchmakingPage = () => {
                   <div>
                     <div className="flex items-center space-x-2">
                       <span className="font-bold text-slate-800 text-sm">{req.postTitle}</span>
-                      <span
-                        className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
-                          req.status === 'ACCEPTED'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : req.status === 'REJECTED'
-                            ? 'bg-rose-50 text-rose-700'
-                            : req.status === 'CANCELLED'
-                            ? 'bg-slate-100 text-slate-500'
-                            : 'bg-amber-50 text-amber-700'
-                        }`}
-                      >
-                        {req.status}
-                      </span>
+                      <StatusBadge value={req.status} type="status" />
                     </div>
                     {req.message && <p className="text-xs text-slate-500 mt-1 italic">"{req.message}"</p>}
                     <p className="text-[11px] text-slate-400 font-mono mt-1">
-                      Submitted: {req.createdAt?.replace('T', ' ').substring(0, 16)}
+                      {t('matchmaking.submitted')}: {req.createdAt?.replace('T', ' ').substring(0, 16)}
                     </p>
                   </div>
                 </div>
@@ -433,163 +403,150 @@ export const MatchmakingPage = () => {
       )}
 
       {/* Publish Post Modal */}
-      {createPostModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-slate-800">Publish Collaboration Post</h3>
-              <button onClick={() => setCreatePostModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreatePost} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Post Type</label>
-                <select
-                  value={postType}
-                  onChange={(e) => setPostType(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#b66dff]"
-                >
-                  <option value="STUDENT_LOOKING_FOR_TEAM">Student Seeking Team</option>
-                  <option value="TEAM_LOOKING_FOR_MEMBER">Team Seeking Members</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Post Title</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Looking for frontend React developer for AI capstone"
-                  value={postTitle}
-                  onChange={(e) => setPostTitle(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#b66dff]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Objectives & Motivation</label>
-                <textarea
-                  rows={3}
-                  required
-                  placeholder="Describe your project goal, direction, or team expectation..."
-                  value={postGoals}
-                  onChange={(e) => setPostGoals(e.target.value)}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#b66dff]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Required Skills (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  placeholder="React, Spring Boot, Python, Docker"
-                  value={skillsInput}
-                  onChange={(e) => setSkillsInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#b66dff]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Slots Needed</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="3"
-                    value={slotsNeeded}
-                    onChange={(e) => setSlotsNeeded(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#b66dff]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contact Info</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Zalo / Email / Discord"
-                    value={contactInfo}
-                    onChange={(e) => setContactInfo(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#b66dff]"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setCreatePostModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-gradient-to-r from-[#da8cff] to-[#9a55ff] hover:opacity-95 text-white rounded-xl text-sm font-semibold shadow-xs"
-                >
-                  Publish Post
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={createPostModalOpen}
+        onClose={() => setCreatePostModalOpen(false)}
+        title={t('matchmaking.modalCreateTitle')}
+        maxWidth="max-w-lg"
+      >
+        <form onSubmit={handleCreatePost} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">{t('matchmaking.postType')}</label>
+            <select
+              value={postType}
+              onChange={(e) => setPostType(e.target.value)}
+              className={selectClass}
+            >
+              <option value="STUDENT_LOOKING_FOR_TEAM">{t('matchmaking.studentLooking')}</option>
+              <option value="TEAM_LOOKING_FOR_MEMBER">{t('matchmaking.teamLooking')}</option>
+            </select>
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">{t('matchmaking.postTitle')}</label>
+            <input
+              type="text"
+              required
+              placeholder={t('matchmaking.placeholderTitle')}
+              value={postTitle}
+              onChange={(e) => setPostTitle(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">{t('matchmaking.objectives')}</label>
+            <textarea
+              rows={3}
+              required
+              placeholder={t('matchmaking.placeholderObjectives')}
+              value={postGoals}
+              onChange={(e) => setPostGoals(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">
+              {t('matchmaking.requiredSkills')}
+            </label>
+            <input
+              type="text"
+              placeholder="React, Spring Boot, Python, Docker"
+              value={skillsInput}
+              onChange={(e) => setSkillsInput(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">{t('matchmaking.slotsNeeded')}</label>
+              <input
+                type="number"
+                min="1"
+                max="3"
+                value={slotsNeeded}
+                onChange={(e) => setSlotsNeeded(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">{t('matchmaking.contactInfo')}</label>
+              <input
+                type="text"
+                required
+                placeholder={t('matchmaking.placeholderContact')}
+                value={contactInfo}
+                onChange={(e) => setContactInfo(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          <div className="pt-2 flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={() => setCreatePostModalOpen(false)}
+              className={buttonClass.secondary}
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              type="submit"
+              className={buttonClass.primary}
+            >
+              {t('matchmaking.publishPost')}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Apply to Post Modal */}
-      {applyModalOpen && selectedPost && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-slate-800">Apply to Collaboration Post</h3>
-              <button onClick={() => setApplyModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleApplySubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Target Post</label>
-                <p className="text-sm font-semibold text-slate-800 p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                  {selectedPost.title}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Introduction / Skills Pitch
-                </label>
-                <textarea
-                  rows={4}
-                  required
-                  placeholder="Introduce yourself, key strengths, experience with technologies..."
-                  value={applyMessage}
-                  onChange={(e) => setApplyMessage(e.target.value)}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#b66dff]"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setApplyModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-gradient-to-r from-[#da8cff] to-[#9a55ff] hover:opacity-95 text-white rounded-xl text-sm font-semibold shadow-xs"
-                >
-                  Submit Application
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={applyModalOpen && !!selectedPost}
+        onClose={() => setApplyModalOpen(false)}
+        title={t('matchmaking.modalApplyTitle')}
+      >
+        <form onSubmit={handleApplySubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">{t('matchmaking.targetPost')}</label>
+            <p className="text-sm font-semibold text-slate-800 p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+              {selectedPost?.title}
+            </p>
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">
+              {t('matchmaking.introPitch')}
+            </label>
+            <textarea
+              rows={4}
+              required
+              placeholder={t('matchmaking.placeholderPitch')}
+              value={applyMessage}
+              onChange={(e) => setApplyMessage(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div className="pt-2 flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={() => setApplyModalOpen(false)}
+              className={buttonClass.secondary}
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              type="submit"
+              className={buttonClass.primary}
+            >
+              {t('matchmaking.submitApplication')}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

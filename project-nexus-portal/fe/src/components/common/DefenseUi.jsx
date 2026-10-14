@@ -54,16 +54,20 @@ const labelKeyMap = {
   SUBMITTED: 'defense.submitted',
 };
 
-export function Badge({ value }) {
-  const { t } = useTranslation();
-  const displayText = labelKeyMap[value] ? t(labelKeyMap[value]) : (labels[value] || value);
+export {
+  PageHeader,
+  StatusBadge,
+  Pagination,
+  FilterBar,
+  Modal,
+  EmptyState,
+} from './CommonUi';
 
-  return <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
-    value === 'CANCELLED' ? 'text-rose-700 bg-rose-50' : ['COMPLETED', 'SUBMITTED'].includes(value)
-      ? 'text-emerald-700 bg-emerald-50' : 'text-indigo-700 bg-indigo-50'
-  }`}>{displayText}</span>;
+export function Badge({ value }) {
+  return <StatusBadge value={value} />;
 }
 
 export function Empty({ children }) {
   return <p className="py-6 text-sm text-center text-slate-500">{children}</p>;
 }
+

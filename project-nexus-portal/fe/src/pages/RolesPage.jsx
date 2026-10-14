@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { roleService } from '../services/roleService';
+import { useTranslation } from '../i18n/LanguageContext';
 import {
   ShieldCheck,
-  Lock,
   Check,
   X,
   Users,
@@ -13,8 +13,10 @@ import {
   RefreshCw,
   Sparkles
 } from 'lucide-react';
+import { StatusBadge } from '../components/common/CommonUi';
 
 export const RolesPage = () => {
+  const { t } = useTranslation();
   const [rolesData, setRolesData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,8 +41,8 @@ export const RolesPage = () => {
   const rolesConfig = [
     {
       name: 'ROLE_ADMIN',
-      displayName: 'System Administrator',
-      description: 'Full authority to configure system parameters, oversee user directories, inspect security audit logs, and manage organizational structures.',
+      displayName: t('enums.role.ROLE_ADMIN'),
+      description: t('rolesPage.roleAdminDesc'),
       permissions: [
         'Full management of user accounts and role assignments',
         'Academic master data administration (Faculties, Departments, Majors, Cohorts)',
@@ -48,13 +50,12 @@ export const RolesPage = () => {
         'Inspect and export security audit trail logs',
         'Lock/unlock user accounts and perform password resets',
       ],
-      badgeStyle: 'bg-red-100 text-red-800 border-red-200',
-      icon: <ShieldAlert className="w-5 h-5 text-red-600" />,
+      icon: <ShieldAlert className="w-5 h-5 text-rose-600" />,
     },
     {
       name: 'ROLE_PRINCIPAL',
-      displayName: 'Dean / Department Head',
-      description: 'Approves capstone graduation topics, manages registration periods, oversees department faculty instructors, and reviews academic milestones.',
+      displayName: t('enums.role.ROLE_PRINCIPAL'),
+      description: t('rolesPage.rolePrincipalDesc'),
       permissions: [
         'Review and approve departmental capstone topics',
         'Schedule and manage topic registration periods',
@@ -62,38 +63,35 @@ export const RolesPage = () => {
         'Access departmental faculty instructor lists',
         'Generate academic summary and statistical reports',
       ],
-      badgeStyle: 'bg-amber-100 text-amber-800 border-amber-200',
       icon: <Award className="w-5 h-5 text-amber-600" />,
     },
     {
       name: 'ROLE_TEACHER',
-      displayName: 'Lecturer & Thesis Advisor',
-      description: 'Proposes capstone topics, appoints co-advisors, reviews student group registration applications, and mentors thesis teams.',
+      displayName: t('enums.role.ROLE_TEACHER'),
+      description: t('rolesPage.roleTeacherDesc'),
       permissions: [
         'Propose and update research topics and requirements',
         'Assign secondary co-advisors to supervised topics',
         'Approve or decline student team topic applications',
         'Monitor milestone deliverables and guide capstone teams',
       ],
-      badgeStyle: 'bg-blue-100 text-blue-800 border-blue-200',
       icon: <BookOpen className="w-5 h-5 text-blue-600" />,
     },
     {
       name: 'ROLE_COUNCIL',
-      displayName: 'Evaluation Council',
-      description: 'Reviews thesis submissions, scores deliverables, conducts defense examinations, and submits final capstone defense remarks.',
+      displayName: t('enums.role.ROLE_COUNCIL'),
+      description: t('rolesPage.roleCouncilDesc'),
       permissions: [
         'Access and inspect assigned capstone project deliverables',
         'Evaluate defense presentations and project validity',
         'Submit official defense review scores and assessment criteria',
       ],
-      badgeStyle: 'bg-purple-100 text-purple-800 border-purple-200',
-      icon: <Sparkles className="w-5 h-5 text-purple-600" />,
+      icon: <Sparkles className="w-5 h-5 text-[#b66dff]" />,
     },
     {
       name: 'ROLE_USER',
-      displayName: 'Student / Candidate',
-      description: 'Searches and compares capstone topics, creates student teams (1-3 members), applies for registrations, and posts on matchmaking boards.',
+      displayName: t('enums.role.ROLE_USER'),
+      description: t('rolesPage.roleUserDesc'),
       permissions: [
         'Browse, filter, and compare up to 3 capstone topics',
         'Form and manage student teams (1 to 3 members)',
@@ -101,21 +99,20 @@ export const RolesPage = () => {
         'Apply for capstone topics during active registration periods',
         'Publish and discover teammate requests on matchmaking board',
       ],
-      badgeStyle: 'bg-emerald-100 text-emerald-800 border-emerald-200',
       icon: <Users className="w-5 h-5 text-emerald-600" />,
     },
   ];
 
   // Permissions Matrix
   const matrixFeatures = [
-    { title: 'User Directory & Access Control (RBAC)', admin: true, principal: false, teacher: false, council: false, student: false },
-    { title: 'Academic Master Data (Faculties & Depts)', admin: true, principal: true, teacher: false, council: false, student: false },
-    { title: 'System Parameters & Security Audit Logs', admin: true, principal: false, teacher: false, council: false, student: false },
-    { title: 'Registration Periods & Topic Approval', admin: true, principal: true, teacher: false, council: false, student: false },
-    { title: 'Capstone Topic Proposing & Advising', admin: true, principal: true, teacher: true, council: false, student: false },
-    { title: 'Council Evaluation & Thesis Defense Scoring', admin: true, principal: true, teacher: false, council: true, student: false },
-    { title: 'Team Formation & Topic Application', admin: false, principal: false, teacher: false, council: false, student: true },
-    { title: 'Matchmaking Board & Teammate Search', admin: false, principal: false, teacher: false, council: false, student: true },
+    { title: t('rolesPage.features.rbac'), admin: true, principal: false, teacher: false, council: false, student: false },
+    { title: t('rolesPage.features.academic'), admin: true, principal: true, teacher: false, council: false, student: false },
+    { title: t('rolesPage.features.security'), admin: true, principal: false, teacher: false, council: false, student: false },
+    { title: t('rolesPage.features.periods'), admin: true, principal: true, teacher: false, council: false, student: false },
+    { title: t('rolesPage.features.topics'), admin: true, principal: true, teacher: true, council: false, student: false },
+    { title: t('rolesPage.features.councils'), admin: true, principal: true, teacher: false, council: true, student: false },
+    { title: t('rolesPage.features.teams'), admin: false, principal: false, teacher: false, council: false, student: true },
+    { title: t('rolesPage.features.matchmaking'), admin: false, principal: false, teacher: false, council: false, student: true },
   ];
 
   const getUserCount = (roleName) => {
@@ -124,25 +121,25 @@ export const RolesPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl shadow-xs border border-slate-200">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            <ShieldCheck className="w-7 h-7 text-indigo-600" />
-            Roles & Permissions Matrix (RBAC)
+            <ShieldCheck className="w-7 h-7 text-[#b66dff]" />
+            {t('rolesPage.title')}
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            System privileges, data access boundaries, and assigned user counts across system roles
+            {t('rolesPage.subtitle')}
           </p>
         </div>
 
         <button
           onClick={fetchRoles}
-          className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
+          className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          {t('rolesPage.refresh')}
         </button>
       </div>
 
@@ -153,19 +150,17 @@ export const RolesPage = () => {
           return (
             <div
               key={role.name}
-              className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition"
+              className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col justify-between hover:shadow-md transition"
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     {role.icon}
-                    <span className={`px-2.5 py-1 text-xs font-bold rounded-full border ${role.badgeStyle}`}>
-                      {role.name}
-                    </span>
+                    <StatusBadge value={role.name} type="role" />
                   </div>
-                  <span className="text-xs font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 flex items-center gap-1">
-                    <Users className="w-3.5 h-3.5 text-indigo-500" />
-                    {userCount} users
+                  <span className="text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 flex items-center gap-1 font-mono">
+                    <Users className="w-3.5 h-3.5 text-[#b66dff]" />
+                    {userCount} {t('rolesPage.usersCount')}
                   </span>
                 </div>
 
@@ -173,7 +168,9 @@ export const RolesPage = () => {
                 <p className="text-xs text-slate-500 mb-4 leading-relaxed">{role.description}</p>
 
                 <div className="border-t border-slate-100 pt-3 space-y-2">
-                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Granted Privileges:</p>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    {t('rolesPage.grantedPrivileges')}
+                  </p>
                   <ul className="space-y-1.5">
                     {role.permissions.map((perm, idx) => (
                       <li key={idx} className="flex items-start gap-2 text-xs text-slate-600">
@@ -190,22 +187,22 @@ export const RolesPage = () => {
       </div>
 
       {/* Permissions Matrix */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+      <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 space-y-4">
         <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-          <Settings className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-lg font-bold text-slate-800">Permissions Matrix</h2>
+          <Settings className="w-5 h-5 text-[#b66dff]" />
+          <h2 className="text-lg font-bold text-slate-800">{t('rolesPage.matrixTitle')}</h2>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 text-xs font-bold text-slate-500 uppercase">
-                <th className="py-3 px-4">System Feature</th>
-                <th className="py-3 px-4 text-center">Admin</th>
-                <th className="py-3 px-4 text-center">Dean / Dept Head</th>
-                <th className="py-3 px-4 text-center">Teacher</th>
-                <th className="py-3 px-4 text-center">Council</th>
-                <th className="py-3 px-4 text-center">Student</th>
+              <tr className="border-b border-slate-200 text-xs font-bold text-slate-500 uppercase">
+                <th className="py-3 px-4">{t('rolesPage.colFeature')}</th>
+                <th className="py-3 px-4 text-center">{t('rolesPage.colAdmin')}</th>
+                <th className="py-3 px-4 text-center">{t('rolesPage.colPrincipal')}</th>
+                <th className="py-3 px-4 text-center">{t('rolesPage.colTeacher')}</th>
+                <th className="py-3 px-4 text-center">{t('rolesPage.colCouncil')}</th>
+                <th className="py-3 px-4 text-center">{t('rolesPage.colStudent')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">

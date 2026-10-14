@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { auditLogService } from '../services/auditLogService';
 import { userService } from '../services/userService';
+import { useTranslation } from '../i18n/LanguageContext';
 import {
   ShieldAlert,
   ShieldCheck,
@@ -12,8 +13,10 @@ import {
   AlertTriangle,
   FileSpreadsheet
 } from 'lucide-react';
+import { StatusBadge, Pagination, buttonClass, inputClass, selectClass } from '../components/common/CommonUi';
 
 export const SecurityPage = () => {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -66,7 +69,7 @@ export const SecurityPage = () => {
         setPage(targetPage);
       }
     } catch (err) {
-      setError(err.message || 'Failed to load audit logs');
+      setError(err.message || t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -90,9 +93,9 @@ export const SecurityPage = () => {
         action: actionFilter,
         status: statusFilter,
       });
-      showToast('Audit logs exported to CSV successfully!');
+      showToast(t('security.exportAuditSuccess'));
     } catch (err) {
-      setError(err.message || 'Failed to export audit logs');
+      setError(err.message || t('common.error'));
     } finally {
       setExportLoading(false);
     }
@@ -101,9 +104,9 @@ export const SecurityPage = () => {
   const handleExportUsers = async () => {
     try {
       await userService.exportUsers();
-      showToast('User list CSV downloaded successfully!');
+      showToast(t('security.exportUsersSuccess'));
     } catch (err) {
-      setError(err.message || 'Failed to export user list');
+      setError(err.message || t('common.error'));
     }
   };
 
@@ -116,16 +119,16 @@ export const SecurityPage = () => {
       return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">LOGIN FAILED</span>;
     }
     if (action.includes('PASSWORD')) {
-      return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">PASSWORD CHANGE/RESET</span>;
+      return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">PASSWORD</span>;
     }
     if (action.includes('CREATE')) {
-      return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">RECORD CREATED</span>;
+      return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">CREATE</span>;
     }
     if (action.includes('DELETE')) {
-      return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">RECORD DELETED</span>;
+      return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">DELETE</span>;
     }
     if (action.includes('STATUS')) {
-      return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">STATUS UPDATED</span>;
+      return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">STATUS</span>;
     }
     return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800 font-mono">{action}</span>;
   };
@@ -134,43 +137,43 @@ export const SecurityPage = () => {
   const successLogins = logs.filter((l) => l.action === 'AUTH_LOGIN_SUCCESS').length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl shadow-xs border border-slate-200">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <ShieldAlert className="w-7 h-7 text-indigo-600" />
-            Security & Audit Logs
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2 tracking-tight">
+            <ShieldAlert className="w-7 h-7 text-[#b66dff]" />
+            {t('security.title')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Comprehensive audit trail of authentication events, data mutations, role changes, and secure exports
+            {t('security.subtitle')}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={() => fetchLogs(page)}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            {t('security.refresh')}
           </button>
 
           <button
             onClick={handleExportUsers}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-            Export Users CSV
+            {t('security.exportUsersCsv')}
           </button>
 
           <button
             onClick={handleExportAuditLogs}
             disabled={exportLoading}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition disabled:opacity-50"
+            className={buttonClass.primary}
           >
             <Download className="w-3.5 h-3.5" />
-            {exportLoading ? 'Exporting...' : 'Export Audit CSV'}
+            <span>{exportLoading ? t('security.exporting') : t('security.exportAuditCsv')}</span>
           </button>
         </div>
       </div>
@@ -192,49 +195,49 @@ export const SecurityPage = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+        <div className="bg-white p-5 rounded-2xl shadow-xs border border-slate-200 flex items-center gap-4">
+          <div className="p-3 bg-brand-50 text-[#b66dff] rounded-xl">
             <Activity className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Recorded Events</p>
-            <p className="text-2xl font-bold text-slate-800">{totalElements}</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('security.totalEvents')}</p>
+            <p className="text-2xl font-bold text-slate-800 font-mono">{totalElements}</p>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+        <div className="bg-white p-5 rounded-2xl shadow-xs border border-slate-200 flex items-center gap-4">
           <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Successful Logins (This Page)</p>
-            <p className="text-2xl font-bold text-emerald-600">{successLogins}</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('security.successfulLogins')}</p>
+            <p className="text-2xl font-bold text-emerald-600 font-mono">{successLogins}</p>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+        <div className="bg-white p-5 rounded-2xl shadow-xs border border-slate-200 flex items-center gap-4">
           <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
             <ShieldAlert className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Security Warnings / Failures</p>
-            <p className="text-2xl font-bold text-rose-600">{failedLogins}</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('security.securityWarnings')}</p>
+            <p className="text-2xl font-bold text-rose-600 font-mono">{failedLogins}</p>
           </div>
         </div>
       </div>
 
       {/* Filters & Audit Logs Table */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+      <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 space-y-4">
         <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row items-center justify-between gap-3">
           {/* Search username */}
           <div className="relative flex-1 w-full md:max-w-md">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
             <input
               type="text"
-              placeholder="Search by actor username..."
+              placeholder={t('security.searchActorPlaceholder')}
               value={usernameFilter}
               onChange={(e) => setUsernameFilter(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className={`${inputClass} pl-9`}
             />
           </div>
 
@@ -243,9 +246,9 @@ export const SecurityPage = () => {
             <select
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
-              className="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none"
+              className={selectClass}
             >
-              <option value="ALL">All Actions</option>
+              <option value="ALL">{t('security.allActions')}</option>
               {distinctActions.map((act) => (
                 <option key={act} value={act}>{act}</option>
               ))}
@@ -255,18 +258,18 @@ export const SecurityPage = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none"
+              className={selectClass}
             >
-              <option value="ALL">All Statuses</option>
+              <option value="ALL">{t('security.allStatuses')}</option>
               <option value="SUCCESS">SUCCESS</option>
               <option value="FAILED">FAILED</option>
             </select>
 
             <button
               type="submit"
-              className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl"
+              className={buttonClass.secondary}
             >
-              Search
+              {t('security.searchBtn')}
             </button>
           </div>
         </form>
@@ -275,28 +278,28 @@ export const SecurityPage = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                <th className="py-3 px-4">Timestamp</th>
-                <th className="py-3 px-4">Actor</th>
-                <th className="py-3 px-4">Action</th>
-                <th className="py-3 px-4">Resource</th>
-                <th className="py-3 px-4">Details</th>
-                <th className="py-3 px-4">IP Address</th>
-                <th className="py-3 px-4 text-center">Status</th>
+              <tr className="border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <th className="py-3 px-4">{t('security.colTimestamp')}</th>
+                <th className="py-3 px-4">{t('security.colActor')}</th>
+                <th className="py-3 px-4">{t('security.colAction')}</th>
+                <th className="py-3 px-4">{t('security.colResource')}</th>
+                <th className="py-3 px-4">{t('security.colDetails')}</th>
+                <th className="py-3 px-4">{t('security.colIp')}</th>
+                <th className="py-3 px-4 text-center">{t('security.colStatus')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {loading ? (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-slate-400">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500" />
-                    Loading audit trail records...
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#b66dff]" />
+                    {t('common.loading')}
                   </td>
                 </tr>
               ) : logs.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-slate-400">
-                    No audit log entries match the filter criteria
+                    {t('security.noLogs')}
                   </td>
                 </tr>
               ) : (
@@ -327,15 +330,7 @@ export const SecurityPage = () => {
                     </td>
 
                     <td className="py-3 px-4 text-center">
-                      {log.status === 'SUCCESS' ? (
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          SUCCESS
-                        </span>
-                      ) : (
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                          FAILED
-                        </span>
-                      )}
+                      <StatusBadge value={log.status === 'SUCCESS' ? 'SUCCESS' : 'FAILED'} type="status" />
                     </td>
                   </tr>
                 ))
@@ -345,28 +340,12 @@ export const SecurityPage = () => {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs text-slate-500">
-          <span>
-            Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong> ({totalElements} records)
-          </span>
-
-          <div className="flex items-center gap-2">
-            <button
-              disabled={page <= 0}
-              onClick={() => fetchLogs(page - 1)}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 transition font-medium"
-            >
-              Previous
-            </button>
-            <button
-              disabled={page + 1 >= totalPages}
-              onClick={() => fetchLogs(page + 1)}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 transition font-medium"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={(p) => fetchLogs(p)}
+          loading={loading}
+        />
       </div>
     </div>
   );

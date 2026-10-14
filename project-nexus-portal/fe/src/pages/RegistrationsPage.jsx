@@ -4,18 +4,25 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  FileText,
   AlertTriangle,
-  Send,
-  MessageSquare,
-  Users
+  Users,
 } from 'lucide-react';
 import registrationService from '../services/registrationService';
 import topicService from '../services/topicService';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../i18n/LanguageContext';
+import {
+  PageHeader,
+  StatusBadge,
+  Modal,
+  EmptyState,
+  inputClass,
+  selectClass,
+} from '../components/common/CommonUi';
 
 export const RegistrationsPage = () => {
   const { user, hasRole } = useAuth();
+  const { t } = useTranslation();
   const isLecturerOrAdmin = hasRole('ROLE_ADMIN') || hasRole('ROLE_TEACHER') || hasRole('ROLE_PRINCIPAL');
 
   const [activePeriods, setActivePeriods] = useState([]);
@@ -71,7 +78,7 @@ export const RegistrationsPage = () => {
   };
 
   const handleCancelRegistration = async (id) => {
-    if (!window.confirm('Are you sure you want to cancel this registration?')) return;
+    if (!window.confirm(t('teams.leaveConfirm'))) return;
     try {
       await registrationService.cancelRegistration(id);
       loadData();
@@ -100,56 +107,56 @@ export const RegistrationsPage = () => {
   };
 
   if (loading) {
-    return <div className="py-16 text-center text-slate-400">Loading registrations...</div>;
+    return <div className="py-16 text-center text-slate-400 font-medium">{t('common.loading')}</div>;
   }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Topic Registrations</h1>
-        <p className="text-sm text-slate-500 mt-0.5">
-          Track official registration periods, monitor approval decisions, and conduct advisor reviews.
-        </p>
-      </div>
+      <PageHeader
+        title={t('registrations.title')}
+        description={t('registrations.desc')}
+      />
 
       {/* Active Periods Banner */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {activePeriods.map((period) => (
-          <div key={period.id} className="bg-white p-5 rounded-2xl border border-[#ebedf2] shadow-xs flex items-start space-x-3.5">
-            <div className="p-2.5 rounded-xl bg-[#f8f2ff] border border-[#e1c2ff] text-[#b66dff]">
-              <Calendar className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="font-bold text-slate-800 text-sm">{period.name}</h3>
-                <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-700">
-                  {period.status}
-                </span>
+      {activePeriods.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {activePeriods.map((period) => (
+            <div
+              key={period.id}
+              className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-start space-x-3.5"
+            >
+              <div className="p-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600">
+                <Calendar className="w-5 h-5" />
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Academic Year {period.academicYear} • Semester {period.semester}
-              </p>
-              <div className="flex items-center space-x-3 mt-2 text-xs text-slate-500 font-mono">
-                <span>Start: {period.startDate?.split('T')[0]}</span>
-                <span>•</span>
-                <span>Deadline: {period.submissionDeadline?.split('T')[0]}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center space-x-2">
+                  <h3 className="font-bold text-slate-800 text-sm truncate">{period.name}</h3>
+                  <StatusBadge value={period.status} />
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {period.academicYear} • {t('periods.semesterLabel', { num: period.semester })}
+                </p>
+                <div className="flex items-center space-x-3 mt-2 text-xs text-slate-500 font-mono">
+                  <span>{t('periods.regStarts')}: {period.startDate?.split('T')[0]}</span>
+                  <span>•</span>
+                  <span>{t('periods.submissionDeadline')}: {period.submissionDeadline?.split('T')[0]}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Student: My Team's Registrations */}
-      <div className="bg-white rounded-2xl border border-[#ebedf2] overflow-hidden shadow-xs">
+      <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
         <div className="p-5 border-b border-slate-100">
-          <h2 className="font-bold text-slate-800 text-base">My Team Submissions</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Formal registration proposals submitted by your team</p>
+          <h2 className="font-bold text-slate-800 text-base">{t('registrations.myTeamRegistrations')}</h2>
         </div>
 
         {teamRegistrations.length === 0 ? (
           <div className="p-8 text-center text-slate-400 text-sm">
-            Your team has not submitted any topic registrations yet.
+            {t('registrations.noTeamRegsFound')}
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -158,38 +165,29 @@ export const RegistrationsPage = () => {
                 <div>
                   <div className="flex items-center space-x-2">
                     <span className="font-semibold text-slate-800 text-sm">{reg.topicTitle}</span>
-                    <span
-                      className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
-                        reg.status === 'APPROVED'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : reg.status === 'REJECTED'
-                          ? 'bg-rose-50 text-rose-700'
-                          : 'bg-amber-50 text-amber-700'
-                      }`}
-                    >
-                      {reg.status}
-                    </span>
+                    <StatusBadge value={reg.status} />
                   </div>
 
                   {reg.feedback && (
                     <div className="mt-2 p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-600">
-                      <span className="font-semibold text-slate-700">Advisor Note: </span>
+                      <span className="font-semibold text-slate-700">{t('registrations.feedback')}: </span>
                       {reg.feedback}
                     </div>
                   )}
 
                   <div className="flex items-center space-x-3 mt-2 text-xs text-slate-400 font-mono">
-                    <span>Registered: {reg.registeredAt?.replace('T', ' ').substring(0, 16)}</span>
-                    {reg.reviewedByLecturerName && <span>Reviewed by: {reg.reviewedByLecturerName}</span>}
+                    <span>{t('registrations.registeredAt')}: {reg.registeredAt?.replace('T', ' ').substring(0, 16)}</span>
+                    {reg.reviewedByLecturerName && <span>• {reg.reviewedByLecturerName}</span>}
                   </div>
                 </div>
 
                 {reg.status === 'PENDING' && (
                   <button
+                    type="button"
                     onClick={() => handleCancelRegistration(reg.id)}
-                    className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-semibold self-start md:self-center transition-colors"
+                    className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-semibold self-start md:self-center transition-colors cursor-pointer"
                   >
-                    Withdraw Registration
+                    {t('common.cancel')}
                   </button>
                 )}
               </div>
@@ -200,25 +198,24 @@ export const RegistrationsPage = () => {
 
       {/* Lecturer: Review Applications for Topics */}
       {isLecturerOrAdmin && (
-        <div className="bg-white rounded-2xl border border-[#ebedf2] overflow-hidden shadow-xs">
+        <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
           <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h2 className="font-bold text-slate-800 text-base">Advisor Review Portal</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Approve or reject student teams applying for your topics</p>
+              <h2 className="font-bold text-slate-800 text-base">{t('registrations.advisorReviewSection')}</h2>
             </div>
 
-            <div className="w-full sm:w-64">
+            <div className="w-full sm:w-72">
               <select
                 value={selectedTopicId}
                 onChange={(e) => {
                   setSelectedTopicId(e.target.value);
                   fetchTopicRegistrations(e.target.value);
                 }}
-                className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-[#b66dff]"
+                className={selectClass}
               >
-                {advisorTopics.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.title}
+                {advisorTopics.map((tItem) => (
+                  <option key={tItem.id} value={tItem.id}>
+                    {tItem.title}
                   </option>
                 ))}
               </select>
@@ -227,7 +224,7 @@ export const RegistrationsPage = () => {
 
           {topicRegistrations.length === 0 ? (
             <div className="p-8 text-center text-slate-400 text-sm">
-              No student teams have registered for this topic yet.
+              {t('registrations.noTopicRegsFound')}
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
@@ -236,17 +233,7 @@ export const RegistrationsPage = () => {
                   <div>
                     <div className="flex items-center space-x-2">
                       <span className="font-bold text-slate-800 text-sm">{reg.teamName}</span>
-                      <span
-                        className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
-                          reg.status === 'APPROVED'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : reg.status === 'REJECTED'
-                            ? 'bg-rose-50 text-rose-700'
-                            : 'bg-amber-50 text-amber-700'
-                        }`}
-                      >
-                        {reg.status}
-                      </span>
+                      <StatusBadge value={reg.status} />
                     </div>
 
                     {reg.message && (
@@ -259,7 +246,7 @@ export const RegistrationsPage = () => {
                     {reg.members && reg.members.length > 0 && (
                       <div className="mt-2.5 pt-2 border-t border-slate-100">
                         <span className="text-[11px] font-semibold text-slate-500 block mb-1">
-                          Registered Members ({reg.members.length}):
+                          {t('registrations.members')} ({reg.members.length})
                         </span>
                         <div className="flex flex-wrap gap-1.5">
                           {reg.members.map((m) => (
@@ -273,7 +260,7 @@ export const RegistrationsPage = () => {
                             >
                               <span>{m.fullName} ({m.studentCode || 'N/A'})</span>
                               <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-black/5 font-mono">
-                                {m.roleInTeam}
+                                {m.roleInTeam === 'LEADER' ? t('teams.leader') : t('teams.member')}
                               </span>
                             </span>
                           ))}
@@ -282,30 +269,32 @@ export const RegistrationsPage = () => {
                     )}
 
                     <div className="text-xs text-slate-400 mt-2 font-mono">
-                      Registered: {reg.registeredAt?.replace('T', ' ').substring(0, 16)}
+                      {t('registrations.registeredAt')}: {reg.registeredAt?.replace('T', ' ').substring(0, 16)}
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-2">
                     <button
+                      type="button"
                       onClick={() => {
                         setSelectedReg(reg);
                         setReviewDecision('APPROVED');
                         setReviewModalOpen(true);
                       }}
-                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs"
+                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer"
                     >
-                      Approve
+                      {t('registrations.approve')}
                     </button>
                     <button
+                      type="button"
                       onClick={() => {
                         setSelectedReg(reg);
                         setReviewDecision('REJECTED');
                         setReviewModalOpen(true);
                       }}
-                      className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-semibold"
+                      className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
                     >
-                      Reject
+                      {t('registrations.reject')}
                     </button>
                   </div>
                 </div>
@@ -316,52 +305,51 @@ export const RegistrationsPage = () => {
       )}
 
       {/* Review Modal */}
-      {reviewModalOpen && selectedReg && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
-            <div className="p-6 border-b border-slate-100">
-              <h3 className="font-bold text-slate-800">
-                {reviewDecision === 'APPROVED' ? 'Approve Team Registration' : 'Reject Team Registration'}
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">Team: {selectedReg.teamName}</p>
+      <Modal
+        isOpen={reviewModalOpen && !!selectedReg}
+        onClose={() => setReviewModalOpen(false)}
+        title={reviewDecision === 'APPROVED' ? t('registrations.approve') : t('registrations.reject')}
+        maxWidth="max-w-md"
+      >
+        {selectedReg && (
+          <form onSubmit={handleReviewSubmit} className="space-y-4">
+            <div>
+              <p className="text-xs text-slate-500 mb-1">
+                {t('registrations.team')}: <strong className="text-slate-800">{selectedReg.teamName}</strong>
+              </p>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
+                {t('registrations.reviewFeedbackLabel')}
+              </label>
+              <textarea
+                rows={4}
+                required
+                placeholder={t('registrations.reviewFeedbackPlaceholder')}
+                value={reviewFeedback}
+                onChange={(e) => setReviewFeedback(e.target.value)}
+                className={inputClass}
+              />
             </div>
 
-            <form onSubmit={handleReviewSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Feedback / Advisory Guidance
-                </label>
-                <textarea
-                  rows={4}
-                  required
-                  placeholder="Provide instructions, meeting time, or feedback for the team..."
-                  value={reviewFeedback}
-                  onChange={(e) => setReviewFeedback(e.target.value)}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#b66dff]"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setReviewModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className={`px-4 py-2 text-white rounded-xl text-sm font-semibold shadow-xs ${
-                    reviewDecision === 'APPROVED' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'
-                  }`}
-                >
-                  Confirm {reviewDecision}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="pt-2 flex justify-end space-x-2.5">
+              <button
+                type="button"
+                onClick={() => setReviewModalOpen(false)}
+                className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-medium hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="submit"
+                className={`px-4 py-2 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer ${
+                  reviewDecision === 'APPROVED' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'
+                }`}
+              >
+                {t('registrations.saveDecision')}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 };
