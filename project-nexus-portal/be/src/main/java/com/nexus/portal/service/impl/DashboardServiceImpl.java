@@ -1,27 +1,49 @@
 package com.nexus.portal.service.impl;
 
 import com.nexus.portal.dto.response.DashboardStatsResponse;
+import com.nexus.portal.model.Notification;
 import com.nexus.portal.model.Role;
+import com.nexus.portal.model.Topic;
+import com.nexus.portal.model.TopicRegistration;
 import com.nexus.portal.model.User;
-import com.nexus.portal.repository.RoleRepository;
-import com.nexus.portal.repository.UserRepository;
+import com.nexus.portal.repository.*;
 import com.nexus.portal.service.DashboardService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.management.ManagementFactory;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class DashboardServiceImpl implements DashboardService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final TopicRepository topicRepository;
+    private final TeamRepository teamRepository;
+    private final TopicRegistrationRepository topicRegistrationRepository;
+    private final RegistrationPeriodRepository registrationPeriodRepository;
+    private final NotificationRepository notificationRepository;
 
-    public DashboardServiceImpl(UserRepository userRepository, RoleRepository roleRepository) {
+    public DashboardServiceImpl(
+            UserRepository userRepository,
+            RoleRepository roleRepository,
+            TopicRepository topicRepository,
+            TeamRepository teamRepository,
+            TopicRegistrationRepository topicRegistrationRepository,
+            RegistrationPeriodRepository registrationPeriodRepository,
+            NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.topicRepository = topicRepository;
+        this.teamRepository = teamRepository;
+        this.topicRegistrationRepository = topicRegistrationRepository;
+        this.registrationPeriodRepository = registrationPeriodRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     @Override
@@ -32,6 +54,15 @@ public class DashboardServiceImpl implements DashboardService {
         long activeUsers = users.stream().filter(User::isActive).count();
         long totalRoles = roleRepository.count();
 
+        long totalTopics = topicRepository.count();
+        List<Topic> topics = topicRepository.findAll();
+
+        long totalTeams = teamRepository.count();
+        long totalRegistrations = topicRegistrationRepository.count();
+        List<TopicRegistration> registrations = topicRegistrationRepository.findAll();
+        long totalPeriods = registrationPeriodRepository.count();
+
+        // 1. Role distribution
         Map<String, Long> roleDistribution = new HashMap<>();
         for (User user : users) {
             for (Role role : user.getRoles()) {
@@ -40,8 +71,18 @@ public class DashboardServiceImpl implements DashboardService {
             }
         }
 
+        // 2. Topic status distribution
+        Map<String, Long> topicStatusDistribution = new HashMap<>();
+        for (Topic topic : topics) {
+            if (topic.getStatus() != null) {
+                String statusName = topic.getStatus().name();
+                topicStatusDistribution.put(statusName, topicStatusDistribution.getOrDefault(statusName, 0L) + 1);
+            }
+        }
+
         long uptimeSeconds = ManagementFactory.getRuntimeMXBean().getUptime() / 1000;
 
+        // 3. Real Recent activities
         List<Map<String, Object>> activities = new ArrayList<>();
         users.stream()
                 .sorted(Comparator.comparing(User::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
@@ -49,18 +90,71 @@ public class DashboardServiceImpl implements DashboardService {
                 .forEach(u -> {
                     Map<String, Object> item = new HashMap<>();
                     item.put("username", u.getUsername());
+                    item.put("fullName", u.getFullName() != null ? u.getFullName() : u.getUsername());
                     item.put("action", "User Registered");
                     item.put("timestamp", u.getCreatedAt() != null ? u.getCreatedAt() : LocalDateTime.now());
                     activities.add(item);
                 });
+
+        // 4. Real Recent notifications
+        List<Map<String, Object>> recentNotifications = new ArrayList<>();
+        List<Notification> notifications = notificationRepository.findAll();
+        notifications.stream()
+                .sorted(Comparator.comparing(Notification::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(5)
+                .forEach(n -> {
+                    Map<String, Object> notif = new HashMap<>();
+                    notif.put("id", n.getId());
+                    notif.put("title", n.getTitle());
+                    notif.put("content", n.getContent());
+                    notif.put("authorName", n.getAuthor() != null ? n.getAuthor().getFullName() : "System");
+                    notif.put("createdAt", n.getCreatedAt());
+                    recentNotifications.add(notif);
+                });
+
+        // 5. Dynamic timeline data (Past 7 days calculation from actual registrations and creations)
+        DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("MM-dd");
+        LocalDate today = LocalDate.now();
+        List<Map<String, Object>> timeline = new ArrayList<>();
+
+        for (int i = 6; i >= 0; i--) {
+            LocalDate date = today.minusDays(i);
+            String dayLabel = date.format(dayFormatter);
+
+            long usersCountUntil = users.stream()
+                    .filter(u -> u.getCreatedAt() != null && !u.getCreatedAt().toLocalDate().isAfter(date))
+                    .count();
+
+            long topicsCountUntil = topics.stream()
+                    .filter(t -> t.getCreatedAt() != null && !t.getCreatedAt().toLocalDate().isAfter(date))
+                    .count();
+
+            long registrationsCountUntil = registrations.stream()
+                    .filter(r -> r.getCreatedAt() != null && !r.getCreatedAt().toLocalDate().isAfter(date))
+                    .count();
+
+            Map<String, Object> point = new HashMap<>();
+            point.put("day", dayLabel);
+            point.put("users", usersCountUntil > 0 ? usersCountUntil : (users.isEmpty() ? 0 : users.size()));
+            point.put("topics", topicsCountUntil > 0 ? topicsCountUntil : (topics.isEmpty() ? 0 : topics.size()));
+            point.put("registrations", registrationsCountUntil > 0 ? registrationsCountUntil : (registrations.isEmpty() ? 0 : registrations.size()));
+            timeline.add(point);
+        }
 
         return DashboardStatsResponse.builder()
                 .totalUsers(totalUsers)
                 .activeUsers(activeUsers)
                 .totalRoles(totalRoles)
                 .systemUptimeSeconds(uptimeSeconds)
+                .totalTopics(totalTopics)
+                .totalTeams(totalTeams)
+                .totalRegistrations(totalRegistrations)
+                .totalPeriods(totalPeriods)
                 .userRoleDistribution(roleDistribution)
+                .topicStatusDistribution(topicStatusDistribution)
+                .timelineData(timeline)
                 .recentActivities(activities)
+                .recentNotifications(recentNotifications)
                 .build();
     }
 }

@@ -47,7 +47,14 @@ export const LanguageProvider = ({ children }) => {
    * Helper function to translate keys using dot notation (e.g. 'nav.dashboard')
    * Supports parameters: t('dashboard.increasedBy', { value: '10%' })
    */
-  const t = useCallback((keyPath, params = {}) => {
+  /**
+   * Helper function to translate keys using dot notation (e.g. 'nav.dashboard')
+   * Supports:
+   * 1. Parameters: t('dashboard.increasedBy', { value: '10%' })
+   * 2. Fallbacks: t('enums.status.CUSTOM', 'Custom Fallback Text')
+   * 3. Fallback + params: t('key', 'Default text with {val}', { val: '123' })
+   */
+  const t = useCallback((keyPath, fallbackOrParams = '', paramsObj = null) => {
     if (!keyPath) return '';
 
     const getNestedValue = (obj, path) => {
@@ -57,18 +64,54 @@ export const LanguageProvider = ({ children }) => {
     // 1. Look in current language
     let text = getNestedValue(dictionaries[language], keyPath);
 
-    // 2. Fallback to English if missing in current language
-    if (text === undefined && language !== 'en') {
-      text = getNestedValue(dictionaries['en'], keyPath);
+    // 2. If it's an enum, cross-check related namespaces (e.g., status, topicStatus, topicType)
+    if (text === undefined && keyPath.startsWith('enums.')) {
+      const parts = keyPath.split('.');
+      const enumVal = parts[parts.length - 1];
+      // Try enums.status
+      text = getNestedValue(dictionaries[language], `enums.status.${enumVal}`);
+      if (text === undefined) {
+        text = getNestedValue(dictionaries[language], `enums.topicStatus.${enumVal}`);
+      }
+      if (text === undefined) {
+        text = getNestedValue(dictionaries[language], `enums.topicType.${enumVal}`);
+      }
     }
 
-    // 3. Fallback to keyPath itself if not found
+    // 3. Fallback to English if missing in current language
+    if (text === undefined && language !== 'en') {
+      text = getNestedValue(dictionaries['en'], keyPath);
+      if (text === undefined && keyPath.startsWith('enums.')) {
+        const parts = keyPath.split('.');
+        const enumVal = parts[parts.length - 1];
+        text = getNestedValue(dictionaries['en'], `enums.status.${enumVal}`) ||
+               getNestedValue(dictionaries['en'], `enums.topicStatus.${enumVal}`) ||
+               getNestedValue(dictionaries['en'], `enums.topicType.${enumVal}`);
+      }
+    }
+
+    // 4. Fallback handling if key still not found
     if (text === undefined) {
+      if (typeof fallbackOrParams === 'string' && fallbackOrParams.trim() !== '') {
+        return fallbackOrParams;
+      }
+      // Clean up technical enum keys like 'enums.topicType.GRADUATION_THESIS'
+      if (keyPath.startsWith('enums.')) {
+        const parts = keyPath.split('.');
+        const lastPart = parts[parts.length - 1];
+        if (lastPart) {
+          return lastPart.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+        }
+      }
       return keyPath;
     }
 
-    // 4. Interpolate variables: {key} or {{key}}
-    if (params && typeof params === 'object') {
+    // 5. Interpolate variables
+    const params = (paramsObj && typeof paramsObj === 'object')
+      ? paramsObj
+      : (fallbackOrParams && typeof fallbackOrParams === 'object' ? fallbackOrParams : null);
+
+    if (params) {
       Object.keys(params).forEach((paramKey) => {
         const val = params[paramKey];
         text = text.replace(new RegExp(`\\{\\{?\\s*${paramKey}\\s*\\}\\}?`, 'g'), String(val));

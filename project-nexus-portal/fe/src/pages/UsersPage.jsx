@@ -380,9 +380,9 @@ export const UsersPage = () => {
                 <button
                   type="button"
                   onClick={() => setActiveTab('all')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all cursor-pointer ${
                     activeTab === 'all'
-                      ? 'bg-white text-slate-900 shadow-xs'
+                      ? 'bg-white text-slate-900 font-semibold shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -391,9 +391,9 @@ export const UsersPage = () => {
                 <button
                   type="button"
                   onClick={() => setActiveTab('lecturers')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all cursor-pointer ${
                     activeTab === 'lecturers'
-                      ? 'bg-white text-slate-900 shadow-xs'
+                      ? 'bg-white text-slate-900 font-semibold shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -535,7 +535,7 @@ export const UsersPage = () => {
         <form onSubmit={handleCreateUser} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">{t('users.usernameLabel')} *</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('users.usernameLabel')} *</label>
               <input
                 type="text"
                 required
@@ -547,7 +547,7 @@ export const UsersPage = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">{t('users.emailLabel')} *</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('users.emailLabel')} *</label>
               <input
                 type="email"
                 required
@@ -559,7 +559,7 @@ export const UsersPage = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">{t('users.passwordLabel')} *</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('users.passwordLabel')} *</label>
               <input
                 type="password"
                 required
@@ -570,7 +570,7 @@ export const UsersPage = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">{t('users.fullNameLabel')} *</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('users.fullNameLabel')} *</label>
               <input
                 type="text"
                 required
@@ -582,7 +582,7 @@ export const UsersPage = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">{t('users.idCodeLabel')}</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('users.idCodeLabel')}</label>
               <input
                 type="text"
                 value={newUser.studentCode}
@@ -593,7 +593,7 @@ export const UsersPage = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">{t('users.phoneLabel')}</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('users.phoneLabel')}</label>
               <input
                 type="tel"
                 value={newUser.phone}
@@ -606,8 +606,8 @@ export const UsersPage = () => {
 
           {/* Roles checkboxes */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-2">{t('users.assignedRolesLabel')} *</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">{t('users.assignedRolesLabel')} *</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm">
               {['ROLE_USER', 'ROLE_TEACHER', 'ROLE_PRINCIPAL', 'ROLE_COUNCIL', 'ROLE_ADMIN'].map((r) => (
                 <label key={r} className="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
                   <input
@@ -631,7 +631,7 @@ export const UsersPage = () => {
           {/* Academic affiliations */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">{t('users.facultyLabel')}</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('users.facultyLabel')}</label>
               <select
                 value={newUser.facultyId}
                 onChange={(e) => setNewUser({ ...newUser, facultyId: e.target.value })}
@@ -645,7 +645,7 @@ export const UsersPage = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">{t('users.departmentLabel')}</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('users.departmentLabel')}</label>
               <select
                 value={newUser.departmentId}
                 onChange={(e) => setNewUser({ ...newUser, departmentId: e.target.value })}
@@ -659,7 +659,7 @@ export const UsersPage = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">{t('users.majorLabel')}</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('users.majorLabel')}</label>
               <select
                 value={newUser.majorId}
                 onChange={(e) => setNewUser({ ...newUser, majorId: e.target.value })}
@@ -673,7 +673,7 @@ export const UsersPage = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">{t('users.cohortLabel')}</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('users.cohortLabel')}</label>
               <select
                 value={newUser.cohortId}
                 onChange={(e) => setNewUser({ ...newUser, cohortId: e.target.value })}
@@ -771,13 +771,13 @@ export const UsersPage = () => {
         onClose={() => setShowResetPasswordModal(false)}
         title={t('users.modalResetPassTitle')}
       >
-        <p className="text-xs text-slate-500 mb-3">
+        <p className="text-sm text-slate-500 mb-3">
           {t('users.modalResetPassSub')} <strong>@{selectedUser?.username}</strong>:
         </p>
 
         <form onSubmit={handleResetPassword} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">{t('users.newPasswordLabel')} *</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">{t('users.newPasswordLabel')} *</label>
             <input
               type="password"
               required

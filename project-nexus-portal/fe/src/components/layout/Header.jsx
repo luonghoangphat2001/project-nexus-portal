@@ -43,17 +43,17 @@ export const Header = ({ onToggleSidebar }) => {
               {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
             </div>
             <div className="hidden md:block">
-              <p className="text-xs font-semibold text-slate-800">
+              <p className="text-sm font-semibold text-slate-800">
                 {user?.fullName || user?.username || 'User'}
               </p>
             </div>
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-52 bg-white border border-slate-200 rounded-2xl shadow-lg py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-lg py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-4 py-2 border-b border-slate-100">
-                <p className="text-[11px] text-slate-400">{t('header.signedInAs')}</p>
-                <p className="text-xs font-semibold text-slate-800 truncate">{user?.email || 'user@nexus.com'}</p>
+                <p className="text-xs text-slate-400">{t('header.signedInAs')}</p>
+                <p className="text-sm font-semibold text-slate-800 truncate">{user?.email || 'user@nexus.com'}</p>
               </div>
 
               <div className="py-1">
@@ -62,9 +62,9 @@ export const Header = ({ onToggleSidebar }) => {
                     setDropdownOpen(false);
                     window.location.href = '/profile';
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 flex items-center space-x-2 transition-colors cursor-pointer"
+                  className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 flex items-center space-x-2 transition-colors cursor-pointer"
                 >
-                  <UserIcon className="w-3.5 h-3.5 text-slate-400" />
+                  <UserIcon className="w-4 h-4 text-slate-400" />
                   <span>{t('header.profileAndSettings')}</span>
                 </button>
               </div>
@@ -75,9 +75,9 @@ export const Header = ({ onToggleSidebar }) => {
                     setDropdownOpen(false);
                     logout();
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center space-x-2 transition-colors cursor-pointer"
+                  className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 flex items-center space-x-2 transition-colors cursor-pointer"
                 >
-                  <LogOut className="w-3.5 h-3.5 text-rose-500" />
+                  <LogOut className="w-4 h-4 text-rose-500" />
                   <span>{t('header.signOut')}</span>
                 </button>
               </div>

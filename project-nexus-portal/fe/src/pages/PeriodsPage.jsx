@@ -188,15 +188,15 @@ export function PeriodsPage() {
       {/* Clean Table Card matching Image 1 */}
       <TableCard>
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-600 font-semibold text-[11px] uppercase tracking-wider">
-                <th className="py-3 px-4">{t('periods.periodName')}</th>
-                <th className="py-3 px-4">{t('periods.academicYear')}</th>
-                <th className="py-3 px-4">{t('periods.registrationTime')}</th>
-                <th className="py-3 px-4">{t('periods.deadline')}</th>
-                <th className="py-3 px-4">{t('common.status')}</th>
-                {canManage && <th className="py-3 px-4 text-right">{t('common.actions')}</th>}
+              <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-600 font-semibold text-xs uppercase tracking-wider">
+                <th className="py-3.5 px-4">{t('periods.periodName')}</th>
+                <th className="py-3.5 px-4">{t('periods.academicYear')}</th>
+                <th className="py-3.5 px-4">{t('periods.registrationTime')}</th>
+                <th className="py-3.5 px-4">{t('periods.deadline')}</th>
+                <th className="py-3.5 px-4">{t('common.status')}</th>
+                {canManage && <th className="py-3.5 px-4 text-right">{t('common.actions')}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -220,7 +220,7 @@ export function PeriodsPage() {
                   <tr key={period.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="py-3.5 px-4">
                       <span className="font-semibold text-slate-900 block">{period.name}</span>
-                      <span className="text-[11px] text-slate-400">
+                      <span className="text-xs text-slate-400">
                         {faculties
                           .filter((f) => period.facultyIds?.includes(f.id))
                           .map((f) => f.code || f.name)
@@ -232,12 +232,12 @@ export function PeriodsPage() {
                       {period.academicYear} · {t('periods.semesterLabel', { num: period.semester })}
                     </td>
 
-                    <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px]">
+                    <td className="py-3.5 px-4 text-slate-600 font-mono text-xs">
                       {period.startDate ? period.startDate.replace('T', ' ') : '—'}
                       <span className="block text-slate-400">→ {period.endDate ? period.endDate.replace('T', ' ') : '—'}</span>
                     </td>
 
-                    <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px]">
+                    <td className="py-3.5 px-4 text-slate-600 font-mono text-xs">
                       {period.submissionDeadline ? period.submissionDeadline.replace('T', ' ') : '—'}
                     </td>
 
@@ -398,7 +398,7 @@ export function PeriodsPage() {
                 <option key={f.id} value={f.id}>{f.name}</option>
               ))}
             </select>
-            <span className="text-[11px] text-slate-400 mt-0.5 block">Hold Ctrl / Cmd to select multiple</span>
+            <span className="text-xs text-slate-400 mt-0.5 block">Hold Ctrl / Cmd to select multiple</span>
           </div>
 
           <div>

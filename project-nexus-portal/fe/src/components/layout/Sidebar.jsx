@@ -208,11 +208,11 @@ export const Sidebar = ({ isOpen }) => {
               <button
                 type="button"
                 onClick={() => toggleGroup(group.id)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                   hasActiveItem && isGroupOpen
-                    ? 'text-slate-800 bg-slate-50'
+                    ? 'text-slate-800 bg-slate-50 font-semibold'
                     : hasActiveItem && !isGroupOpen
-                    ? 'bg-blue-600 text-white shadow-xs'
+                    ? 'bg-blue-600 text-white shadow-xs font-semibold'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
@@ -238,7 +238,7 @@ export const Sidebar = ({ isOpen }) => {
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) =>
-                          `flex items-center space-x-2.5 px-3 py-1.5 rounded-lg text-xs transition-colors ${
+                          `flex items-center space-x-2.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                             isActive
                               ? 'bg-blue-50 text-blue-600 font-semibold'
                               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -270,10 +270,10 @@ export const Sidebar = ({ isOpen }) => {
             </div>
             {isOpen && (
               <div className="overflow-hidden">
-                <p className="text-xs font-bold text-slate-800 truncate">
+                <p className="text-sm font-semibold text-slate-800 truncate">
                   {user?.username || 'user'}
                 </p>
-                <p className="text-[11px] text-slate-400 truncate">
+                <p className="text-xs text-slate-400 truncate">
                   {roleDisplay}
                 </p>
               </div>

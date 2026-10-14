@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { LanguageSwitcher } from '../components/common/LanguageSwitcher';
 import { Layers, Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
+import { buttonClass, inputClass } from '../components/common/CommonUi';
 
 export const LoginPage = () => {
   const { t } = useTranslation();
@@ -48,21 +49,21 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4 relative">
-      <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-3xl p-8 shadow-lg relative z-10">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 relative">
+      <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-3xl p-8 shadow-sm relative z-10">
         {/* Language Switcher in Header of Form */}
-        <div className="flex justify-end mb-2">
+        <div className="flex justify-end mb-4">
           <LanguageSwitcher variant="pill" />
         </div>
 
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-13 h-13 rounded-2xl bg-gradient-to-r from-[#da8cff] to-[#9a55ff] flex items-center justify-center text-white shadow-md shadow-brand-500/20 mb-3 p-3">
+          <div className="w-13 h-13 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-xs mb-3 p-3">
             <Layers className="w-7 h-7" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
             {isRegisterMode ? t('auth.createAccount') : t('auth.welcome')}
           </h1>
-          <p className="text-slate-500 text-xs mt-1">
+          <p className="text-slate-500 text-sm mt-1">
             {isRegisterMode
               ? t('auth.registerSubtitle')
               : t('auth.signInSubtitle')}
@@ -70,7 +71,7 @@ export const LoginPage = () => {
         </div>
 
         {errorMessage && (
-          <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-center space-x-2.5 text-rose-700 text-xs">
+          <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-center space-x-2.5 text-rose-700 text-sm">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMessage}</span>
           </div>
@@ -80,8 +81,8 @@ export const LoginPage = () => {
           {isRegisterMode && (
             <>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                  {t('auth.fullName')}
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  {t('auth.fullName')} *
                 </label>
                 <input
                   type="text"
@@ -89,13 +90,13 @@ export const LoginPage = () => {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder={t('auth.fullNamePlaceholder')}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#b66dff] transition-colors"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                  {t('auth.email')}
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  {t('auth.email')} *
                 </label>
                 <input
                   type="email"
@@ -103,42 +104,42 @@ export const LoginPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t('auth.emailPlaceholder')}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#b66dff] transition-colors"
+                  className={inputClass}
                 />
               </div>
             </>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-              {isRegisterMode ? t('auth.username') : t('auth.usernameOrEmail')}
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              {isRegisterMode ? t('auth.username') : t('auth.usernameOrEmail')} *
             </label>
             <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
               <input
                 type="text"
                 required
                 value={usernameOrEmail}
                 onChange={(e) => setUsernameOrEmail(e.target.value)}
                 placeholder={isRegisterMode ? t('auth.usernamePlaceholder') : t('auth.usernameOrEmailPlaceholder')}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#b66dff] transition-colors"
+                className={`${inputClass} pl-10`}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-              {t('auth.password')}
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              {t('auth.password')} *
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#b66dff] transition-colors"
+                className={`${inputClass} pl-10`}
               />
             </div>
           </div>
@@ -146,63 +147,25 @@ export const LoginPage = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full mt-2 bg-gradient-to-r from-[#da8cff] to-[#9a55ff] hover:opacity-95 text-white font-semibold py-2.5 px-4 rounded-xl shadow-xs flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
+            className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow-xs flex items-center justify-center space-x-2 transition-all disabled:opacity-50 text-sm cursor-pointer"
           >
-            {isSubmitting ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              <>
-                <span>{isRegisterMode ? t('auth.completeRegistration') : t('auth.signIn')}</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
+            <span>{isRegisterMode ? t('auth.createAccount') : t('auth.signIn')}</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        {!isRegisterMode && (
-          <div className="mt-6 pt-5 border-t border-slate-100">
-            <p className="text-xs text-slate-400 font-medium mb-2.5 text-center">
-              {t('auth.quickDemoAccounts')}
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setUsernameOrEmail('superadmin');
-                  setPassword('password123');
-                }}
-                className="px-3 py-2 bg-slate-50 hover:bg-[#f8f2ff]/50 border border-slate-200 hover:border-[#e1c2ff] rounded-xl text-left transition-all"
-              >
-                <div className="text-[11px] font-semibold text-[#b66dff]">{t('auth.admin')}</div>
-                <div className="text-xs text-slate-600 font-mono">superadmin</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setUsernameOrEmail('individual_user');
-                  setPassword('password123');
-                }}
-                className="px-3 py-2 bg-slate-50 hover:bg-emerald-50/50 border border-slate-200 hover:border-emerald-200 rounded-xl text-left transition-all"
-              >
-                <div className="text-[11px] font-semibold text-emerald-700">{t('auth.student')}</div>
-                <div className="text-xs text-slate-600 font-mono">individual_user</div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="mt-5 text-center">
+        <div className="mt-6 pt-5 border-t border-slate-100 text-center">
           <button
             type="button"
             onClick={() => {
               setIsRegisterMode(!isRegisterMode);
               setErrorMessage('');
             }}
-            className="text-xs text-[#b66dff] hover:text-[#b66dff] font-medium transition-colors"
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 transition cursor-pointer"
           >
             {isRegisterMode
-              ? t('auth.alreadyHaveAccount')
-              : t('auth.dontHaveAccount')}
+              ? t('auth.hasAccountSignIn')
+              : t('auth.noAccountRegister')}
           </button>
         </div>
       </div>

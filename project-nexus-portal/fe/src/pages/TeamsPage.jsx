@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import teamService from '../services/teamService';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../i18n/LanguageContext';
 import {
   PageHeader,
   TableCard,

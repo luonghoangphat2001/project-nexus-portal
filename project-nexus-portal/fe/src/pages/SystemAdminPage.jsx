@@ -235,24 +235,24 @@ export const SystemAdminPage = () => {
           <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
             <button
               onClick={() => setActiveTab('academic')}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                activeTab === 'academic' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all cursor-pointer ${
+                activeTab === 'academic' ? 'bg-white text-blue-600 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {t('systemAdmin.tabAcademic')}
             </button>
             <button
               onClick={() => setActiveTab('settings')}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                activeTab === 'settings' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all cursor-pointer ${
+                activeTab === 'settings' ? 'bg-white text-blue-600 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {t('systemAdmin.tabSettings')}
             </button>
             <button
               onClick={() => setActiveTab('health')}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                activeTab === 'health' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all cursor-pointer ${
+                activeTab === 'health' ? 'bg-white text-blue-600 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {t('systemAdmin.tabHealth')}
@@ -572,7 +572,7 @@ export const SystemAdminPage = () => {
                       onClick={() =>
                         handleUpdateSetting(s.settingKey, s.settingValue === 'true' ? 'false' : 'true', s.description)
                       }
-                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all cursor-pointer ${
                         s.settingValue === 'true'
                           ? 'bg-emerald-600 text-white'
                           : 'bg-slate-200 text-slate-700'
@@ -767,7 +767,7 @@ export const SystemAdminPage = () => {
             : t('systemAdmin.cohorts')
         }`}
       >
-        <form onSubmit={handleAcademicSubmit} className="space-y-4 text-xs">
+        <form onSubmit={handleAcademicSubmit} className="space-y-4 text-sm">
           {modalType === 'department' && (
             <div>
               <label className="block font-semibold text-slate-600 mb-1">{t('systemAdmin.colParentFaculty')} *</label>

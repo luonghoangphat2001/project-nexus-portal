@@ -218,9 +218,9 @@ export function AcademicPage() {
       {/* Clean Table Card */}
       <TableCard>
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-600 font-semibold text-[11px] uppercase tracking-wider">
+              <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-600 font-semibold text-xs uppercase tracking-wider">
                 <th className="py-3 px-4">{t('academic.code')}</th>
                 <th className="py-3 px-4">{t('academic.name')}</th>
                 {config.parent && <th className="py-3 px-4">{config.parentLabel}</th>}
