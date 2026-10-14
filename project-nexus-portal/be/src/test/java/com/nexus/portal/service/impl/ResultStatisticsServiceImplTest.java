@@ -5,7 +5,7 @@ import com.nexus.portal.enums.RoleName;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.DefenseAssignmentRepository;
 import com.nexus.portal.repository.DefenseCouncilRepository;
-import com.nexus.portal.repository.PublishedResultRepository;
+import com.nexus.portal.repository.ResultRepository;
 import com.nexus.portal.repository.DepartmentRepository;
 import com.nexus.portal.repository.RegistrationPeriodRepository;
 import com.nexus.portal.repository.TopicRepository;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
 class ResultStatisticsServiceImplTest {
     @Mock private DefenseAssignmentRepository assignments;
     @Mock private DefenseCouncilRepository councils;
-    @Mock private PublishedResultRepository results;
+    @Mock private ResultRepository results;
     @Mock private ScoreCalculationService scoreCalculation;
     @Mock private DepartmentRepository departments;
     @Mock private RegistrationPeriodRepository periods;

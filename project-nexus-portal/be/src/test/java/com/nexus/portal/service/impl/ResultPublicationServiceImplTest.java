@@ -7,7 +7,7 @@ import com.nexus.portal.model.*;
 import com.nexus.portal.repository.DefenseAssignmentRepository;
 import com.nexus.portal.repository.DefenseCouncilRepository;
 import com.nexus.portal.repository.DepartmentRepository;
-import com.nexus.portal.repository.PublishedResultRepository;
+import com.nexus.portal.repository.ResultRepository;
 import com.nexus.portal.repository.RegistrationPeriodRepository;
 import com.nexus.portal.repository.TopicRepository;
 import com.nexus.portal.service.AuditLogService;
@@ -35,7 +35,7 @@ import static org.mockito.Mockito.*;
 class ResultPublicationServiceImplTest {
     @Mock private DefenseAssignmentRepository assignments;
     @Mock private DefenseCouncilRepository councils;
-    @Mock private PublishedResultRepository results;
+    @Mock private ResultRepository results;
     @Mock private ScoreCalculationService scoreCalculation;
     @Mock private DefenseAccessPolicy access;
     @Mock private AuditLogService audit;

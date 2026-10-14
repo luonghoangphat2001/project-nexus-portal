@@ -10,7 +10,7 @@ import com.nexus.portal.model.*;
 import com.nexus.portal.repository.DepartmentRepository;
 import com.nexus.portal.repository.DefenseAssignmentRepository;
 import com.nexus.portal.repository.DefenseCouncilRepository;
-import com.nexus.portal.repository.PublishedResultRepository;
+import com.nexus.portal.repository.ResultRepository;
 import com.nexus.portal.repository.RegistrationPeriodRepository;
 import com.nexus.portal.repository.TopicRepository;
 import com.nexus.portal.service.AuditLogService;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 public class ResultsServiceImpl implements ResultService {
     private final DefenseAssignmentRepository assignments;
     private final DefenseCouncilRepository councils;
-    private final PublishedResultRepository results;
+    private final ResultRepository results;
     private final ScoreCalculationService scoreCalculation;
     private final DefenseAccessPolicy access;
     private final AuditLogService audit;
@@ -45,7 +45,7 @@ public class ResultsServiceImpl implements ResultService {
     private final TopicRepository topics;
 
     public ResultsServiceImpl(DefenseAssignmentRepository assignments, DefenseCouncilRepository councils,
-                              PublishedResultRepository results, ScoreCalculationService scoreCalculation,
+                              ResultRepository results, ScoreCalculationService scoreCalculation,
                               DefenseAccessPolicy access, AuditLogService audit, Clock clock,
                               DepartmentRepository departments, RegistrationPeriodRepository periods,
                               TopicRepository topics) {

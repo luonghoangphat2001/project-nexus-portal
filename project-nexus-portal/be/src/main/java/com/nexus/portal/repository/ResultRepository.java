@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Set;
 
-public interface PublishedResultRepository extends JpaRepository<Result, Long> {
+public interface ResultRepository extends JpaRepository<Result, Long> {
     boolean existsByAssignmentId(Long assignmentId);
     List<Result> findByAssignmentIdOrderByStudentIdAsc(Long assignmentId);
     List<Result> findByStudentIdAndPublishedAtIsNotNullOrderByPublishedAtDesc(Long studentId);

@@ -8,7 +8,7 @@ import com.nexus.portal.exception.BadRequestException;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.AssessmentRepository;
 import com.nexus.portal.repository.DefenseAssignmentRepository;
-import com.nexus.portal.repository.PublishedResultRepository;
+import com.nexus.portal.repository.ResultRepository;
 import com.nexus.portal.repository.TeamMemberRepository;
 import com.nexus.portal.service.CalculatedScore;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +30,7 @@ class ScoreCalculationServiceImplTest {
     @Mock private AssessmentRepository assessments;
     @Mock private DefenseAssignmentRepository assignments;
     @Mock private TeamMemberRepository members;
-    @Mock private PublishedResultRepository publishedResultsReader;
+    @Mock private ResultRepository publishedResultsReader;
     @Mock private DefenseAccessPolicy access;
 
     private ScoreCalculationServiceImpl service;
