@@ -1,6 +1,6 @@
 package com.nexus.portal.service.impl;
 
-import com.nexus.portal.dto.response.DefenseResultResponse;
+import com.nexus.portal.dto.response.ResultResponse;
 import com.nexus.portal.enums.*;
 import com.nexus.portal.exception.BadRequestException;
 import com.nexus.portal.model.*;
@@ -9,7 +9,6 @@ import com.nexus.portal.repository.DefenseCouncilRepository;
 import com.nexus.portal.repository.DepartmentRepository;
 import com.nexus.portal.repository.PublishedResultRepository;
 import com.nexus.portal.repository.RegistrationPeriodRepository;
-import com.nexus.portal.repository.ResultStatisticsRepository;
 import com.nexus.portal.repository.TopicRepository;
 import com.nexus.portal.service.AuditLogService;
 import com.nexus.portal.service.CalculatedScore;
@@ -40,7 +39,6 @@ class ResultPublicationServiceImplTest {
     @Mock private ScoreCalculationService scoreCalculation;
     @Mock private DefenseAccessPolicy access;
     @Mock private AuditLogService audit;
-    @Mock private ResultStatisticsRepository reports;
     @Mock private DepartmentRepository departments;
     @Mock private RegistrationPeriodRepository periods;
     @Mock private TopicRepository topics;
@@ -56,7 +54,7 @@ class ResultPublicationServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new ResultsServiceImpl(assignments, councils, results, scoreCalculation,
-            access, audit, clock, reports, departments, periods, topics);
+            access, audit, clock, departments, periods, topics);
 
         manager = new User();
         manager.setId(1L);
@@ -107,7 +105,7 @@ class ResultPublicationServiceImplTest {
                         new BigDecimal("7.65"), true)));
         when(results.saveAllAndFlush(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        List<DefenseResultResponse> published = service.publishAssignmentResults(9L, "admin");
+        List<ResultResponse.Defense> published = service.publishAssignmentResults(9L, "admin");
 
         assertEquals(1, published.size());
         assertEquals(new BigDecimal("8.00"), published.get(0).reviewScore());

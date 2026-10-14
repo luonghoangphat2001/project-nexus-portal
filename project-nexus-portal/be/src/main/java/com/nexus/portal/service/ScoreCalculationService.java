@@ -1,6 +1,6 @@
 package com.nexus.portal.service;
 
-import com.nexus.portal.dto.response.DefenseResultResponse;
+import com.nexus.portal.dto.response.ResultResponse;
 import com.nexus.portal.enums.ScoreRange;
 import com.nexus.portal.model.DefenseAssignment;
 
@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface ScoreCalculationService {
-    List<DefenseResultResponse> getAssignmentScores(Long assignmentId, String identifier);
+    List<ResultResponse.Defense> getAssignmentScores(Long assignmentId, String identifier);
     List<CalculatedScore> calculateScores(DefenseAssignment assignment);
 
     final class ScoreRangeClassifier {

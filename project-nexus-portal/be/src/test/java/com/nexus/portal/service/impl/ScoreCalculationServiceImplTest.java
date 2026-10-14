@@ -1,6 +1,6 @@
 package com.nexus.portal.service.impl;
 
-import com.nexus.portal.dto.response.DefenseResultResponse;
+import com.nexus.portal.dto.response.ResultResponse;
 import com.nexus.portal.enums.AssessmentStatus;
 import com.nexus.portal.enums.AssessmentType;
 import com.nexus.portal.enums.CouncilStatus;
@@ -90,7 +90,7 @@ class ScoreCalculationServiceImplTest {
         when(publishedResultsReader.findByAssignmentIdOrderByStudentIdAsc(9L)).thenReturn(List.of());
         givenCalculationDependencies(submitted);
 
-        List<DefenseResultResponse> result = service.getAssignmentScores(9L, "admin");
+        List<ResultResponse.Defense> result = service.getAssignmentScores(9L, "admin");
 
         assertEquals(1, result.size());
         assertEquals(new BigDecimal("8.00"), result.get(0).reviewScore());
@@ -112,7 +112,7 @@ class ScoreCalculationServiceImplTest {
         saved.setPassed(true);
         when(publishedResultsReader.findByAssignmentIdOrderByStudentIdAsc(9L)).thenReturn(List.of(saved));
 
-        List<DefenseResultResponse> result = service.getAssignmentScores(9L, "admin");
+        List<ResultResponse.Defense> result = service.getAssignmentScores(9L, "admin");
 
         assertTrue(result.get(0).published());
         assertEquals(new BigDecimal("7.65"), result.get(0).finalScore());

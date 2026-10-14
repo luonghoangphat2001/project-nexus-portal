@@ -10,10 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class ScoreCalculatorTest {
+class ScoreCalculationFormulaTest {
     @Test
     void averagesThreeCriteriaAndAllSubmittedAssessments() {
-        BigDecimal average = ScoreCalculator.average(List.of(
+        BigDecimal average = ScoreCalculationServiceImpl.averageAssessments(List.of(
                 assessment("10", "8", "6"),
                 assessment("6", "8", "10")));
 
@@ -22,7 +22,7 @@ class ScoreCalculatorTest {
 
     @Test
     void appliesThirtySeventyWeightAndRoundsHalfUpToTwoDecimals() {
-        BigDecimal finalScore = ScoreCalculator.finalScore(
+        BigDecimal finalScore = ScoreCalculationServiceImpl.calculateFinalScore(
                 new BigDecimal("8.00"), new BigDecimal("7.50"));
 
         assertEquals(new BigDecimal("7.65"), finalScore);
@@ -30,8 +30,8 @@ class ScoreCalculatorTest {
 
     @Test
     void treatsFiveAsPassingThreshold() {
-        assertFalse(ScoreCalculator.passed(new BigDecimal("4.99")));
-        assertTrue(ScoreCalculator.passed(new BigDecimal("5.00")));
+        assertFalse(ScoreCalculationServiceImpl.isPassingScore(new BigDecimal("4.99")));
+        assertTrue(ScoreCalculationServiceImpl.isPassingScore(new BigDecimal("5.00")));
     }
 
     private Assessment assessment(String content, String implementation, String presentation) {

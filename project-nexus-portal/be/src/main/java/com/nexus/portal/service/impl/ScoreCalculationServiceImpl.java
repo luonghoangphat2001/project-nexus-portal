@@ -1,6 +1,6 @@
 package com.nexus.portal.service.impl;
 
-import com.nexus.portal.dto.response.DefenseResultResponse;
+import com.nexus.portal.dto.response.ResultResponse;
 import com.nexus.portal.enums.AssessmentStatus;
 import com.nexus.portal.enums.AssessmentType;
 import com.nexus.portal.enums.CouncilStatus;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,10 @@ import java.util.List;
 @Service
 @Transactional(readOnly = true)
 public class ScoreCalculationServiceImpl implements ScoreCalculationService {
+    private static final BigDecimal REVIEW_WEIGHT = new BigDecimal("0.30");
+    private static final BigDecimal DEFENSE_WEIGHT = new BigDecimal("0.70");
+    private static final BigDecimal PASSING_SCORE = new BigDecimal("5.00");
+
     private final AssessmentRepository assessments;
     private final DefenseAssignmentRepository assignments;
     private final TeamMemberRepository members;
@@ -43,7 +48,7 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
     }
 
     @Override
-    public List<DefenseResultResponse> getAssignmentScores(Long assignmentId, String identifier) {
+    public List<ResultResponse.Defense> getAssignmentScores(Long assignmentId, String identifier) {
         User manager = access.getUser(identifier);
         DefenseAssignment assignment = assignments.findById(assignmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Defense assignment not found"));
@@ -91,11 +96,11 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
                 throw new BadRequestException(
                         "Assessments for student " + student.getId() + " are incomplete");
             }
-            BigDecimal reviewScore = ScoreCalculator.average(reviews);
-            BigDecimal defenseScore = ScoreCalculator.average(defenses);
-            BigDecimal finalScore = ScoreCalculator.finalScore(reviewScore, defenseScore);
+            BigDecimal reviewScore = averageAssessments(reviews);
+            BigDecimal defenseScore = averageAssessments(defenses);
+            BigDecimal finalScore = calculateFinalScore(reviewScore, defenseScore);
             calculatedScores.add(new CalculatedScore(student, reviewScore, defenseScore,
-                    finalScore, ScoreCalculator.passed(finalScore)));
+                    finalScore, isPassingScore(finalScore)));
         }
         return calculatedScores;
     }
@@ -106,10 +111,30 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
         }
     }
 
-    private DefenseResultResponse toResponse(DefenseAssignment assignment, CalculatedScore score,
+    static BigDecimal averageAssessments(List<Assessment> assessments) {
+        BigDecimal sum = assessments.stream()
+                .map(assessment -> assessment.getContentScore()
+                        .add(assessment.getImplementationScore())
+                        .add(assessment.getPresentationScore())
+                        .divide(BigDecimal.valueOf(3), 8, RoundingMode.HALF_UP))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return sum.divide(BigDecimal.valueOf(assessments.size()), 2, RoundingMode.HALF_UP);
+    }
+
+    static BigDecimal calculateFinalScore(BigDecimal reviewScore, BigDecimal defenseScore) {
+        return reviewScore.multiply(REVIEW_WEIGHT)
+                .add(defenseScore.multiply(DEFENSE_WEIGHT))
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    static boolean isPassingScore(BigDecimal finalScore) {
+        return finalScore.compareTo(PASSING_SCORE) >= 0;
+    }
+
+    private ResultResponse.Defense toResponse(DefenseAssignment assignment, CalculatedScore score,
                                           boolean published, LocalDateTime publishedAt) {
         Topic topic = assignment.getRegistration().getTopic();
-        return new DefenseResultResponse(assignment.getId(), assignment.getRegistration().getId(),
+        return new ResultResponse.Defense(assignment.getId(), assignment.getRegistration().getId(),
                 topic.getPeriod().getId(), topic.getPeriod().getName(), topic.getDepartment().getId(),
                 topic.getDepartment().getName(), topic.getId(), topic.getTitle(),
                 assignment.getRegistration().getTeam().getName(), score.student().getId(),
@@ -117,11 +142,11 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
                 score.defenseScore(), score.finalScore(), score.passed(), published, publishedAt);
     }
 
-    private DefenseResultResponse toResponse(PublishedResult result) {
+    private ResultResponse.Defense toResponse(PublishedResult result) {
         DefenseAssignment assignment = result.getAssignment();
         Topic topic = assignment.getRegistration().getTopic();
         User student = result.getStudent();
-        return new DefenseResultResponse(assignment.getId(), assignment.getRegistration().getId(),
+        return new ResultResponse.Defense(assignment.getId(), assignment.getRegistration().getId(),
                 topic.getPeriod().getId(), topic.getPeriod().getName(), topic.getDepartment().getId(),
                 topic.getDepartment().getName(), topic.getId(), topic.getTitle(),
                 assignment.getRegistration().getTeam().getName(), student.getId(), student.getFullName(),

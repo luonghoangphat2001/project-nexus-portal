@@ -1,16 +1,22 @@
 package com.nexus.portal.controller;
 
 import com.nexus.portal.controller.base.CsvExportController;
-import com.nexus.portal.dto.response.ResultStatisticsResponse;
 import com.nexus.portal.dto.response.ApiResponse;
+import com.nexus.portal.dto.response.ResultResponse;
 import com.nexus.portal.enums.ScoreRange;
+import com.nexus.portal.service.ResultPublicationService;
 import com.nexus.portal.service.ResultStatisticsService;
 import com.nexus.portal.service.ScoreCalculationService.ScoreRangeClassifier;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,29 +24,47 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/results")
-@Tag(name = "Academic Reports", description = "Endpoints for statistics and CSV export of published academic results")
-public class ResultStatisticsController extends CsvExportController<ResultStatisticsResponse.Row> {
-    private final ResultStatisticsService reports;
+@Tag(name = "Results", description = "Endpoints for publishing results and viewing academic statistics")
+public class ResultController extends CsvExportController<ResultResponse.Statistics.Row> {
+    private final ResultPublicationService resultPublication;
+    private final ResultStatisticsService resultStatistics;
 
-    public ResultStatisticsController(ResultStatisticsService reports) {
-        this.reports = reports;
+    public ResultController(
+            ResultPublicationService resultPublication,
+            ResultStatisticsService resultStatistics) {
+        this.resultPublication = resultPublication;
+        this.resultStatistics = resultStatistics;
+    }
+
+    @PostMapping("/assignments/{assignmentId}/publish")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
+    public ResponseEntity<ApiResponse<List<ResultResponse.Defense>>> publishAssignmentResults(
+            @PathVariable Long assignmentId, Authentication auth) {
+        return ResponseEntity.ok(ApiResponse.success(
+                resultPublication.publishAssignmentResults(assignmentId, auth.getName()), "Results published"));
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<List<ResultResponse.Defense>>> getMyPublishedResults(Authentication auth) {
+        return ResponseEntity.ok(ApiResponse.success(resultPublication.getMyPublishedResults(auth.getName())));
     }
 
     @GetMapping("/reports/options")
     @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
-    public ResponseEntity<ApiResponse<ResultStatisticsResponse.Options>> getFilterOptions(Authentication auth) {
-        return ResponseEntity.ok(ApiResponse.success(reports.getFilterOptions(auth.getName())));
+    public ResponseEntity<ApiResponse<ResultResponse.Statistics.Options>> getFilterOptions(Authentication auth) {
+        return ResponseEntity.ok(ApiResponse.success(resultStatistics.getFilterOptions(auth.getName())));
     }
 
     @GetMapping("/reports")
     @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
-    public ResponseEntity<ApiResponse<List<ResultStatisticsResponse.Row>>> getStatistics(
+    public ResponseEntity<ApiResponse<List<ResultResponse.Statistics.Row>>> getStatistics(
             @RequestParam(required = false) Long periodId,
             @RequestParam(required = false) Long departmentId,
             @RequestParam(required = false) Long topicId,
             Authentication auth) {
         return ResponseEntity.ok(ApiResponse.success(
-                reports.getStatistics(periodId, departmentId, topicId, auth.getName())));
+                resultStatistics.getStatistics(periodId, departmentId, topicId, auth.getName())));
     }
 
     @GetMapping(value = "/reports.csv", produces = "text/csv")
@@ -50,7 +74,7 @@ public class ResultStatisticsController extends CsvExportController<ResultStatis
             @RequestParam(required = false) Long departmentId,
             @RequestParam(required = false) Long topicId,
             Authentication auth) {
-        return buildCsvResponse(reports.getStatistics(periodId, departmentId, topicId, auth.getName()));
+        return buildCsvResponse(resultStatistics.getStatistics(periodId, departmentId, topicId, auth.getName()));
     }
 
     @Override
@@ -68,7 +92,7 @@ public class ResultStatisticsController extends CsvExportController<ResultStatis
     }
 
     @Override
-    protected List<?> exportRow(ResultStatisticsResponse.Row row) {
+    protected List<?> exportRow(ResultResponse.Statistics.Row row) {
         List<Object> cells = new ArrayList<>(Arrays.asList(
                 row.periodName(), row.departmentName(), row.topicTitle(),
                 row.studentCount(), row.averageFinalScore(), row.passCount(), row.failCount()));

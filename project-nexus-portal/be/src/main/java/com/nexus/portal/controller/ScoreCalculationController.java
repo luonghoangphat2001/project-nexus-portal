@@ -1,7 +1,7 @@
 package com.nexus.portal.controller;
 
 import com.nexus.portal.dto.response.ApiResponse;
-import com.nexus.portal.dto.response.DefenseResultResponse;
+import com.nexus.portal.dto.response.ResultResponse;
 import com.nexus.portal.service.ScoreCalculationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +26,7 @@ public class ScoreCalculationController {
 
     @GetMapping("/{assignmentId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
-    public ResponseEntity<ApiResponse<List<DefenseResultResponse>>> getAssignmentScores(
+    public ResponseEntity<ApiResponse<List<ResultResponse.Defense>>> getAssignmentScores(
             @PathVariable Long assignmentId, Authentication auth) {
         return ResponseEntity.ok(ApiResponse.success(scoreCalculation.getAssignmentScores(assignmentId, auth.getName())));
     }

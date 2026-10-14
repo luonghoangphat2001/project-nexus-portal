@@ -1,7 +1,6 @@
 package com.nexus.portal.service.impl;
 
-import com.nexus.portal.dto.response.DefenseResultResponse;
-import com.nexus.portal.dto.response.ResultStatisticsResponse;
+import com.nexus.portal.dto.response.ResultResponse;
 import com.nexus.portal.enums.CouncilStatus;
 import com.nexus.portal.enums.RoleName;
 import com.nexus.portal.enums.ScoreRange;
@@ -13,7 +12,6 @@ import com.nexus.portal.repository.DefenseAssignmentRepository;
 import com.nexus.portal.repository.DefenseCouncilRepository;
 import com.nexus.portal.repository.PublishedResultRepository;
 import com.nexus.portal.repository.RegistrationPeriodRepository;
-import com.nexus.portal.repository.ResultStatisticsRepository;
 import com.nexus.portal.repository.TopicRepository;
 import com.nexus.portal.service.AuditLogService;
 import com.nexus.portal.service.CalculatedScore;
@@ -43,7 +41,6 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
     private final DefenseAccessPolicy access;
     private final AuditLogService audit;
     private final Clock clock;
-    private final ResultStatisticsRepository reports;
     private final DepartmentRepository departments;
     private final RegistrationPeriodRepository periods;
     private final TopicRepository topics;
@@ -51,8 +48,8 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
     public ResultsServiceImpl(DefenseAssignmentRepository assignments, DefenseCouncilRepository councils,
                               PublishedResultRepository results, ScoreCalculationService scoreCalculation,
                               DefenseAccessPolicy access, AuditLogService audit, Clock clock,
-                              ResultStatisticsRepository reports, DepartmentRepository departments,
-                              RegistrationPeriodRepository periods, TopicRepository topics) {
+                              DepartmentRepository departments, RegistrationPeriodRepository periods,
+                              TopicRepository topics) {
         this.assignments = assignments;
         this.councils = councils;
         this.results = results;
@@ -60,7 +57,6 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
         this.access = access;
         this.audit = audit;
         this.clock = clock;
-        this.reports = reports;
         this.departments = departments;
         this.periods = periods;
         this.topics = topics;
@@ -68,7 +64,7 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public List<DefenseResultResponse> publishAssignmentResults(Long assignmentId, String identifier) {
+    public List<ResultResponse.Defense> publishAssignmentResults(Long assignmentId, String identifier) {
         User manager = access.getUser(identifier);
         Long councilId = assignments.findCouncilIdById(assignmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Defense assignment not found"));
@@ -107,7 +103,7 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
     }
 
     @Override
-    public List<DefenseResultResponse> getMyPublishedResults(String identifier) {
+    public List<ResultResponse.Defense> getMyPublishedResults(String identifier) {
         User student = access.getUser(identifier);
         if (!access.hasRole(student, RoleName.ROLE_USER)) {
             throw new AccessDeniedException("Only students can view their own results");
@@ -117,30 +113,30 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
     }
 
     @Override
-    public ResultStatisticsResponse.Options getFilterOptions(String identifier) {
+    public ResultResponse.Statistics.Options getFilterOptions(String identifier) {
         User manager = access.getUser(identifier);
         List<Department> scope = getManagedDepartments(manager);
         List<Long> departmentIds = scope.stream().map(Department::getId).toList();
-        List<ResultStatisticsResponse.Options.Option> departmentOptions = scope.stream()
+        List<ResultResponse.Statistics.Options.Option> departmentOptions = scope.stream()
                 .sorted(Comparator.comparing(Department::getName))
-                .map(department -> new ResultStatisticsResponse.Options.Option(
+                .map(department -> new ResultResponse.Statistics.Options.Option(
                         department.getId(), department.getName()))
                 .toList();
-        List<ResultStatisticsResponse.Options.Option> periodOptions = periods.findAll().stream()
+        List<ResultResponse.Statistics.Options.Option> periodOptions = periods.findAll().stream()
                 .sorted(Comparator.comparing(RegistrationPeriod::getStartDate).reversed())
-                .map(period -> new ResultStatisticsResponse.Options.Option(period.getId(), period.getName()))
+                .map(period -> new ResultResponse.Statistics.Options.Option(period.getId(), period.getName()))
                 .toList();
-        List<ResultStatisticsResponse.Options.TopicOption> topicOptions = departmentIds.isEmpty() ? List.of()
+        List<ResultResponse.Statistics.Options.TopicOption> topicOptions = departmentIds.isEmpty() ? List.of()
                 : topics.findByDepartmentIdIn(departmentIds).stream()
                 .sorted(Comparator.comparing(Topic::getTitle))
-                .map(topic -> new ResultStatisticsResponse.Options.TopicOption(topic.getId(), topic.getTitle(),
+                .map(topic -> new ResultResponse.Statistics.Options.TopicOption(topic.getId(), topic.getTitle(),
                         topic.getDepartment().getId(), topic.getPeriod().getId()))
                 .toList();
-        return new ResultStatisticsResponse.Options(periodOptions, departmentOptions, topicOptions);
+        return new ResultResponse.Statistics.Options(periodOptions, departmentOptions, topicOptions);
     }
 
     @Override
-    public List<ResultStatisticsResponse.Row> getStatistics(
+    public List<ResultResponse.Statistics.Row> getStatistics(
             Long periodId, Long departmentId, Long topicId, String identifier) {
         User manager = access.getUser(identifier);
         Set<Long> allowedDepartmentIds = getManagedDepartments(manager).stream()
@@ -161,7 +157,7 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
         }
 
         Map<ReportKey, List<PublishedResult>> grouped = new HashMap<>();
-        reports.findPublishedForReport(allowedDepartmentIds, periodId, departmentId, topicId)
+        results.findPublishedForReport(allowedDepartmentIds, periodId, departmentId, topicId)
                 .forEach(result -> {
                     Topic topic = result.getAssignment().getRegistration().getTopic();
                     RegistrationPeriod period = topic.getPeriod();
@@ -173,13 +169,13 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
 
         return grouped.entrySet().stream()
                 .map(entry -> toReportRow(entry.getKey(), entry.getValue()))
-                .sorted(Comparator.comparing(ResultStatisticsResponse.Row::periodName)
-                        .thenComparing(ResultStatisticsResponse.Row::departmentName)
-                        .thenComparing(ResultStatisticsResponse.Row::topicTitle))
+                .sorted(Comparator.comparing(ResultResponse.Statistics.Row::periodName)
+                        .thenComparing(ResultResponse.Statistics.Row::departmentName)
+                        .thenComparing(ResultResponse.Statistics.Row::topicTitle))
                 .toList();
     }
 
-    private ResultStatisticsResponse.Row toReportRow(ReportKey key, List<PublishedResult> rows) {
+    private ResultResponse.Statistics.Row toReportRow(ReportKey key, List<PublishedResult> rows) {
         BigDecimal total = rows.stream().map(PublishedResult::getFinalScore)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         long passCount = rows.stream().filter(PublishedResult::isPassed).count();
@@ -190,7 +186,7 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
             String label = ScoreRangeClassifier.labelOf(ScoreRangeClassifier.classify(result.getFinalScore()));
             distribution.merge(label, 1L, Long::sum);
         }
-        return new ResultStatisticsResponse.Row(key.periodId(), key.periodName(), key.departmentId(),
+        return new ResultResponse.Statistics.Row(key.periodId(), key.periodName(), key.departmentId(),
                 key.departmentName(), key.topicId(), key.topicTitle(), rows.size(),
                 total.divide(BigDecimal.valueOf(rows.size()), 2, RoundingMode.HALF_UP),
                 passCount, rows.size() - passCount, distribution);
@@ -222,11 +218,11 @@ public class ResultsServiceImpl implements ResultPublicationService, ResultStati
                 .orElseThrow(() -> new ResourceNotFoundException("Defense assignment not found"));
     }
 
-    private DefenseResultResponse toResponse(PublishedResult result) {
+    private ResultResponse.Defense toResponse(PublishedResult result) {
         DefenseAssignment assignment = result.getAssignment();
         Topic topic = assignment.getRegistration().getTopic();
         User student = result.getStudent();
-        return new DefenseResultResponse(assignment.getId(), assignment.getRegistration().getId(),
+        return new ResultResponse.Defense(assignment.getId(), assignment.getRegistration().getId(),
                 topic.getPeriod().getId(), topic.getPeriod().getName(), topic.getDepartment().getId(),
                 topic.getDepartment().getName(), topic.getId(), topic.getTitle(),
                 assignment.getRegistration().getTeam().getName(), student.getId(), student.getFullName(),
