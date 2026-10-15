@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { RefreshCw, FileText, CheckCircle2, Trash2, Edit2, Lock, Eye, AlertCircle } from 'lucide-react';
+import { RefreshCw, FileText, CheckCircle2, Trash2, Edit2, Lock, Eye, AlertCircle, Award, BookOpen, Clock, Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import councilService from '../services/councilService';
 import assessmentService from '../services/assessmentService';
@@ -40,6 +40,7 @@ export function AssessmentsPage() {
   const [params] = useSearchParams();
   const requestedId = params.get('assignmentId');
   const [councils, setCouncils] = useState([]);
+  const [selectedCouncilId, setSelectedCouncilId] = useState('');
   const [selectedId, setSelectedId] = useState('');
   const [scores, setScores] = useState([]);
   const [studentId, setStudentId] = useState('');
@@ -53,8 +54,21 @@ export function AssessmentsPage() {
   const [refresh, setRefresh] = useState(0);
   const [viewScoreDetail, setViewScoreDetail] = useState(null);
 
-  const assignments = councils.flatMap((c) => c.assignments.map((a) => ({ ...a, council: c })));
-  const selected = assignments.find((a) => String(a.id) === selectedId);
+  const selectedCouncil = useMemo(
+    () => councils.find((c) => String(c.id) === String(selectedCouncilId)) || councils[0] || null,
+    [councils, selectedCouncilId]
+  );
+
+  const councilAssignments = useMemo(() => {
+    if (!selectedCouncil) return [];
+    return (selectedCouncil.assignments || []).map((a) => ({ ...a, council: selectedCouncil }));
+  }, [selectedCouncil]);
+
+  const selected = useMemo(
+    () => councilAssignments.find((a) => String(a.id) === String(selectedId)) || councilAssignments[0] || null,
+    [councilAssignments, selectedId]
+  );
+
   const ownScore = scores.find((s) => String(s.studentId) === studentId && s.type === type && s.evaluatorId === user?.id);
   const canEvaluate = selected && (type === 'REVIEW' ? selected.canReview : selected.canDefense);
 
@@ -67,8 +81,19 @@ export function AssessmentsPage() {
         if (!active) return;
         const eligible = data.filter((c) => c.canManage || c.members.some((m) => m.lecturerId === user?.id));
         setCouncils(eligible);
-        const all = eligible.flatMap((c) => c.assignments);
-        setSelectedId((id) => all.some((a) => String(a.id) === (id || requestedId)) ? (id || requestedId) : String(all[0]?.id || ''));
+
+        // Find initial council and assignment
+        const all = eligible.flatMap((c) => (c.assignments || []).map((a) => ({ ...a, council: c })));
+        if (requestedId && all.some((a) => String(a.id) === String(requestedId))) {
+          const match = all.find((a) => String(a.id) === String(requestedId));
+          setSelectedCouncilId(String(match.council.id));
+          setSelectedId(String(requestedId));
+        } else if (eligible.length > 0) {
+          setSelectedCouncilId(String(eligible[0].id));
+          if (eligible[0].assignments && eligible[0].assignments[0]) {
+            setSelectedId(String(eligible[0].assignments[0].id));
+          }
+        }
       })
       .catch((e) => {
         if (active) setError(e.message || t('common.error'));
@@ -78,6 +103,14 @@ export function AssessmentsPage() {
       });
     return () => { active = false; };
   }, [refresh, user?.id, requestedId, t]);
+
+  // Synchronize selectedId when selectedCouncilId changes
+  useEffect(() => {
+    if (councilAssignments.length === 0) return;
+    setSelectedId((current) =>
+      councilAssignments.some((a) => String(a.id) === current) ? current : String(councilAssignments[0].id)
+    );
+  }, [councilAssignments]);
 
   useEffect(() => {
     let active = true;
@@ -159,49 +192,93 @@ export function AssessmentsPage() {
         <div className="p-12 text-center text-sm text-slate-500 bg-white rounded-2xl border border-slate-200">
           {t('common.loading')}
         </div>
-      ) : assignments.length === 0 ? (
+      ) : councils.length === 0 ? (
         <div className="p-12 text-center text-sm text-slate-500 bg-white rounded-2xl border border-slate-200">
           {t('assessments.noAssignedTeams')}
         </div>
       ) : (
         <>
-          {/* Council & Team Selection Card */}
-          <FilterCard title={t('assessments.selectCouncilTeam')} collapsible={false}>
-            <div className="space-y-4">
-              <FilterField label={t('assessments.selectCouncilTeam')}>
-                <select
-                  className={selectClass}
-                  disabled={busy}
-                  value={selectedId}
-                  onChange={(e) => { setSelectedId(e.target.value); setNotice(''); }}
-                >
-                  {assignments.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.council.name} · {a.registration.teamName} · {a.registration.topicTitle}
-                    </option>
-                  ))}
-                </select>
-              </FilterField>
-
-              {selected && (
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-sm text-slate-600 border-t border-slate-100">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <StatusBadge value={selected.council.status} type="status" />
-                    <span className="font-medium text-slate-800">
-                      {selected.council.room || 'Phòng hội đồng'} · {formatDate(selected.council.startsAt)}
-                    </span>
-                  </div>
-                  <Link
-                    className="text-blue-600 hover:text-blue-700 font-semibold inline-flex items-center gap-1.5"
-                    to={`/reports?registrationId=${selected.registration.id}`}
+          {/* KHỐI 2 BỘ LỌC TÁCH BIỆT: HỘI ĐỒNG ĐÁNH GIÁ & ĐỀ TÀI / NHÓM */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs transition-all space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Bộ lọc 1: Hội đồng đánh giá */}
+              <div>
+                <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-blue-600" />
+                  <span>{t('assessments.filterCouncil', '1. Chọn Hội đồng đánh giá')}</span>
+                </label>
+                <div className="relative">
+                  <select
+                    className={selectClass}
+                    disabled={busy}
+                    value={selectedCouncilId}
+                    onChange={(e) => {
+                      setSelectedCouncilId(e.target.value);
+                      setNotice('');
+                    }}
                   >
-                    <FileText className="w-4 h-4" />
-                    <span>{t('assessments.viewDocuments')}</span>
-                  </Link>
+                    {councils.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} {c.room ? `— Phòng ${c.room}` : ''}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              )}
+              </div>
+
+              {/* Bộ lọc 2: Đề tài & Nhóm sinh viên */}
+              <div>
+                <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                  <BookOpen className="w-4 h-4 text-indigo-600" />
+                  <span>{t('assessments.filterTopic', '2. Chọn Đề tài & Nhóm sinh viên')}</span>
+                </label>
+                <div className="relative">
+                  <select
+                    className={selectClass}
+                    disabled={busy || councilAssignments.length === 0}
+                    value={selectedId}
+                    onChange={(e) => {
+                      setSelectedId(e.target.value);
+                      setNotice('');
+                    }}
+                  >
+                    {councilAssignments.length === 0 ? (
+                      <option value="">{t('assessments.noTopicsInCouncil', 'Hội đồng chưa có đề tài phân công')}</option>
+                    ) : (
+                      councilAssignments.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.registration.topicTitle} — Nhóm: {a.registration.teamName}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+              </div>
             </div>
-          </FilterCard>
+
+            {selected && (
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 text-sm text-slate-600 border-t border-slate-100">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <StatusBadge value={selected.council.status} type="status" />
+                  <span className="font-medium text-slate-800 flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                    <span>{selected.council.room || 'Phòng hội đồng'}</span>
+                  </span>
+                  <span className="font-medium text-slate-800 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-slate-500" />
+                    <span>{formatDate(selected.council.startsAt)}</span>
+                  </span>
+                </div>
+                <Link
+                  className="text-blue-600 hover:text-blue-700 font-semibold inline-flex items-center gap-1.5"
+                  to={`/reports?registrationId=${selected.registration.id}`}
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>{t('assessments.viewDocuments')}</span>
+                </Link>
+              </div>
+            )}
+          </div>
 
           {/* Form đánh giá phiếu chấm điểm của bản thân (nếu có quyền chấm) */}
           {selected && (selected.canDefense || selected.canReview) && scoresReady && !scoreLoading && (

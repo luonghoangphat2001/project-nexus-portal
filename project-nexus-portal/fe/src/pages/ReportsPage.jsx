@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Download, Upload, FileText, RefreshCw } from 'lucide-react';
+import { Download, Upload, FileText, RefreshCw, CalendarClock, GraduationCap } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import reportService from '../services/reportService';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -144,37 +144,85 @@ export function ReportsPage() {
         </div>
       ) : (
         <>
-          {/* Project / Registration Selector */}
-          <FilterCard title={t('reports.selectTeamProject')} collapsible={false}>
-            <div className="space-y-3">
-              <FilterField label={t('reports.selectTeamProject')}>
-                <select
-                  disabled={busy}
-                  className={selectClass}
-                  value={selectedId}
-                  onChange={(e) => {
-                    setSelectedId(e.target.value);
-                    setNotice('');
-                    setValues({ type: 'REPORT', title: '', note: '', file: null });
-                    if (fileInput.current) fileInput.current.value = '';
-                  }}
-                >
-                  {registrations.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.teamName} · {r.topicTitle} · {r.periodName}
-                    </option>
-                  ))}
-                </select>
-              </FilterField>
-              {selected && (
-                <p className="text-sm text-slate-600">
-                  {t('reports.deadlineNotice')}{' '}
-                  <strong className="text-slate-900">{formatDate(selected.submissionDeadline)}</strong>{' '}
-                  {t('reports.deadlineSub')}
-                </p>
-              )}
+          {/* Project & Submission Milestone Selector Card */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs transition-all">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+              {/* Left Column: Project / Registration Select */}
+              <div className="lg:col-span-7 space-y-2">
+                <label className="block text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-blue-600" />
+                  <span>{t('reports.selectTeamProject')}</span>
+                </label>
+                <div className="relative">
+                  <select
+                    disabled={busy}
+                    className={selectClass}
+                    value={selectedId}
+                    onChange={(e) => {
+                      setSelectedId(e.target.value);
+                      setNotice('');
+                      setValues({ type: 'REPORT', title: '', note: '', file: null });
+                      if (fileInput.current) fileInput.current.value = '';
+                    }}
+                  >
+                    {registrations.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.topicTitle} — Nhóm: {r.teamName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Additional project details */}
+                {selected && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-500">
+                    <span className="font-semibold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200/60">
+                      {selected.periodName}
+                    </span>
+                    {selected.departmentName && (
+                      <span className="text-slate-600 font-medium">
+                        {selected.departmentName}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Submission Deadline Milestone */}
+              <div className="lg:col-span-5">
+                {selected && (
+                  <div className="bg-gradient-to-br from-amber-50/80 to-orange-50/50 border border-amber-200/80 rounded-xl p-4 flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-amber-100/80 text-amber-700 shrink-0 mt-0.5">
+                      <CalendarClock className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+                          {t('reports.deadlineNotice', 'Hạn chót nộp tài liệu')}
+                        </span>
+                        {selected.canSubmit ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                            {t('common.open', 'Đang mở nộp')}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">
+                            {t('common.closed', 'Chỉ xem')}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm font-bold text-slate-900 font-mono">
+                        {formatDate(selected.submissionDeadline)}
+                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        {t('reports.deadlineSub', '(Vui lòng nộp đầy đủ file báo cáo/slide trước thời hạn)')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </FilterCard>
+          </div>
 
           {/* Upload Document Form */}
           {selected?.canSubmit && (

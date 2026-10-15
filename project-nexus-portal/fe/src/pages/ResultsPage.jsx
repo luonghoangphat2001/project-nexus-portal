@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Download, RefreshCw, BarChart2, PieChart as PieChartIcon, TrendingUp, CheckCircle, XCircle, Award, Users } from 'lucide-react';
+import { Download, RefreshCw, BarChart2, PieChart as PieChartIcon, TrendingUp, CheckCircle, XCircle, Award, Users, BookOpen, Clock, Building2, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import councilService from '../services/councilService';
 import scoreCalculationService from '../services/scoreCalculationService';
@@ -18,6 +18,21 @@ import {
   selectClass
 } from '../components/common/CommonUi';
 
+function formatDate(date) {
+  if (!date) return '—';
+  try {
+    return new Date(date).toLocaleString(undefined, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return String(date);
+  }
+}
+
 const formatScore = (value) => (value != null ? Number(value).toFixed(2) : '—');
 const selectedFilters = (filters) => Object.fromEntries(
   Object.entries(filters).filter(([, value]) => value),
@@ -28,6 +43,7 @@ export function ResultsPage() {
   const { t } = useTranslation();
   const isStudent = user?.roles?.includes('ROLE_USER') && !user?.roles?.includes('ROLE_ADMIN');
   const [assignments, setAssignments] = useState([]);
+  const [selectedCouncilId, setSelectedCouncilId] = useState('');
   const [selectedId, setSelectedId] = useState('');
   const [grades, setGrades] = useState([]);
   const [myGrades, setMyGrades] = useState([]);
@@ -46,6 +62,17 @@ export function ResultsPage() {
     () => assignments.filter((a) => a.council.status === 'COMPLETED'),
     [assignments]
   );
+
+  // Danh sách hội đồng duy nhất từ completedAssignments
+  const completedCouncils = useMemo(() => {
+    const map = new Map();
+    completedAssignments.forEach((a) => {
+      if (a.council && !map.has(a.council.id)) {
+        map.set(a.council.id, a.council);
+      }
+    });
+    return Array.from(map.values());
+  }, [completedAssignments]);
 
   useEffect(() => {
     let active = true;
@@ -68,10 +95,37 @@ export function ResultsPage() {
     return () => { active = false; };
   }, [isStudent, refresh, t]);
 
+  // Đồng bộ selectedCouncilId
   useEffect(() => {
-    if (isStudent || completedAssignments.length === 0) return;
-    setSelectedId((id) => completedAssignments.some((a) => String(a.id) === id) ? id : String(completedAssignments[0].id));
-  }, [completedAssignments, isStudent]);
+    if (isStudent || completedCouncils.length === 0) return;
+    setSelectedCouncilId((id) =>
+      completedCouncils.some((c) => String(c.id) === id) ? id : String(completedCouncils[0].id)
+    );
+  }, [completedCouncils, isStudent]);
+
+  // Danh sách đề tài & nhóm thuộc hội đồng đang chọn
+  const councilAssignments = useMemo(() => {
+    if (!selectedCouncilId) return [];
+    return completedAssignments.filter((a) => String(a.council.id) === String(selectedCouncilId));
+  }, [completedAssignments, selectedCouncilId]);
+
+  // Đồng bộ selectedId (assignmentId)
+  useEffect(() => {
+    if (isStudent || councilAssignments.length === 0) return;
+    setSelectedId((id) =>
+      councilAssignments.some((a) => String(a.id) === id) ? id : String(councilAssignments[0].id)
+    );
+  }, [councilAssignments, isStudent]);
+
+  const activeCouncil = useMemo(
+    () => completedCouncils.find((c) => String(c.id) === String(selectedCouncilId)) || null,
+    [completedCouncils, selectedCouncilId]
+  );
+
+  const activeAssignment = useMemo(
+    () => councilAssignments.find((a) => String(a.id) === String(selectedId)) || councilAssignments[0] || null,
+    [councilAssignments, selectedId]
+  );
 
   useEffect(() => {
     let active = true;
@@ -286,22 +340,93 @@ export function ResultsPage() {
             <div className="p-8 text-center text-sm text-slate-500">{t('results.noCompletedCouncils')}</div>
           ) : (
             <>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                  {t('results.councilTeamTopic')}
-                </label>
-                <select
-                  className={selectClass}
-                  disabled={busy}
-                  value={selectedId}
-                  onChange={(e) => setSelectedId(e.target.value)}
-                >
-                  {completedAssignments.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.council.name} · {a.registration.teamName} · {a.registration.topicTitle}
-                    </option>
-                  ))}
-                </select>
+              {/* KHỐI 2 BỘ LỌC TÁCH BIỆT: HỘI ĐỒNG CHẤM & ĐỀ TÀI BẢO VỆ */}
+              <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4.5 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Bộ lọc 1: Hội đồng chấm */}
+                  <div>
+                    <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                      <Award className="w-4 h-4 text-blue-600" />
+                      <span>{t('results.filterCouncil', '1. Chọn Hội đồng chấm')}</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        className={selectClass}
+                        disabled={busy}
+                        value={selectedCouncilId}
+                        onChange={(e) => setSelectedCouncilId(e.target.value)}
+                      >
+                        {completedCouncils.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} {c.room ? `— Phòng ${c.room}` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Bộ lọc 2: Đề tài & Nhóm sinh viên */}
+                  <div>
+                    <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                      <BookOpen className="w-4 h-4 text-indigo-600" />
+                      <span>{t('results.filterTopic', '2. Chọn Đề tài & Nhóm sinh viên')}</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        className={selectClass}
+                        disabled={busy || councilAssignments.length === 0}
+                        value={selectedId}
+                        onChange={(e) => setSelectedId(e.target.value)}
+                      >
+                        {councilAssignments.length === 0 ? (
+                          <option value="">{t('results.noTopicsInCouncil', 'Hội đồng chưa có đề tài bảo vệ')}</option>
+                        ) : (
+                          councilAssignments.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.registration.topicTitle} — Nhóm: {a.registration.teamName}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dải thông tin bổ trợ Hội đồng & Đề tài đang chọn */}
+                {activeCouncil && activeAssignment && (
+                  <div className="pt-3 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="inline-flex items-center gap-1 font-medium text-slate-700 bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-2xs">
+                        <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Phòng: {activeCouncil.room || 'Phòng hội đồng'}</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1 font-medium text-slate-700 bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-2xs">
+                        <Clock className="w-3.5 h-3.5 text-slate-500" />
+                        <span>{formatDate(activeCouncil.startsAt)}</span>
+                      </span>
+                      {activeAssignment.registration?.periodName && (
+                        <span className="text-slate-500 font-medium">
+                          {activeAssignment.registration.periodName}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-500">{t('results.publishStatus', 'Trạng thái công bố')}:</span>
+                      {activeAssignment.resultsPublished ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{t('results.publishedNotice', 'Đã công bố chính thức')}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>{t('results.pendingPublish', 'Chờ công bố điểm')}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {gradesLoading ? (
