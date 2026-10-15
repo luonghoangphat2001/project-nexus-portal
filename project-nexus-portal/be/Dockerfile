@@ -27,6 +27,6 @@ RUN chown -R appuser:appgroup /app
 
 USER appuser
 
-EXPOSE 8086
+EXPOSE 8080
 
 ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]

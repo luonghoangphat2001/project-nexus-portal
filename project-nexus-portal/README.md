@@ -72,3 +72,12 @@ Các endpoint ghép theo `API_PREFIX`; `.env.example` hiện dùng `/api`, tươ
 Score calculation (`/results/assignments/{id}`), result publication (`/results/assignments/{id}/publish`, `/results/me`), and academic reports/statistics (`/results/reports`, `/results/reports.csv`) are available in the `/results` interface. These modules consume submitted assessments from Module 13 and process only completed councils.
 
 See the [business rules and API guide](./docs/MODULES_14_15_16.md) and [test cases](./docs/TEST_CASES_MODULES_14_15_16.md). The backend adds the `published_results` table in `schema.sql`. Run `mvn test` from `be` and `npm run build` from `fe` to verify.
+
+## 6. CI/CD & Triển khai lên VPS
+
+Hệ thống CI/CD được tích hợp sẵn qua GitHub Actions (`.github/workflows/deploy.yml`):
+- **Continuous Integration (CI)**: Tự động chạy Unit Test Backend (`mvn test`) và Build Frontend (`npm run build`).
+- **Continuous Deployment (CD)**: Tự động kết nối SSH đến VPS và khởi động hệ thống với Docker Compose (`docker-compose.prod.yml`).
+- Chi tiết cấu hình SSH Key, GitHub Secrets và môi trường VPS xem tại:
+  👉 [Hướng dẫn CI/CD và Triển khai VPS](./docs/CI_CD_DEPLOYMENT_GUIDE.md)
+

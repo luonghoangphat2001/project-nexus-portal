@@ -159,18 +159,21 @@ async function main() {
     if (res.status !== 201) throw new Error(`Expected 201, got ${res.status}: ${JSON.stringify(res.data)}`);
     periodId = res.data.data.id;
 
-    // Clean and align Team 2 to this new period for end-to-end flow
+    // Clean and align Team 2 to this new period for end-to-end flow without destroying master seed data
     const { execSync } = require('child_process');
-    execSync(`docker exec nexus_mysql_db mysql -uroot -proot -e "
+    execSync(`docker exec nexus_mysql_db mysql -uroot -proot nexus_db -e "
       SET FOREIGN_KEY_CHECKS = 0;
-      DELETE FROM nexus_db.published_results;
-      DELETE FROM nexus_db.assessments;
-      DELETE FROM nexus_db.defense_assignments;
-      DELETE FROM nexus_db.defense_council_members;
-      DELETE FROM nexus_db.defense_councils;
-      DELETE FROM nexus_db.report_documents;
+      DELETE pr FROM nexus_db.published_results pr JOIN nexus_db.defense_assignments da ON pr.assignment_id = da.id JOIN nexus_db.topic_registrations tr ON da.registration_id = tr.id WHERE tr.team_id = 2;
+      DELETE a FROM nexus_db.assessments a JOIN nexus_db.defense_assignments da ON a.assignment_id = da.id JOIN nexus_db.topic_registrations tr ON da.registration_id = tr.id WHERE tr.team_id = 2;
+      DELETE da FROM nexus_db.defense_assignments da JOIN nexus_db.topic_registrations tr ON da.registration_id = tr.id WHERE tr.team_id = 2;
+      DELETE dcm FROM nexus_db.defense_council_members dcm JOIN nexus_db.defense_councils dc ON dcm.council_id = dc.id WHERE dc.name LIKE 'SE Defense Council Room%' OR dc.name LIKE 'Conflicting Council%';
+      DELETE FROM nexus_db.defense_councils WHERE name LIKE 'SE Defense Council Room%' OR name LIKE 'Conflicting Council%';
+      DELETE rd FROM nexus_db.report_documents rd JOIN nexus_db.topic_registrations tr ON rd.registration_id = tr.id WHERE tr.team_id = 2;
       DELETE FROM nexus_db.progress_tasks WHERE team_id = 2;
       DELETE FROM nexus_db.topic_registrations WHERE team_id = 2;
+      DELETE FROM nexus_db.matchmaking_post_skills WHERE post_id IN (SELECT id FROM (SELECT id FROM nexus_db.matchmaking_posts WHERE author_id = ${authIndividual.user.id}) as tmp);
+      DELETE FROM nexus_db.team_join_requests WHERE applicant_id = ${authIndividual.user.id};
+      DELETE FROM nexus_db.matchmaking_posts WHERE author_id = ${authIndividual.user.id};
       UPDATE nexus_db.teams SET period_id = ${periodId}, status = 'READY', name = 'Team Nexus Alpha (3 Students)' WHERE id = 2;
       INSERT IGNORE INTO nexus_db.user_departments (user_id, department_id) VALUES (4, 1);
       SET FOREIGN_KEY_CHECKS = 1;

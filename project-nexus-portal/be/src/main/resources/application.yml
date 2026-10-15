@@ -36,6 +36,9 @@ spring:
         - classpath:data/03_users.sql
         - classpath:data/04_periods_topics.sql
         - classpath:data/05_teams_matchmaking.sql
+        - classpath:data/06_notifications_kanban.sql
+        - classpath:data/07_councils_assessments_results.sql
+        - classpath:data/08_audit_settings.sql
 
 app:
   reports:
