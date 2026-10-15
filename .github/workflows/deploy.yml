@@ -78,8 +78,7 @@ jobs:
       github.ref == 'refs/heads/main' &&
       github.event_name != 'pull_request' &&
       (needs.ci-backend.result == 'success' || needs.ci-backend.result == 'skipped') &&
-      (needs.ci-frontend.result == 'success' || needs.ci-frontend.result == 'skipped') &&
-      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch')
+      (needs.ci-frontend.result == 'success' || needs.ci-frontend.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: appleboy/ssh-action@v1.2.0
