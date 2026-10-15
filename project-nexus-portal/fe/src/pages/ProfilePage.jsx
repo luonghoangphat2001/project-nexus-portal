@@ -18,7 +18,7 @@ import {
   UserCheck,
   Globe
 } from 'lucide-react';
-import { PageHeader, buttonClass, inputClass } from '../components/common/CommonUi';
+import { PageHeader, StatusBadge, buttonClass, inputClass } from '../components/common/CommonUi';
 
 export const ProfilePage = () => {
   const { user: authUser, updateUser } = useAuth();
@@ -103,22 +103,6 @@ export const ProfilePage = () => {
     }
   };
 
-  const getRoleBadge = (role) => {
-    switch (role) {
-      case 'ROLE_ADMIN':
-        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-50 text-rose-700 border border-rose-200">System Admin</span>;
-      case 'ROLE_PRINCIPAL':
-        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700 border border-amber-200">Trưởng khoa / BM</span>;
-      case 'ROLE_TEACHER':
-        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">GVHD</span>;
-      case 'ROLE_COUNCIL':
-        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-purple-50 text-purple-700 border border-purple-200">Hội đồng</span>;
-      case 'ROLE_USER':
-      default:
-        return <span key={role} className="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Sinh viên</span>;
-    }
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -146,7 +130,9 @@ export const ProfilePage = () => {
             <p className="text-sm text-slate-500 font-medium mb-3">@{authUser?.username}</p>
 
             <div className="flex flex-wrap justify-center gap-1.5 mb-6">
-              {authUser?.roles?.map(getRoleBadge)}
+              {authUser?.roles?.map((role) => (
+                <StatusBadge key={role} value={role} type="role" />
+              ))}
             </div>
 
             <div className="border-t border-slate-100 pt-4 text-left space-y-3 text-sm">
@@ -156,15 +142,15 @@ export const ProfilePage = () => {
               </div>
               <div className="flex items-center text-slate-600 gap-3">
                 <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-                <span>{authUser?.phone || 'Chưa cập nhật'}</span>
+                <span>{authUser?.phone || t('common.notUpdated', 'Chưa cập nhật')}</span>
               </div>
               <div className="flex items-center text-slate-600 gap-3">
                 <IdCard className="w-4 h-4 text-slate-400 shrink-0" />
-                <span>Mã số: <strong className="text-slate-900 font-semibold">{authUser?.studentCode || 'N/A'}</strong></span>
+                <span>{t('users.studentCode')}: <strong className="text-slate-900 font-semibold">{authUser?.studentCode || 'N/A'}</strong></span>
               </div>
               <div className="flex items-center text-slate-600 gap-3">
                 <UserCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Trạng thái: <strong className="text-emerald-700 font-semibold">Hoạt động</strong></span>
+                <span>{t('common.status')}: <strong className="text-emerald-700 font-semibold">{t('enums.status.ACTIVE')}</strong></span>
               </div>
             </div>
           </div>

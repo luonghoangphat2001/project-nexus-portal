@@ -20,11 +20,12 @@ import {
   Layers,
   ChevronDown,
   ChevronsUpDown,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 
-export const Sidebar = ({ isOpen }) => {
+export const Sidebar = ({ isOpen = true, mobileOpen = false, onCloseMobile }) => {
   const { user, hasRole } = useAuth();
   const { t } = useTranslation();
   const location = useLocation();
@@ -146,23 +147,33 @@ export const Sidebar = ({ isOpen }) => {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 bg-white border-r border-slate-200/80 transition-all duration-300 flex flex-col ${
-        isOpen ? 'w-64' : 'w-20'
-      }`}
+      className={`fixed inset-y-0 left-0 z-40 bg-white border-r border-slate-200/80 transition-all duration-300 flex flex-col w-64 md:translate-x-0 ${
+        mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+      } ${isOpen ? 'md:w-64' : 'md:w-20'}`}
     >
-      {/* Brand Header Matching Reference Design */}
-      <div className="h-16 flex items-center px-6 border-b border-slate-100 shrink-0">
+      {/* Brand Header */}
+      <div className="h-16 flex items-center justify-between px-5 border-b border-slate-100 shrink-0">
         <div className="flex items-center space-x-2.5">
           <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-xs shrink-0">
             <Layers className="w-4 h-4" />
           </div>
-          {isOpen && (
+          {(isOpen || mobileOpen) && (
             <div className="flex items-baseline space-x-1 overflow-hidden">
               <span className="font-extrabold text-lg text-blue-600 tracking-tight">NEXUS</span>
               <span className="text-xs font-bold text-slate-800 tracking-wider">PORTAL</span>
             </div>
           )}
         </div>
+        {/* Mobile close button */}
+        <button
+          type="button"
+          onClick={onCloseMobile}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 md:hidden cursor-pointer"
+          title={t('common.close')}
+          aria-label={t('common.close')}
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Navigation Menu List */}
@@ -174,8 +185,8 @@ export const Sidebar = ({ isOpen }) => {
           );
           const GroupIcon = group.icon;
 
-          if (!isOpen) {
-            // Collapsed Mode
+          if (!isOpen && !mobileOpen) {
+            // Collapsed Mode (Only on Desktop when !isOpen)
             return (
               <div key={group.id} className="space-y-1 py-1">
                 {group.items.map((item) => {
@@ -184,6 +195,7 @@ export const Sidebar = ({ isOpen }) => {
                     <NavLink
                       key={item.path}
                       to={item.path}
+                      onClick={() => onCloseMobile?.()}
                       className={({ isActive }) =>
                         `flex items-center justify-center p-2.5 rounded-xl text-xs font-medium transition-all ${
                           isActive
@@ -201,7 +213,7 @@ export const Sidebar = ({ isOpen }) => {
             );
           }
 
-          // Expanded Mode matching Image 1
+          // Expanded Mode
           return (
             <div key={group.id} className="space-y-1">
               {/* Group Trigger Button */}
@@ -237,8 +249,9 @@ export const Sidebar = ({ isOpen }) => {
                       <NavLink
                         key={item.path}
                         to={item.path}
+                        onClick={() => onCloseMobile?.()}
                         className={({ isActive }) =>
-                          `flex items-center space-x-2.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                          `flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
                             isActive
                               ? 'bg-blue-50 text-blue-600 font-semibold'
                               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -257,10 +270,11 @@ export const Sidebar = ({ isOpen }) => {
         })}
       </div>
 
-      {/* Footer User Account Box Matching Bottom Left of Reference Image */}
+      {/* Footer User Account Box */}
       <div className="p-3 border-t border-slate-100 shrink-0 bg-white">
         <Link
           to="/profile"
+          onClick={() => onCloseMobile?.()}
           className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all text-left group cursor-pointer"
           title={t('header.profileAndSettings')}
         >
@@ -268,7 +282,7 @@ export const Sidebar = ({ isOpen }) => {
             <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-700 text-xs shrink-0">
               {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
             </div>
-            {isOpen && (
+            {(isOpen || mobileOpen) && (
               <div className="overflow-hidden">
                 <p className="text-sm font-semibold text-slate-800 truncate">
                   {user?.username || 'user'}
@@ -279,7 +293,7 @@ export const Sidebar = ({ isOpen }) => {
               </div>
             )}
           </div>
-          {isOpen && (
+          {(isOpen || mobileOpen) && (
             <ChevronsUpDown className="w-4 h-4 text-slate-400 group-hover:text-slate-600 shrink-0" />
           )}
         </Link>

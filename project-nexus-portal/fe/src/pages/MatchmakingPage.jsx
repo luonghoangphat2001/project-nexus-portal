@@ -18,6 +18,7 @@ import {
   StatusBadge,
   Modal,
   EmptyState,
+  Banner,
   buttonClass,
   inputClass,
   selectClass,
@@ -27,6 +28,8 @@ export const MatchmakingPage = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('feed'); // 'feed' | 'candidates' | 'my-requests'
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   // Posts State
   const [posts, setPosts] = useState([]);
@@ -70,14 +73,17 @@ export const MatchmakingPage = () => {
 
   const fetchPosts = async () => {
     setLoadingPosts(true);
+    setError('');
     try {
       const res = await matchmakingService.getPosts({
         type: postTypeFilter || undefined,
         query: searchFilter || undefined,
       });
-      setPosts(res || []);
+      setPosts(Array.isArray(res) ? res : (res?.data || []));
     } catch (err) {
       console.error(err);
+      setError(err.message || t('common.error'));
+      setPosts([]);
     } finally {
       setLoadingPosts(false);
     }
@@ -85,11 +91,14 @@ export const MatchmakingPage = () => {
 
   const fetchCandidates = async () => {
     setLoadingCandidates(true);
+    setError('');
     try {
       const res = await matchmakingService.getCandidates();
-      setCandidates(res || []);
+      setCandidates(Array.isArray(res) ? res : (res?.data || []));
     } catch (err) {
       console.error(err);
+      setError(err.message || t('common.error'));
+      setCandidates([]);
     } finally {
       setLoadingCandidates(false);
     }
@@ -97,11 +106,14 @@ export const MatchmakingPage = () => {
 
   const fetchMyRequests = async () => {
     setLoadingRequests(true);
+    setError('');
     try {
       const res = await matchmakingService.getMyJoinRequests();
-      setMyRequests(res || []);
+      setMyRequests(Array.isArray(res) ? res : (res?.data || []));
     } catch (err) {
       console.error(err);
+      setError(err.message || t('common.error'));
+      setMyRequests([]);
     } finally {
       setLoadingRequests(false);
     }
@@ -109,6 +121,8 @@ export const MatchmakingPage = () => {
 
   const handleCreatePost = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
     try {
       const skillsArray = skillsInput
         .split(',')
@@ -129,25 +143,28 @@ export const MatchmakingPage = () => {
       setPostGoals('');
       setSkillsInput('');
       setContactInfo('');
+      setSuccess(t('matchmaking.createSuccess', 'Đăng tin tìm đồng đội thành công!'));
       fetchPosts();
     } catch (err) {
-      alert(err.message || t('common.error'));
+      setError(err.message || t('common.error'));
     }
   };
 
   const handleApplySubmit = async (e) => {
     e.preventDefault();
     if (!selectedPost) return;
+    setError('');
+    setSuccess('');
     try {
       await matchmakingService.submitJoinRequest(selectedPost.id, {
         message: applyMessage,
       });
-      alert(t('matchmaking.applySuccess'));
+      setSuccess(t('matchmaking.applySuccess'));
       setApplyModalOpen(false);
       setSelectedPost(null);
       setApplyMessage('');
     } catch (err) {
-      alert(err.message || t('common.error'));
+      setError(err.message || t('common.error'));
     }
   };
 
@@ -167,6 +184,9 @@ export const MatchmakingPage = () => {
           </button>
         }
       />
+
+      {/* Notifications */}
+      <Banner error={error} success={success} />
 
       {/* Tabs */}
       <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl self-start max-w-fit">
@@ -302,7 +322,7 @@ export const MatchmakingPage = () => {
                           setSelectedPost(post);
                           setApplyModalOpen(true);
                         }}
-                        className="px-3 py-1.5 bg-gradient-to-r from-[#da8cff] to-[#9a55ff] hover:opacity-95 text-white rounded-xl text-xs font-semibold flex items-center space-x-1 shadow-xs cursor-pointer"
+                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center space-x-1 shadow-xs transition-all cursor-pointer"
                       >
                         <Send className="w-3 h-3" />
                         <span>{t('matchmaking.applyBtn')}</span>

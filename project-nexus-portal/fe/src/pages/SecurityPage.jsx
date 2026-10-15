@@ -214,7 +214,7 @@ export const SecurityPage = () => {
           value={successLogins}
           icon={ShieldCheck}
           iconBg="bg-emerald-600"
-          subtitle="Authentication pass"
+          subtitle={t('security.authPass', 'Authentication pass')}
         />
 
         <MetricCard
@@ -222,7 +222,7 @@ export const SecurityPage = () => {
           value={failedLogins}
           icon={ShieldAlert}
           iconBg="bg-rose-600"
-          subtitle="Attention needed"
+          subtitle={t('security.attentionNeeded', 'Attention needed')}
         />
       </div>
 

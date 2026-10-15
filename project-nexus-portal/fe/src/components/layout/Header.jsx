@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../i18n/LanguageContext';
@@ -8,24 +9,43 @@ import { LogOut, User as UserIcon, PanelLeft } from 'lucide-react';
 export const Header = ({ onToggleSidebar }) => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close user dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200/80 px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+    <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
       {/* Left: Sidebar Toggle Button */}
       <div className="flex items-center space-x-3">
         <button
+          type="button"
           onClick={onToggleSidebar}
           className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
           title={t('header.toggleMenu')}
+          aria-label={t('header.toggleMenu')}
         >
           <PanelLeft className="w-5 h-5" />
         </button>
       </div>
 
       {/* Right: Language Switcher, Notifications & User Dropdown */}
-      <div className="flex items-center space-x-3.5">
-        {/* Language Switcher matching design image */}
+      <div className="flex items-center space-x-2 sm:space-x-3.5">
+        {/* Language Switcher */}
         <LanguageSwitcher variant="circle" />
 
         {/* Notifications Icon */}
@@ -34,10 +54,14 @@ export const Header = ({ onToggleSidebar }) => {
         <div className="h-4 w-px bg-slate-200"></div>
 
         {/* User Profile Dropdown */}
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
           <button
+            type="button"
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center space-x-2 p-1 rounded-xl hover:bg-slate-50 transition-colors text-left cursor-pointer"
+            className="flex items-center space-x-2 p-1 rounded-xl hover:bg-slate-50 transition-colors text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100"
+            aria-expanded={dropdownOpen}
+            aria-haspopup="true"
+            aria-label="User menu"
           >
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-xs shadow-xs">
               {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
@@ -58,9 +82,10 @@ export const Header = ({ onToggleSidebar }) => {
 
               <div className="py-1">
                 <button
+                  type="button"
                   onClick={() => {
                     setDropdownOpen(false);
-                    window.location.href = '/profile';
+                    navigate('/profile');
                   }}
                   className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 flex items-center space-x-2 transition-colors cursor-pointer"
                 >
@@ -71,6 +96,7 @@ export const Header = ({ onToggleSidebar }) => {
 
               <div className="pt-1 border-t border-slate-100">
                 <button
+                  type="button"
                   onClick={() => {
                     setDropdownOpen(false);
                     logout();

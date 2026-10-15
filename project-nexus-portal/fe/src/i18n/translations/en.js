@@ -44,7 +44,8 @@ export const en = {
     "previous": "Previous",
     "next": "Next",
     "pageOf": "Page {current} of {total}",
-    "add": "Add New"
+    "add": "Add New",
+    "notUpdated": "Not updated"
   },
   "enums": {
     "status": {
@@ -546,6 +547,7 @@ export const en = {
     "noCandidatesFound": "No available candidates looking for teams right now.",
     "noRequestsFound": "You have not sent or received any matchmaking requests.",
     "postSuccess": "Post created successfully!",
+    "createSuccess": "Post created successfully!",
     "applySuccess": "Application sent successfully!",
     "subtitle": "Find compatible teammates or join recruiting teams for capstone projects.",
     "publishPost": "Publish Post",
@@ -981,7 +983,9 @@ export const en = {
     "subtitle": "Monitor system activity logs, security audit events, and suspicious behavior.",
     "totalEvents": "Total Events",
     "successfulLogins": "Successful Logins",
+    "authPass": "Authentication pass",
     "securityWarnings": "Security Warnings",
+    "attentionNeeded": "Attention needed",
     "exportUsersCsv": "Export Users CSV",
     "exportAuditCsv": "Export Audit CSV",
     "exporting": "Exporting...",
@@ -1035,5 +1039,31 @@ export const en = {
     "council": "Council Member",
     "student": "Student",
     "user": "User"
+  },
+  "notifications": {
+    "title": "Notifications & Announcements",
+    "subtitle": "Read and manage thesis and university announcements in real time.",
+    "liveConnected": "Live updates connected",
+    "liveReconnecting": "Connecting to live updates...",
+    "liveDisconnected": "Live updates disconnected",
+    "unreadOnly": "Unread only ({count})",
+    "publishNotification": "Publish Notification",
+    "formTitle": "Notification Title",
+    "formTitlePlaceholder": "Enter announcement title...",
+    "formContent": "Notification Content",
+    "formContentPlaceholder": "Enter announcement content...",
+    "audience": "Audience / Faculty",
+    "allFaculties": "All faculties",
+    "publishSuccess": "Notification published successfully.",
+    "markReadSuccess": "Notification marked as read.",
+    "deletedSuccess": "Notification deleted successfully.",
+    "markAsRead": "Mark as read",
+    "delete": "Delete",
+    "deleteConfirm": "Are you sure you want to delete this notification?",
+    "read": "Read",
+    "unread": "Unread",
+    "noNotifications": "No notifications found.",
+    "allRead": "All notifications have been read.",
+    "noMatching": "No notifications match the current filters."
   }
 };

@@ -393,7 +393,7 @@ public class MatchmakingServiceImpl implements MatchmakingService {
                 .slotsNeeded(post.getSlotsNeeded())
                 .contactInfo(post.getContactInfo())
                 .status(post.getStatus())
-                .skills(post.getSkills())
+                .skills(post.getSkills() != null ? new HashSet<>(post.getSkills()) : new HashSet<>())
                 .createdAt(post.getCreatedAt())
                 .build();
     }

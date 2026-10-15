@@ -60,6 +60,16 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (updatedUserData) => {
+    if (updatedUserData) {
+      setUser((prev) => {
+        const merged = { ...prev, ...updatedUserData };
+        localStorage.setItem('nexus_user', JSON.stringify(merged));
+        return merged;
+      });
+    }
+  };
+
   const hasRole = (roleName) => {
     if (!user || !user.roles) return false;
     const formattedRole = roleName.startsWith('ROLE_') ? roleName : `ROLE_${roleName}`;
@@ -76,6 +86,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        updateUser,
         hasRole,
       }}
     >

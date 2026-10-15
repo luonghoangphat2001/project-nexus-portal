@@ -136,6 +136,7 @@ async function main() {
   let taskId = null;
   let docId = null;
   let councilId = null;
+  let councilStartsEpoch = 0;
   let councilEndsEpoch = 0;
   let assignmentId = null;
   let assessmentId = null;
@@ -432,9 +433,10 @@ async function main() {
   // ----------------------------------------------------------------------------
   await runTestCase('TC-15', 'Establish Defense Council & assign defense schedule', 'principal', 12, async () => {
     // Schedule council starting in future
-    councilEndsEpoch = Date.now() + 4000;
-    const startsAt = getVietnamLocalDateTime(1);
-    const endsAt = getVietnamLocalDateTime(4);
+    councilStartsEpoch = Date.now() + 4000;
+    councilEndsEpoch = Date.now() + 8000;
+    const startsAt = getVietnamLocalDateTime(4);
+    const endsAt = getVietnamLocalDateTime(8);
 
     const payload = {
       name: `SE Defense Council Room A3-201 (${timestamp})`,
@@ -540,9 +542,6 @@ async function main() {
   await runTestCase('TC-18', 'Automated weighted average score calculation & Pass/Fail status', 'principal & system', 14, async () => {
     const students = [authStudent.user.id, authStudent2.user.id, authStudent3.user.id];
 
-    // Wait a brief moment to pass council startsAt / endsAt
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
     // Submit remaining REVIEW assessments for student 2 & 3
     for (const sId of [authStudent2.user.id, authStudent3.user.id]) {
       const a = await apiRequest('POST', '/assessments', {
@@ -550,7 +549,14 @@ async function main() {
         contentScore: 8.0, implementationScore: 8.5, presentationScore: 8.0,
         comment: 'Meets review evaluation standards.',
       }, authCouncil.token);
-      await apiRequest('POST', `/assessments/${a.data.data.id}/submit`, null, authCouncil.token);
+      if (!a.ok) throw new Error(`Draft review assessment failed: ${JSON.stringify(a.data)}`);
+      const sub = await apiRequest('POST', `/assessments/${a.data.data.id}/submit`, null, authCouncil.token);
+      if (!sub.ok) throw new Error(`Submit review assessment failed: ${JSON.stringify(sub.data)}`);
+    }
+
+    // Wait until council defense has started before submitting DEFENSE assessments
+    while (Date.now() <= councilStartsEpoch + 500) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
     }
 
     // Submit DEFENSE assessments from all 3 members (principal, teacher, council) for all 3 students
@@ -567,7 +573,9 @@ async function main() {
           contentScore: ev.score, implementationScore: ev.score, presentationScore: ev.score,
           comment: 'Confident defense presentation, answered committee questions well.',
         }, ev.token);
-        await apiRequest('POST', `/assessments/${d.data.data.id}/submit`, null, ev.token);
+        if (!d.ok) throw new Error(`Draft defense assessment failed: ${JSON.stringify(d.data)}`);
+        const sub = await apiRequest('POST', `/assessments/${d.data.data.id}/submit`, null, ev.token);
+        if (!sub.ok) throw new Error(`Submit defense assessment failed: ${JSON.stringify(sub.data)}`);
       }
     }
 

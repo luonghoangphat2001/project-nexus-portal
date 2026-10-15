@@ -76,10 +76,12 @@ export function FilterCard({
   onSearch,
   title,
   defaultExpanded = true,
+  collapsible = true,
   className = '',
 }) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  const isBodyVisible = !collapsible || isExpanded;
 
   return (
     <div className={`bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs transition-all ${className}`}>
@@ -103,22 +105,25 @@ export function FilterCard({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
-          title={isExpanded ? 'Collapse filters' : 'Expand filters'}
-        >
-          {isExpanded ? (
-            <ChevronUp className="w-4 h-4" />
-          ) : (
-            <ChevronDown className="w-4 h-4" />
-          )}
-        </button>
+        {collapsible && (
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+            title={isExpanded ? 'Collapse filters' : 'Expand filters'}
+            aria-label={isExpanded ? 'Collapse filters' : 'Expand filters'}
+          >
+            {isExpanded ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </button>
+        )}
       </div>
 
       {/* Filter Body (Inputs & Selects) */}
-      {isExpanded && (
+      {isBodyVisible && (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -133,7 +138,7 @@ export function FilterCard({
           {onSearch && (
             <div className="flex justify-end pt-2">
               <button type="submit" className={buttonClass.primary}>
-                {t('common.filter') || 'Search'}
+                {t('common.search') || 'Search'}
               </button>
             </div>
           )}

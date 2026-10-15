@@ -44,7 +44,8 @@ export const vi = {
     "previous": "Trước",
     "next": "Sau",
     "pageOf": "Trang {current} / {total}",
-    "add": "Thêm mới"
+    "add": "Thêm mới",
+    "notUpdated": "Chưa cập nhật"
   },
   "enums": {
     "status": {
@@ -546,6 +547,7 @@ export const vi = {
     "noCandidatesFound": "Không có sinh viên nào đang tìm nhóm lúc này.",
     "noRequestsFound": "Bạn chưa gửi hoặc nhận được yêu cầu ghép nhóm nào.",
     "postSuccess": "Đã đăng bài thành công!",
+    "createSuccess": "Đăng tin tìm đồng đội thành công!",
     "applySuccess": "Đã gửi yêu cầu tham gia thành công!",
     "subtitle": "Tìm kiếm thành viên cùng chí hướng hoặc gia nhập các nhóm đang tuyển người cho đề tài khóa luận.",
     "publishPost": "Đăng tin tìm đồng đội",
@@ -981,7 +983,9 @@ export const vi = {
     "subtitle": "Giám sát nhật ký hoạt động hệ thống, kiểm toán bảo mật và phát hiện hành vi bất thường.",
     "totalEvents": "Tổng số sự kiện",
     "successfulLogins": "Đăng nhập hợp lệ",
+    "authPass": "Đăng nhập thành công",
     "securityWarnings": "Cảnh báo bảo mật",
+    "attentionNeeded": "Cần chú ý",
     "exportUsersCsv": "Xuất người dùng (CSV)",
     "exportAuditCsv": "Xuất nhật ký (CSV)",
     "exporting": "Đang xuất...",
@@ -1035,5 +1039,31 @@ export const vi = {
     "council": "Hội đồng chấm",
     "student": "Sinh viên",
     "user": "Người dùng"
+  },
+  "notifications": {
+    "title": "Thông báo & Tin tức",
+    "subtitle": "Xem và quản lý các thông báo khóa luận, tin tức khoa và nhà trường theo thời gian thực.",
+    "liveConnected": "Cập nhật trực tiếp: Đã kết nối",
+    "liveReconnecting": "Đang kết nối nhận thông báo...",
+    "liveDisconnected": "Cập nhật trực tiếp: Mất kết nối",
+    "unreadOnly": "Chỉ tin chưa đọc ({count})",
+    "publishNotification": "Đăng thông báo mới",
+    "formTitle": "Tiêu đề thông báo",
+    "formTitlePlaceholder": "Nhập tiêu đề thông báo...",
+    "formContent": "Nội dung thông báo",
+    "formContentPlaceholder": "Nhập nội dung chi tiết...",
+    "audience": "Đối tượng / Khoa",
+    "allFaculties": "Tất cả các khoa",
+    "publishSuccess": "Đăng thông báo thành công.",
+    "markReadSuccess": "Đã đánh dấu thông báo là đã đọc.",
+    "deletedSuccess": "Đã xóa thông báo thành công.",
+    "markAsRead": "Đánh dấu đã đọc",
+    "delete": "Xóa",
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa thông báo này?",
+    "read": "Đã đọc",
+    "unread": "Chưa đọc",
+    "noNotifications": "Không tìm thấy thông báo nào.",
+    "allRead": "Tất cả thông báo đã được đọc.",
+    "noMatching": "Không có thông báo nào phù hợp với bộ lọc."
   }
 };

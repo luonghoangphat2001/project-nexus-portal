@@ -55,7 +55,7 @@ public class MatchmakingPost extends BaseEntity {
     @Column(name = "status", length = 30, nullable = false)
     private PostStatus status = PostStatus.OPEN;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "matchmaking_post_skills", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "skill", length = 100, nullable = false)
     private Set<String> skills = new HashSet<>();
