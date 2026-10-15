@@ -54,7 +54,7 @@ services:
       context: ./fe
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://nexusportal.hpdev.name.vn:8080/api}
     container_name: nexus_frontend_app
     restart: unless-stopped
     depends_on:

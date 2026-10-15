@@ -4,10 +4,13 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-ARG VITE_API_BASE_URL=http://localhost:8080/api
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-
 COPY . .
+
+RUN if [ ! -f .env ] && [ -f .env.example ]; then cp .env.example .env; fi
+
+ARG VITE_API_BASE_URL
+RUN if [ -n "$VITE_API_BASE_URL" ]; then echo "VITE_API_BASE_URL=$VITE_API_BASE_URL" > .env.production; fi
+
 RUN npm run build
 
 FROM nginx:alpine

@@ -95,23 +95,7 @@ jobs:
           envs: SERVICE_TYPE
           script: |
             set -e
-            TARGET_DIR="${{ secrets.VPS_TARGET_DIR }}"
-            if [ -z "$TARGET_DIR" ] || [ ! -d "$TARGET_DIR" ]; then
-              if [ -d "/root/project-nexus-portal" ]; then
-                TARGET_DIR="/root/project-nexus-portal"
-              elif [ -d "$HOME/project-nexus-portal" ]; then
-                TARGET_DIR="$HOME/project-nexus-portal"
-              elif [ -d "/home/ubuntu/project-nexus-portal" ]; then
-                TARGET_DIR="/home/ubuntu/project-nexus-portal"
-              else
-                git clone https://github.com/luonghoangphat2001/project-nexus-portal.git /root/project-nexus-portal
-                TARGET_DIR="/root/project-nexus-portal"
-              fi
-            fi
-
-            echo "Deploying $SERVICE_TYPE to: $TARGET_DIR"
-
-            cd "$TARGET_DIR"
+            cd "${{ secrets.VPS_TARGET_DIR }}"
             git fetch origin main
             git reset --hard origin/main
 
