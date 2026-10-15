@@ -33,6 +33,14 @@ if [ -d "../.git" ] || [ -d ".git" ]; then
     git reset --hard origin/main || true
 fi
 
-$DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build --remove-orphans
+TARGET_SERVICE="${1:-all}"
+if [ "$TARGET_SERVICE" = "backend" ]; then
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build backend_api
+elif [ "$TARGET_SERVICE" = "frontend" ]; then
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build frontend_app
+else
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build --remove-orphans
+fi
+
 docker image prune -f
 $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps

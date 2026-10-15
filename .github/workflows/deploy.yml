@@ -18,8 +18,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'project-nexus-portal/be/**'
+            frontend:
+              - 'project-nexus-portal/fe/**'
+
   ci-backend:
     name: Backend CI
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -35,6 +54,8 @@ jobs:
 
   ci-frontend:
     name: Frontend CI
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -51,29 +72,45 @@ jobs:
 
   cd-deploy:
     name: Deploy to VPS
-    needs: [ci-backend, ci-frontend]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [changes, ci-backend, ci-frontend]
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request' &&
+      (needs.ci-backend.result == 'success' || needs.ci-backend.result == 'skipped') &&
+      (needs.ci-frontend.result == 'success' || needs.ci-frontend.result == 'skipped') &&
+      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
       - uses: appleboy/ssh-action@v1.2.0
+        env:
+          SERVICE_TYPE: ${{ (needs.changes.outputs.backend == 'true' && needs.changes.outputs.frontend == 'true') && 'all' || (needs.changes.outputs.backend == 'true' && 'backend') || (needs.changes.outputs.frontend == 'true' && 'frontend') || 'all' }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_SSH_PORT || 22 }}
           script_stop: true
+          command_timeout: 30m
+          timeout: 60s
+          envs: SERVICE_TYPE
           script: |
             set -e
             TARGET_DIR="${{ secrets.VPS_TARGET_DIR }}"
-            if [ -z "$TARGET_DIR" ]; then
-              TARGET_DIR="$HOME/project-nexus-portal"
+            if [ -z "$TARGET_DIR" ] || [ ! -d "$TARGET_DIR" ]; then
+              if [ -d "/root/project-nexus-portal" ]; then
+                TARGET_DIR="/root/project-nexus-portal"
+              elif [ -d "$HOME/project-nexus-portal" ]; then
+                TARGET_DIR="$HOME/project-nexus-portal"
+              elif [ -d "/home/ubuntu/project-nexus-portal" ]; then
+                TARGET_DIR="/home/ubuntu/project-nexus-portal"
+              else
+                git clone https://github.com/luonghoangphat2001/project-nexus-portal.git /root/project-nexus-portal
+                TARGET_DIR="/root/project-nexus-portal"
+              fi
             fi
-            TARGET_DIR="${TARGET_DIR/#\~/$HOME}"
 
-            if [ ! -d "$TARGET_DIR" ]; then
-              echo "Directory $TARGET_DIR does not exist on VPS."
-              exit 1
-            fi
+            echo "Deploying $SERVICE_TYPE to: $TARGET_DIR"
 
             cd "$TARGET_DIR"
             git fetch origin main
@@ -84,4 +121,4 @@ jobs:
             fi
 
             chmod +x scripts/deploy.sh
-            ./scripts/deploy.sh
+            ./scripts/deploy.sh "$SERVICE_TYPE"
