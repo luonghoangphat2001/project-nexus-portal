@@ -360,13 +360,8 @@ class DefenseWorkflowIntegrationTest {
         reports.uploadDocument(registration.getId(), upload(), "leader");
         clock.set(council.endsAt().plusMinutes(1));
         assertThatThrownBy(() -> councils.changeStatus(council.id(), new CouncilStatusRequest(CouncilStatus.COMPLETED), "admin"))
-                .isInstanceOf(BadRequestException.class).hasMessageContaining("advisor assessment is missing");
-        User advisor = createUser("advisor", RoleName.ROLE_TEACHER, department);
-        TopicLecturer primaryAdvisor = new TopicLecturer(topic, advisor, AdvisorRole.PRIMARY);
-        persist(primaryAdvisor); topic.getTopicLecturers().add(primaryAdvisor);
+                .isInstanceOf(BadRequestException.class).hasMessageContaining("assessments are missing");
         for (User student : List.of(leader, member)) {
-            AssessmentResponse advisorSheet = assessments.saveDraft(scoreRequest(assignmentId, student.getId(), AssessmentType.ADVISOR), "advisor");
-            assessments.submitAssessment(advisorSheet.id(), "advisor");
             for (User evaluator : List.of(chair, secretary, reviewer)) {
                 AssessmentResponse draft = assessments.saveDraft(scoreRequest(assignmentId, student.getId(), AssessmentType.DEFENSE), evaluator.getUsername());
                 assessments.submitAssessment(draft.id(), evaluator.getUsername());
@@ -375,7 +370,7 @@ class DefenseWorkflowIntegrationTest {
             assessments.submitAssessment(review.id(), "reviewer");
         }
         assertThat(councils.changeStatus(council.id(), new CouncilStatusRequest(CouncilStatus.COMPLETED), "admin").status()).isEqualTo(CouncilStatus.COMPLETED);
-        assertThat(assessments.getAssessments(assignmentId, "admin")).hasSize(10);
+        assertThat(assessments.getAssessments(assignmentId, "admin")).hasSize(8);
     }
 
     @Test

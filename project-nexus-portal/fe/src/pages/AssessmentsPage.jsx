@@ -70,9 +70,7 @@ export function AssessmentsPage() {
   );
 
   const ownScore = scores.find((s) => String(s.studentId) === studentId && s.type === type && s.evaluatorId === user?.id);
-  const canEvaluate = selected && (type === 'ADVISOR'
-    ? selected.canAdvisor
-    : type === 'REVIEW' ? selected.canReview : selected.canDefense);
+  const canEvaluate = selected && (type === 'REVIEW' ? selected.canReview : selected.canDefense);
 
   useEffect(() => {
     let active = true;
@@ -81,8 +79,7 @@ export function AssessmentsPage() {
     councilService.getCouncils()
       .then((data) => {
         if (!active) return;
-        const eligible = data.filter((c) => c.canManage || c.members.some((m) => m.lecturerId === user?.id)
-          || c.assignments.some((assignment) => assignment.canAdvisor));
+        const eligible = data.filter((c) => c.canManage || c.members.some((m) => m.lecturerId === user?.id));
         setCouncils(eligible);
 
         // Find initial council and assignment
@@ -144,8 +141,7 @@ export function AssessmentsPage() {
   useEffect(() => {
     const current = councils.flatMap((c) => c.assignments).find((a) => String(a.id) === selectedId);
     setStudentId((id) => current?.registration.students.some((s) => String(s.id) === id) ? id : String(current?.registration.students[0]?.id || ''));
-    if (!current?.canReview && !current?.canDefense && current?.canAdvisor) setType('ADVISOR');
-    else if (!current?.canReview && !current?.canDefense) setType('DEFENSE');
+    if (!current?.canReview) setType('DEFENSE');
   }, [selectedId, councils]);
 
   const action = async (execute, message) => {
@@ -202,10 +198,10 @@ export function AssessmentsPage() {
         </div>
       ) : (
         <>
-          {/* KHỐI 2 BỘ LỌC TÁCH BIỆT: HỘI ĐỒNG ĐÁNH GIÁ & ĐỀ TÀI / NHÓM */}
+          {/* CASCADING FILTER CONTROLS: EVALUATION COUNCIL & CAPSTONE TOPIC */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs transition-all space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Bộ lọc 1: Hội đồng đánh giá */}
+              {/* Filter 1: Evaluation Council */}
               <div>
                 <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
                   <Award className="w-4 h-4 text-blue-600" />
@@ -230,7 +226,7 @@ export function AssessmentsPage() {
                 </div>
               </div>
 
-              {/* Bộ lọc 2: Đề tài & Nhóm sinh viên */}
+              {/* Filter 2: Topic & Student Team */}
               <div>
                 <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
                   <BookOpen className="w-4 h-4 text-indigo-600" />
@@ -284,7 +280,7 @@ export function AssessmentsPage() {
             )}
           </div>
 
-          {/* Form đánh giá phiếu chấm điểm của bản thân (nếu có quyền chấm) */}
+          {/* Personal Evaluation Scoring Form */}
           {selected && (selected.canDefense || selected.canReview) && scoresReady && !scoreLoading && (
             <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-5">
               <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
@@ -329,18 +325,11 @@ export function AssessmentsPage() {
                     value={type}
                     onChange={(e) => setType(e.target.value)}
                   >
-                    {selected.canAdvisor && <option value="ADVISOR">Đánh giá của giảng viên hướng dẫn (20%)</option>}
                     {selected.canDefense && <option value="DEFENSE">{t('assessments.defenseAssessment')}</option>}
                     {selected.canReview && <option value="REVIEW">{t('assessments.reviewAssessment')}</option>}
                   </select>
                 </div>
               </div>
-
-              {selected.canAdvisor && !selected.canDefense && (
-                <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                  GVHD không được tham gia chấm hội đồng
-                </p>
-              )}
 
               {ownScore?.status !== 'SUBMITTED' && canEvaluate && studentId && (
                 <AssessmentForm
@@ -364,7 +353,7 @@ export function AssessmentsPage() {
             </div>
           )}
 
-          {/* TABLE VẼ BẢNG DANH SÁCH TẤT CẢ PHIẾU CHẤM ĐIỂM CHUẨN ENTERPRISE */}
+          {/* Evaluation Scoresheet Records Table */}
           <TableCard>
             <TableHeaderBar
               title={t('assessments.evaluationsList')}
@@ -411,13 +400,13 @@ export function AssessmentsPage() {
 
                       return (
                         <tr key={s.id} className="hover:bg-slate-50/60 transition-colors">
-                          {/* Sinh viên */}
+                          {/* Student */}
                           <td className="py-3.5 px-4 font-semibold text-slate-900">
                             <div>{s.studentName}</div>
                             <div className="text-xs font-mono text-slate-400 font-normal">ID: {s.studentId}</div>
                           </td>
 
-                          {/* Hình thức đánh giá */}
+                          {/* Assessment Type */}
                           <td className="py-3.5 px-4">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                               s.type === 'DEFENSE'
@@ -428,44 +417,44 @@ export function AssessmentsPage() {
                             </span>
                           </td>
 
-                          {/* Cán bộ chấm */}
+                          {/* Evaluator */}
                           <td className="py-3.5 px-4">
                             <div className="font-medium text-slate-800">{s.evaluatorName}</div>
                             <div className="text-xs text-slate-400">{formatDate(s.submittedAt || s.updatedAt)}</div>
                           </td>
 
-                          {/* Điểm nội dung */}
+                          {/* Content Score */}
                           <td className="py-3.5 px-3 text-center font-mono font-medium">
                             <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-800">
                               {s.contentScore != null ? Number(s.contentScore).toFixed(1) : '—'}/10
                             </span>
                           </td>
 
-                          {/* Điểm thực hiện */}
+                          {/* Implementation Score */}
                           <td className="py-3.5 px-3 text-center font-mono font-medium">
                             <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-800">
                               {s.implementationScore != null ? Number(s.implementationScore).toFixed(1) : '—'}/10
                             </span>
                           </td>
 
-                          {/* Điểm thuyết trình */}
+                          {/* Presentation Score */}
                           <td className="py-3.5 px-3 text-center font-mono font-medium">
                             <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-800">
                               {s.presentationScore != null ? Number(s.presentationScore).toFixed(1) : '—'}/10
                             </span>
                           </td>
 
-                          {/* Điểm TB */}
+                          {/* Average Score */}
                           <td className="py-3.5 px-3 text-center font-mono font-bold text-blue-600 text-base">
                             {avg}
                           </td>
 
-                          {/* Trạng thái */}
+                          {/* Status */}
                           <td className="py-3.5 px-4">
                             <StatusBadge value={s.status} type="status" />
                           </td>
 
-                          {/* Nhận xét popup/drawer */}
+                          {/* Comments Drawer / Modal trigger */}
                           <td className="py-3.5 px-4 text-center">
                             {(s.comment || s.strengths || s.weaknesses || s.questions) ? (
                               <button
@@ -481,7 +470,7 @@ export function AssessmentsPage() {
                             )}
                           </td>
 
-                          {/* Thao tác */}
+                          {/* Actions */}
                           <td className="py-3.5 px-4 text-right">
                             {s.canEdit ? (
                               <div className="flex items-center justify-end gap-1.5">
@@ -540,7 +529,7 @@ export function AssessmentsPage() {
             )}
           </TableCard>
 
-          {/* Modal xem chi tiết nhận xét & câu hỏi của phiếu chấm */}
+          {/* Detailed Assessment Comments Modal */}
           <Modal
             isOpen={!!viewScoreDetail}
             onClose={() => setViewScoreDetail(null)}
