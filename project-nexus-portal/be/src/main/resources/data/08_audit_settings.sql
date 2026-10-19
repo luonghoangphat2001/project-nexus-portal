@@ -4,18 +4,18 @@
 
 -- 1. System Settings Configuration
 INSERT INTO system_settings (id, category, description, setting_key, setting_value, created_at, updated_at) VALUES
-  (1, 'GENERAL', 'Portal title displayed across navigation headers and browser title bar', 'SYSTEM_NAME', 'Nexus Portal - HCMUTE', NOW(6), NOW(6)),
-  (2, 'ACADEMIC', 'Active academic semester for capstone and thesis workflows', 'CURRENT_SEMESTER', 'Fall Semester (2026 - 2027)', NOW(6), NOW(6)),
-  (3, 'ACADEMIC', 'Minimum number of students required per team', 'MIN_TEAM_MEMBERS', '1', NOW(6), NOW(6)),
-  (4, 'ACADEMIC', 'Maximum number of students allowed per team', 'MAX_TEAM_MEMBERS', '3', NOW(6), NOW(6)),
-  (5, 'FEATURE', 'Allow students to publish teammate matchmaking requests and browse peers', 'ALLOW_STUDENT_MATCHMAKING', 'true', NOW(6), NOW(6)),
-  (6, 'SECURITY', 'Global system maintenance mode switch (restricts non-admin access)', 'MAINTENANCE_MODE', 'false', NOW(6), NOW(6)),
-  (7, 'WORKFLOW', 'Automatically approve topic registrations when criteria are met', 'AUTO_APPROVE_TOPIC_REGISTRATION', 'false', NOW(6), NOW(6)),
-  (8, 'STORAGE', 'Maximum allowed file size for document and thesis report uploads in Megabytes', 'MAX_REPORT_FILE_SIZE_MB', '10', NOW(6), NOW(6)),
-  (9, 'SCORING', 'Weight percentage for reviewer assessment in final grade formula (30%)', 'SCORING_REVIEW_WEIGHT', '0.30', NOW(6), NOW(6)),
-  (10, 'SCORING', 'Weight percentage for defense council assessment in final grade formula (70%)', 'SCORING_DEFENSE_WEIGHT', '0.70', NOW(6), NOW(6)),
-  (11, 'SCORING', 'Minimum passing score threshold for graduation thesis defense (scale 0-10)', 'PASSING_SCORE_THRESHOLD', '5.00', NOW(6), NOW(6)),
-  (12, 'NOTIFICATION', 'Send automated email notifications upon status changes and defense assignments', 'ENABLE_EMAIL_NOTIFICATIONS', 'true', NOW(6), NOW(6))
+  (1, 'GENERAL', 'Tên hệ thống hiển thị trên thanh tiêu đề', 'SYSTEM_NAME', 'Nexus Portal - HCMUTE', NOW(6), NOW(6)),
+  (2, 'ACADEMIC', 'Học kỳ hiện tại đang kích hoạt', 'CURRENT_SEMESTER', 'Học kỳ 1 (2026 - 2027)', NOW(6), NOW(6)),
+  (3, 'ACADEMIC', 'Số sinh viên tối thiểu mỗi nhóm', 'MIN_TEAM_MEMBERS', '1', NOW(6), NOW(6)),
+  (4, 'ACADEMIC', 'Số sinh viên tối đa mỗi nhóm', 'MAX_TEAM_MEMBERS', '3', NOW(6), NOW(6)),
+  (5, 'FEATURE', 'Cho phép sinh viên đăng bài ghép nhóm', 'ALLOW_STUDENT_MATCHMAKING', 'true', NOW(6), NOW(6)),
+  (6, 'SECURITY', 'Chế độ bảo trì hệ thống', 'MAINTENANCE_MODE', 'false', NOW(6), NOW(6)),
+  (7, 'WORKFLOW', 'Tự động duyệt đăng ký đề tài hợp lệ', 'AUTO_APPROVE_TOPIC_REGISTRATION', 'false', NOW(6), NOW(6)),
+  (8, 'STORAGE', 'Dung lượng file báo cáo tối đa (MB)', 'MAX_REPORT_FILE_SIZE_MB', '10', NOW(6), NOW(6)),
+  (9, 'SCORING', 'Tỷ trọng điểm giảng viên phản biện (30%)', 'SCORING_REVIEW_WEIGHT', '0.30', NOW(6), NOW(6)),
+  (10, 'SCORING', 'Tỷ trọng điểm hội đồng bảo vệ (70%)', 'SCORING_DEFENSE_WEIGHT', '0.70', NOW(6), NOW(6)),
+  (11, 'SCORING', 'Điểm đạt chuẩn tốt nghiệp (thang điểm 10)', 'PASSING_SCORE_THRESHOLD', '5.00', NOW(6), NOW(6)),
+  (12, 'NOTIFICATION', 'Gửi thông báo email tự động', 'ENABLE_EMAIL_NOTIFICATIONS', 'true', NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE 
   setting_value = VALUES(setting_value),
   description = VALUES(description),

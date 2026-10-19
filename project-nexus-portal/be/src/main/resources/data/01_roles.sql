@@ -5,9 +5,9 @@
 
 INSERT INTO roles (id, name, description)
 VALUES 
-  (1, 'ROLE_ADMIN', 'System Administrator (Full access to user management, permissions, and system settings)'),
-  (2, 'ROLE_PRINCIPAL', 'Faculty Dean / Head of Department (Manages thesis periods, councils, and approval workflows)'),
-  (3, 'ROLE_TEACHER', 'Advisor Lecturer (Proposes thesis topics and advises student project teams)'),
-  (4, 'ROLE_COUNCIL', 'Evaluation Council Member (Reviews reports and assesses student defenses)'),
-  (5, 'ROLE_USER', 'Student (Forms teams, registers topics, and submits project deliverables)')
+  (1, 'ROLE_ADMIN', 'Quản trị viên hệ thống'),
+  (2, 'ROLE_PRINCIPAL', 'Ban chủ nhiệm / Trưởng bộ môn'),
+  (3, 'ROLE_TEACHER', 'Giảng viên hướng dẫn'),
+  (4, 'ROLE_COUNCIL', 'Thành viên hội đồng đánh giá'),
+  (5, 'ROLE_USER', 'Sinh viên')
 ON DUPLICATE KEY UPDATE description = VALUES(description);

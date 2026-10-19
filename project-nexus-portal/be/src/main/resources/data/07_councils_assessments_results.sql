@@ -4,16 +4,16 @@
 
 -- 1. Defense Councils
 INSERT INTO defense_councils (id, name, department_id, period_id, room, starts_at, ends_at, status, created_at, updated_at) VALUES
-  (1, 'Hội đồng 01 - Kỹ thuật phần mềm & An toàn thông tin (A3-201)', 
+  (1, 'Hội đồng 01 - KTPM & ATTT', 
    1, 1, 'Phòng A3-201', '2026-10-10 08:00:00', '2026-10-10 11:30:00', 'COMPLETED', NOW(6) - INTERVAL 10 DAY, NOW(6) - INTERVAL 5 DAY),
 
-  (2, 'Hội đồng 02 - Khoa học máy tính & Trí tuệ nhân tạo (B2-105)', 
+  (2, 'Hội đồng 02 - KHMT & AI', 
    4, 1, 'Phòng B2-105', '2026-10-11 08:00:00', '2026-10-11 11:30:00', 'COMPLETED', NOW(6) - INTERVAL 9 DAY, NOW(6) - INTERVAL 4 DAY),
 
-  (3, 'Hội đồng 03 - Mạng máy tính & Hệ thống nhúng IoT (Lab-304)', 
+  (3, 'Hội đồng 03 - MMT & IoT', 
    2, 1, 'Phòng Lab B1-304', '2026-11-20 08:00:00', '2026-11-20 11:30:00', 'SCHEDULED', NOW(6) - INTERVAL 3 DAY, NOW(6)),
 
-  (4, 'Hội đồng 04 - Hệ thống thông tin doanh nghiệp (Hội trường B)', 
+  (4, 'Hội đồng 04 - HTTT', 
    3, 1, 'Hội trường B', '2026-11-22 13:30:00', '2026-11-22 17:00:00', 'SCHEDULED', NOW(6) - INTERVAL 3 DAY, NOW(6))
 ON DUPLICATE KEY UPDATE 
   name = VALUES(name),

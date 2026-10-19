@@ -71,24 +71,24 @@ INSERT INTO team_members (team_id, user_id, role_in_team, joined_at, created_at,
 -- 3. Team Invitations (Historical & Active)
 DELETE FROM team_invitations WHERE id BETWEEN 1 AND 20;
 INSERT INTO team_invitations (id, team_id, inviter_id, invitee_id, type, status, message, created_at, updated_at) VALUES
-  (1, 2, 5, 6, 'INVITE_BY_LEADER', 'ACCEPTED', 'Join Team Nexus Alpha for graduation thesis project', NOW(6), NOW(6)),
-  (2, 2, 5, 7, 'INVITE_BY_LEADER', 'ACCEPTED', 'Join Team Nexus Alpha for graduation thesis project', NOW(6), NOW(6)),
-  (3, 7, 34, 8, 'INVITE_BY_LEADER', 'PENDING', 'We need a software developer for robot ROS2 backend, join our team!', NOW(6), NOW(6)),
-  (4, 8, 36, 41, 'INVITE_BY_LEADER', 'PENDING', 'Looking for an AI engineer to integrate mobile telemedicine models', NOW(6), NOW(6)),
-  (5, 10, 42, 44, 'INVITE_BY_LEADER', 'REJECTED', 'Would you like to join K22 Capstone project team?', NOW(6), NOW(6)),
-  (6, 4, 8, 25, 'REQUEST_BY_STUDENT', 'REJECTED', 'Hi Team CloudOps, I have strong Docker & k8s skills and want to join', NOW(6), NOW(6));
+  (1, 2, 5, 6, 'INVITE_BY_LEADER', 'ACCEPTED', 'Mời vào nhóm làm KLTN', NOW(6), NOW(6)),
+  (2, 2, 5, 7, 'INVITE_BY_LEADER', 'ACCEPTED', 'Mời vào nhóm làm KLTN', NOW(6), NOW(6)),
+  (3, 7, 34, 8, 'INVITE_BY_LEADER', 'PENDING', 'Mời vào nhóm làm đề tài Robot', NOW(6), NOW(6)),
+  (4, 8, 36, 41, 'INVITE_BY_LEADER', 'PENDING', 'Mời vào nhóm làm mảng AI/Mobile', NOW(6), NOW(6)),
+  (5, 10, 42, 44, 'INVITE_BY_LEADER', 'REJECTED', 'Mời vào nhóm Đồ án K22', NOW(6), NOW(6)),
+  (6, 4, 8, 25, 'REQUEST_BY_STUDENT', 'REJECTED', 'Xin gia nhập nhóm CloudOps', NOW(6), NOW(6));
 
 -- 4. Topic Registrations
 INSERT INTO topic_registrations (id, topic_id, team_id, message, status, reviewed_by, feedback, registered_at, reviewed_at, created_at, updated_at) VALUES
-  (1, 1, 2, 'Team of 3 K21 Software Engineering students applying for AI Code Scanner thesis topic.', 'APPROVED', 3, 'Approved. Team meets all prerequisites with excellent GPA in SE and Security.', NOW(), NOW(), NOW(6), NOW(6)),
-  (2, 4, 3, 'Team Vision AI applying for LLM Clinical Diagnosis Support System topic.', 'APPROVED', 15, 'Approved. Strong foundation in NLP and deep learning coursework.', NOW(), NOW(), NOW(6), NOW(6)),
-  (3, 2, 4, 'Team CloudOps Pioneers applying for Smart Campus IoT Monitoring project.', 'APPROVED', 14, 'Approved. High proficiency demonstrated in networking protocols and Linux systems.', NOW(), NOW(), NOW(6), NOW(6)),
-  (4, 5, 5, 'Team FinTech Analytics applying for High-Frequency Trading Risk Engine.', 'APPROVED', 16, 'Approved. Good match with financial data modeling curriculum.', NOW(), NOW(), NOW(6), NOW(6)),
-  (5, 7, 6, 'Team CyberSec Hunters applying for Zero-Trust Microsegmentation platform.', 'APPROVED', 14, 'Approved. Solid understanding of Linux kernel eBPF and network security.', NOW(), NOW(), NOW(6), NOW(6)),
-  (6, 3, 9, 'Team Data Dynamics applying for Decentralized Academic Credential Verification.', 'APPROVED', 16, 'Approved. Ready for smart contract architecture and credential verification.', NOW(), NOW(), NOW(6), NOW(6)),
-  (7, 6, 7, 'Team Smart Robotics applying for Autonomous Mobile Robot AMR Navigation.', 'PENDING', NULL, NULL, NOW(), NULL, NOW(6), NOW(6)),
-  (8, 9, 8, 'Team Mobile Innovators applying for E-Commerce Microservices Architecture.', 'PENDING', NULL, NULL, NOW(), NULL, NOW(6), NOW(6)),
-  (9, 8, 10, 'Team NextGen K22 applying for Real-Time Traffic Congestion Optimization.', 'REJECTED', 15, 'Rejected. Prerequisite Machine Learning course not yet completed by applicants.', NOW(), NOW(), NOW(6), NOW(6))
+  (1, 1, 2, 'Đăng ký đề tài Quét mã nguồn AI', 'APPROVED', 3, 'Đạt yêu cầu', NOW(), NOW(), NOW(6), NOW(6)),
+  (2, 4, 3, 'Đăng ký đề tài Chẩn đoán y tế LLM', 'APPROVED', 15, 'Đạt yêu cầu', NOW(), NOW(), NOW(6), NOW(6)),
+  (3, 2, 4, 'Đăng ký đề tài Giám sát IoT Campus', 'APPROVED', 14, 'Đạt yêu cầu', NOW(), NOW(), NOW(6), NOW(6)),
+  (4, 5, 5, 'Đăng ký đề tài Quản trị FinTech', 'APPROVED', 16, 'Đạt yêu cầu', NOW(), NOW(), NOW(6), NOW(6)),
+  (5, 7, 6, 'Đăng ký đề tài Zero-Trust Network', 'APPROVED', 14, 'Đạt yêu cầu', NOW(), NOW(), NOW(6), NOW(6)),
+  (6, 3, 9, 'Đăng ký đề tài Xác thực Blockchain', 'APPROVED', 16, 'Đạt yêu cầu', NOW(), NOW(), NOW(6), NOW(6)),
+  (7, 6, 7, 'Đăng ký đề tài Robot tự hành AMR', 'PENDING', NULL, NULL, NOW(), NULL, NOW(6), NOW(6)),
+  (8, 9, 8, 'Đăng ký đề tài Microservices E-Commerce', 'PENDING', NULL, NULL, NOW(), NULL, NOW(6), NOW(6)),
+  (9, 8, 10, 'Đăng ký đề tài Điều tiết giao thông', 'REJECTED', 15, 'Chưa đạt môn tiên quyết', NOW(), NOW(), NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE 
   message = VALUES(message),
   status = VALUES(status),
@@ -104,43 +104,43 @@ DELETE FROM matchmaking_posts WHERE id BETWEEN 1 AND 20;
 
 INSERT INTO matchmaking_posts (id, post_type, author_id, team_id, title, goals, department_id, faculty_id, cohort_id, slots_needed, contact_info, status, created_at, updated_at) VALUES
   (1, 'TEAM_LOOKING_FOR_MEMBER', 34, 7, 
-   'Team Smart Robotics looking for 1 ROS2 / C++ embedded software developer',
-   'Targeting an innovative robotics capstone with practical warehouse AGV demo and research publication.',
-   6, 2, 1, 1, 'Email: lam.dv@nexus.edu.vn / Phone: 0901000034', 'OPEN', NOW(6), NOW(6)),
+   'Nhóm Smart Robotics tìm 1 bạn lập trình ROS2 / C++',
+   'Thực hiện đề tài robot tự hành AGV nhà kho.',
+   6, 2, 1, 1, 'Email: lam.dv@nexus.edu.vn / ĐT: 0901000034', 'OPEN', NOW(6), NOW(6)),
 
   (2, 'TEAM_LOOKING_FOR_MEMBER', 36, 8, 
-   'Team Mobile Innovators looking for 1 Flutter / React Native mobile engineer',
-   'Building cross-platform telemedicine application connected with medical IoT devices.',
-   6, 2, 1, 1, 'Email: duc.pv@nexus.edu.vn / Phone: 0901000036', 'OPEN', NOW(6), NOW(6)),
+   'Nhóm Mobile Innovators tìm 1 bạn Flutter / React Native',
+   'Phát triển ứng dụng Telemedicine kết nối IoT y tế.',
+   6, 2, 1, 1, 'Email: duc.pv@nexus.edu.vn / ĐT: 0901000036', 'OPEN', NOW(6), NOW(6)),
 
   (3, 'TEAM_LOOKING_FOR_MEMBER', 42, 10, 
-   'Team NextGen K22 looking for 1 Backend developer (Spring Boot + MySQL)',
-   'Building next-generation microservice web portal for capstone coursework.',
-   1, 1, 2, 1, 'Email: khang.kv@nexus.edu.vn / Phone: 0901000042', 'OPEN', NOW(6), NOW(6)),
+   'Nhóm NextGen K22 tìm 1 bạn Backend Spring Boot',
+   'Xây dựng hệ thống web portal dịch vụ vi mô.',
+   1, 1, 2, 1, 'Email: khang.kv@nexus.edu.vn / ĐT: 0901000042', 'OPEN', NOW(6), NOW(6)),
 
   (4, 'STUDENT_LOOKING_FOR_TEAM', 8, NULL, 
-   'Senior K21 SE student looking for dedicated Graduation Thesis team',
-   'Aiming for excellent honors thesis grade in Cloud, DevOps, or Distributed Systems.',
-   1, 1, 1, 1, 'Email: individual_user@nexus.edu.vn / Phone: 0901000008', 'OPEN', NOW(6), NOW(6)),
+   'Sinh viên K21 CNPM tìm nhóm làm KLTN',
+   'Mong muốn làm về mảng Cloud, DevOps hoặc Hệ thống phân tán.',
+   1, 1, 1, 1, 'Email: individual_user@nexus.edu.vn / ĐT: 0901000008', 'OPEN', NOW(6), NOW(6)),
 
   (5, 'STUDENT_LOOKING_FOR_TEAM', 41, NULL, 
-   'K21 student skilled in PyTorch & Computer Vision seeking AI capstone team',
-   'Experienced in YOLO, OpenCV, deep learning pipeline, seeking graduation team.',
-   4, 1, 1, 1, 'Email: duc.nh@nexus.edu.vn / Phone: 0901000041', 'OPEN', NOW(6), NOW(6)),
+   'Sinh viên K21 có kỹ năng PyTorch & Computer Vision tìm nhóm AI',
+   'Có kinh nghiệm làm YOLO, OpenCV và pipeline Deep Learning.',
+   4, 1, 1, 1, 'Email: duc.nh@nexus.edu.vn / ĐT: 0901000041', 'OPEN', NOW(6), NOW(6)),
 
   (6, 'STUDENT_LOOKING_FOR_TEAM', 44, NULL, 
-   'Junior K22 CS student looking for Capstone Project team (Web & AI)',
-   'Passionate about full-stack web and generative AI integration.',
-   4, 1, 2, 1, 'Email: son.nt@nexus.edu.vn / Phone: 0901000044', 'OPEN', NOW(6), NOW(6)),
+   'Sinh viên K22 KHMT tìm nhóm Đồ án Tốt nghiệp',
+   'Kỹ năng tốt về Full-stack web và Generative AI.',
+   4, 1, 2, 1, 'Email: son.nt@nexus.edu.vn / ĐT: 0901000044', 'OPEN', NOW(6), NOW(6)),
 
   (7, 'TEAM_LOOKING_FOR_MEMBER', 22, 3, 
-   'Team Vision AI looking for Machine Learning researcher (Filled)',
-   'Researching RAG LLM clinical decision support.',
+   'Nhóm Vision AI tìm thành viên nghiên cứu Machine Learning',
+   'Nghiên cứu mô hình RAG LLM chẩn đoán y tế.',
    4, 1, 1, 1, 'Email: hau.dv@nexus.edu.vn', 'FILLED', NOW(6), NOW(6)),
 
   (8, 'STUDENT_LOOKING_FOR_TEAM', 45, NULL, 
-   'K22 IS student seeking enterprise systems project team (Closed)',
-   'Joined another group.',
+   'Sinh viên K22 HTTT tìm nhóm làm hệ thống doanh nghiệp',
+   'Đã vào nhóm khác.',
    3, 1, 2, 1, 'Email: tai.pt@nexus.edu.vn', 'CLOSED', NOW(6), NOW(6));
 
 -- 6. Matchmaking Post Skills
@@ -156,8 +156,8 @@ INSERT INTO matchmaking_post_skills (post_id, skill) VALUES
 
 -- 7. Team Join Requests
 INSERT INTO team_join_requests (id, post_id, applicant_id, faculty_id, cohort_id, message, status, created_at, updated_at) VALUES
-  (1, 1, 8, 1, 1, 'Hi Team Smart Robotics, I have experience with robotics telemetry and IoT middleware, would love to join!', 'PENDING', NOW(6), NOW(6)),
-  (2, 2, 41, 1, 1, 'Hello, I have implemented mobile AI models and can handle mobile integration for telemedicine.', 'PENDING', NOW(6), NOW(6)),
-  (3, 3, 44, 1, 2, 'I am in K22 CS with strong Spring Boot and React fundamentals, eager to join your capstone group.', 'PENDING', NOW(6), NOW(6)),
-  (4, 7, 24, 1, 1, 'Applied and accepted into Team Vision AI.', 'ACCEPTED', NOW(6), NOW(6)),
-  (5, 1, 45, 1, 2, 'Applied to robotics but cohort requirement is K21.', 'REJECTED', NOW(6), NOW(6));
+  (1, 1, 8, 1, 1, 'Mình có kinh nghiệm ROS2 và IoT, muốn xin vào nhóm!', 'PENDING', NOW(6), NOW(6)),
+  (2, 2, 41, 1, 1, 'Mình làm được mảng Mobile AI cho Telemedicine, xin vào nhóm!', 'PENDING', NOW(6), NOW(6)),
+  (3, 3, 44, 1, 2, 'K22 KHMT nắm vững Spring Boot & React, mong muốn vào nhóm.', 'PENDING', NOW(6), NOW(6)),
+  (4, 7, 24, 1, 1, 'Đã nộp đơn và được duyệt vào nhóm Vision AI.', 'ACCEPTED', NOW(6), NOW(6)),
+  (5, 1, 45, 1, 2, 'Đăng ký vào nhóm Robot nhưng không khớp khóa K21.', 'REJECTED', NOW(6), NOW(6));
