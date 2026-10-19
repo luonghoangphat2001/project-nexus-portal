@@ -3,11 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { LanguageSwitcher } from '../components/common/LanguageSwitcher';
+import { formatApiError } from '../utils/errorHandler';
 import { Layers, Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
 import { buttonClass, inputClass } from '../components/common/CommonUi';
 
 export const LoginPage = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,7 +43,7 @@ export const LoginPage = () => {
       }
       navigate(from, { replace: true });
     } catch (err) {
-      setErrorMessage(err.message || t('auth.authFailed'));
+      setErrorMessage(formatApiError(err, language));
     } finally {
       setIsSubmitting(false);
     }

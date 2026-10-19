@@ -7,6 +7,7 @@ import {
   Search,
 } from 'lucide-react';
 import matchmakingService from '../services/matchmakingService';
+import teamService from '../services/teamService';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
@@ -59,8 +60,14 @@ export const MatchmakingPage = () => {
   const [skillsInput, setSkillsInput] = useState('');
   const [contactInfo, setContactInfo] = useState('');
 
+  // User team state for FE locking
+  const [myTeam, setMyTeam] = useState(null);
+
   useEffect(() => {
     fetchPosts();
+    // Check if user already belongs to a team to lock join buttons
+    teamService.getMyTeam().then((res) => setMyTeam(res)).catch(() => setMyTeam(null));
+    matchmakingService.getMyJoinRequests().then((res) => setMyRequests(Array.isArray(res) ? res : (res?.data || []))).catch(() => {});
   }, [postTypeFilter]);
 
   useEffect(() => {
@@ -316,18 +323,65 @@ export const MatchmakingPage = () => {
                       {t('matchmaking.contact')}: {post.contactInfo}
                     </span>
 
-                    {post.authorId !== user?.id && post.status === 'OPEN' && (
-                      <button
-                        onClick={() => {
-                          setSelectedPost(post);
-                          setApplyModalOpen(true);
-                        }}
-                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center space-x-1 shadow-xs transition-all cursor-pointer"
-                      >
-                        <Send className="w-3 h-3" />
-                        <span>{t('matchmaking.applyBtn')}</span>
-                      </button>
-                    )}
+                    {post.authorId !== user?.id && post.status === 'OPEN' && (() => {
+                      const isMyTeamPost = myTeam && post.teamId === myTeam.id;
+                      const hasTeam = !!myTeam;
+                      const isAlreadyRequested = myRequests.some((r) => r.postId === post.id && r.status === 'PENDING');
+                      const isTargetTeamLocked = post.teamStatus === 'LOCKED';
+
+                      if (isMyTeamPost) {
+                        return (
+                          <span className="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-xl text-xs font-medium">
+                            {t('teams.myTeam', 'Nhóm của bạn')}
+                          </span>
+                        );
+                      }
+
+                      if (isAlreadyRequested) {
+                        return (
+                          <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl text-xs font-semibold">
+                            {t('errors.alreadyRequested', 'Đã gửi yêu cầu')}
+                          </span>
+                        );
+                      }
+
+                      if (hasTeam) {
+                        return (
+                          <button
+                            disabled
+                            className="px-3 py-1.5 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-medium cursor-not-allowed"
+                            title={t('errors.alreadyInTeam', 'Sinh viên đã thuộc về một nhóm trong đợt này.')}
+                          >
+                            {t('teams.alreadyHasTeam', 'Đã có nhóm')}
+                          </button>
+                        );
+                      }
+
+                      if (isTargetTeamLocked) {
+                        return (
+                          <button
+                            disabled
+                            className="px-3 py-1.5 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-medium cursor-not-allowed"
+                            title={t('errors.teamLocked', 'Nhóm đã bị khóa bởi hệ thống')}
+                          >
+                            {t('teams.lockedBadge', 'Đã khóa')}
+                          </button>
+                        );
+                      }
+
+                      return (
+                        <button
+                          onClick={() => {
+                            setSelectedPost(post);
+                            setApplyModalOpen(true);
+                          }}
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center space-x-1 shadow-xs transition-all cursor-pointer"
+                        >
+                          <Send className="w-3 h-3" />
+                          <span>{t('matchmaking.applyBtn')}</span>
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}

@@ -11,19 +11,21 @@ import {
 import teamService from '../services/teamService';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
+import { formatApiError } from '../utils/errorHandler';
 import {
   PageHeader,
   TableCard,
   TableHeaderBar,
   StatusBadge,
   Modal,
+  Banner,
   buttonClass,
   inputClass,
 } from '../components/common/CommonUi';
 
 export const TeamsPage = () => {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [team, setTeam] = useState(null);
   const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,7 @@ export const TeamsPage = () => {
       const invRes = await teamService.getMyInvitations();
       setInvitations(invRes || []);
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(formatApiError(err, language));
     } finally {
       setLoading(false);
     }
@@ -73,7 +75,7 @@ export const TeamsPage = () => {
       setNewTeamName('');
       loadData();
     } catch (err) {
-      alert(err.message || t('common.error'));
+      alert(formatApiError(err, language));
     }
   };
 
@@ -93,7 +95,7 @@ export const TeamsPage = () => {
         setInviteMessage('');
       }, 1500);
     } catch (err) {
-      alert(err.message || t('common.error'));
+      alert(formatApiError(err, language));
     }
   };
 
@@ -102,33 +104,45 @@ export const TeamsPage = () => {
       await teamService.respondToInvitation(invitationId, accept);
       loadData();
     } catch (err) {
-      alert(err.message || t('common.error'));
+      alert(formatApiError(err, language));
     }
   };
 
   const handleLeaveTeam = async () => {
     if (!team) return;
-    if (!window.confirm(t('teams.confirmLeave'))) return;
+    if (!window.confirm(t('teams.confirmLeave', 'Bạn có chắc chắn muốn rời khỏi nhóm này không?'))) return;
     try {
       await teamService.leaveTeam(team.id);
       loadData();
     } catch (err) {
-      alert(err.message || t('common.error'));
+      alert(formatApiError(err, language));
     }
   };
 
   const handleRemoveMember = async (memberUserId) => {
     if (!team) return;
-    if (!window.confirm(t('teams.confirmRemove'))) return;
+    if (!window.confirm(t('teams.confirmRemove', 'Bạn có chắc chắn muốn xóa thành viên này khỏi nhóm?'))) return;
     try {
       await teamService.removeMember(team.id, memberUserId);
       loadData();
     } catch (err) {
-      alert(err.message || t('common.error'));
+      alert(formatApiError(err, language));
     }
   };
 
-  const isLeader = team && team.leaderId === user?.id;
+  const handleTransferLeader = async (newLeaderUserId, memberName) => {
+    if (!team) return;
+    if (!window.confirm(t('teams.confirmTransfer', `Bạn có chắc chắn muốn chuyển vai trò Trưởng nhóm cho ${memberName}?`))) return;
+    try {
+      await teamService.transferLeader(team.id, newLeaderUserId);
+      loadData();
+    } catch (err) {
+      alert(formatApiError(err, language));
+    }
+  };
+
+  const isLeader = team && (team.leaderId === user?.id || team.leader?.id === user?.id || team.members?.some((m) => m.userId === user?.id && m.roleInTeam === 'LEADER'));
+  const isLocked = team?.status === 'LOCKED';
 
   if (loading) {
     return <div className="py-16 text-center text-slate-400">{t('common.loading')}</div>;
@@ -161,6 +175,10 @@ export const TeamsPage = () => {
       {/* Has Team View */}
       {team ? (
         <div className="space-y-6">
+          {isLocked && (
+            <Banner notice={t('errors.teamLocked')} />
+          )}
+
           {/* Team Overview Card */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -182,8 +200,10 @@ export const TeamsPage = () => {
               <div className="flex items-center space-x-2">
                 {isLeader && (team.members?.length || 0) < 3 && (
                   <button
+                    disabled={isLocked}
                     onClick={() => setInviteModalOpen(true)}
-                    className={buttonClass.primary}
+                    className={`${buttonClass.primary} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    title={isLocked ? t('errors.teamLocked') : t('teams.inviteMember')}
                   >
                     <UserPlus className="w-4 h-4" />
                     <span>{t('teams.inviteMember')}</span>
@@ -192,8 +212,10 @@ export const TeamsPage = () => {
 
                 {!isLeader && (
                   <button
+                    disabled={isLocked}
                     onClick={handleLeaveTeam}
-                    className={buttonClass.danger}
+                    className={`${buttonClass.danger} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    title={isLocked ? t('errors.teamLockedLeave') : t('teams.leaveTeam')}
                   >
                     <LogOut className="w-4 h-4" />
                     <span>{t('teams.leaveTeam')}</span>
@@ -238,14 +260,23 @@ export const TeamsPage = () => {
                       </div>
                     </div>
 
-                    {isLeader && !isMemberLeader && (
-                      <button
-                        onClick={() => handleRemoveMember(m.userId)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                        title={t('teams.removeMember')}
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                    {isLeader && !isMemberLeader && !isLocked && (
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => handleTransferLeader(m.userId, m.fullName || m.username)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
+                          title={t('teams.transferLeader', 'Chuyển quyền trưởng nhóm')}
+                        >
+                          <Crown className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleRemoveMember(m.userId)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                          title={t('teams.removeMember')}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 );
@@ -300,11 +331,17 @@ export const TeamsPage = () => {
 
                     <div className="flex items-center space-x-2">
                       <button
+                        disabled={!!team}
                         onClick={() => handleRespondInvitation(inv.id, true)}
-                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center space-x-1 shadow-xs cursor-pointer transition-all"
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1 shadow-xs transition-all ${
+                          team
+                            ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
+                        }`}
+                        title={team ? t('errors.alreadyInTeam') : t('teams.acceptAndJoin')}
                       >
                         <Check className="w-3.5 h-3.5" />
-                        <span>{t('teams.acceptAndJoin')}</span>
+                        <span>{team ? t('teams.alreadyHasTeam', 'Đã có nhóm') : t('teams.acceptAndJoin')}</span>
                       </button>
                       <button
                         onClick={() => handleRespondInvitation(inv.id, false)}

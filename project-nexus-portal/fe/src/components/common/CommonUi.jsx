@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
+import { formatApiError } from '../../utils/errorHandler';
 import {
   Filter,
   RotateCcw,
@@ -469,10 +470,13 @@ export function EmptyState({ message, title, description, icon: Icon = HelpCircl
  * Notification / Alert Banner
  */
 export function Banner({ error, success, notice }) {
-  const msg = error || success || notice;
-  if (!msg) return null;
+  const { language } = useTranslation();
+  const rawMsg = error || success || notice;
+  if (!rawMsg) return null;
 
   const isError = !!error;
+  const displayMsg = isError ? formatApiError(error, language) : rawMsg;
+
   return (
     <div
       role={isError ? 'alert' : 'status'}
@@ -487,7 +491,7 @@ export function Banner({ error, success, notice }) {
       ) : (
         <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
       )}
-      <span className="flex-1 leading-relaxed font-medium">{msg}</span>
+      <span className="flex-1 leading-relaxed font-medium">{displayMsg}</span>
     </div>
   );
 }

@@ -48,13 +48,27 @@ api.interceptors.response.use(
       }
     }
 
-    const message = error.response?.data?.message
-      ? error.response.data.message
-      : error.response?.data?.error
-      ? error.response.data.error
+    const resData = error.response?.data;
+    const message = resData?.message
+      ? resData.message
+      : resData?.error
+      ? resData.error
       : error.message;
 
-    return Promise.reject(new Error(message));
+    const enrichedError = new Error(message);
+    enrichedError.status = status;
+    enrichedError.validationErrors = resData?.validationErrors;
+    enrichedError.code = resData?.error;
+    enrichedError.path = resData?.path;
+    enrichedError.raw = error;
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('nexus:api_error', { detail: enrichedError })
+      );
+    }
+
+    return Promise.reject(enrichedError);
   }
 );
 
