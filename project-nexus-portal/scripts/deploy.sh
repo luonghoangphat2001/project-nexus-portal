@@ -35,11 +35,14 @@ fi
 
 TARGET_SERVICE="${1:-all}"
 if [ "$TARGET_SERVICE" = "backend" ]; then
-    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build backend_api
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml build --no-cache backend_api
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d backend_api
 elif [ "$TARGET_SERVICE" = "frontend" ]; then
-    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build frontend_app
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml build --no-cache frontend_app
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d frontend_app
 else
-    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build --remove-orphans
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml build --no-cache
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --remove-orphans
 fi
 
 docker image prune -f
