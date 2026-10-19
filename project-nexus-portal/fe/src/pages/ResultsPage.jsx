@@ -230,12 +230,12 @@ export function ResultsPage() {
   });
 
   const bandConfigs = [
-    { key: 'BELOW_FIVE', label: '< 5.0 (Kém)', color: 'bg-rose-500', barColor: 'bg-rose-500' },
-    { key: 'FIVE_TO_SIX', label: '5.0 - 6.4 (Trung bình)', color: 'bg-amber-500', barColor: 'bg-amber-500' },
-    { key: 'SIX_TO_SEVEN', label: '6.5 - 6.9 (Khá TB)', color: 'bg-yellow-500', barColor: 'bg-yellow-500' },
-    { key: 'SEVEN_TO_EIGHT', label: '7.0 - 7.9 (Khá)', color: 'bg-blue-500', barColor: 'bg-blue-500' },
-    { key: 'EIGHT_TO_NINE', label: '8.0 - 8.9 (Giỏi)', color: 'bg-indigo-600', barColor: 'bg-indigo-600' },
-    { key: 'NINE_TO_TEN', label: '9.0 - 10.0 (Xuất sắc)', color: 'bg-emerald-600', barColor: 'bg-emerald-600' },
+    { key: 'BELOW_FIVE', label: t('results.bandBelowFive'), color: 'bg-rose-500', barColor: 'bg-rose-500' },
+    { key: 'FIVE_TO_SIX', label: t('results.bandFiveToSix'), color: 'bg-amber-500', barColor: 'bg-amber-500' },
+    { key: 'SIX_TO_SEVEN', label: t('results.bandSixToSeven'), color: 'bg-yellow-500', barColor: 'bg-yellow-500' },
+    { key: 'SEVEN_TO_EIGHT', label: t('results.bandSevenToEight'), color: 'bg-blue-500', barColor: 'bg-blue-500' },
+    { key: 'EIGHT_TO_NINE', label: t('results.bandEightToNine'), color: 'bg-indigo-600', barColor: 'bg-indigo-600' },
+    { key: 'NINE_TO_TEN', label: t('results.bandNineToTen'), color: 'bg-emerald-600', barColor: 'bg-emerald-600' },
   ];
 
   const maxBandCount = Math.max(...Object.values(aggregatedBands), 1);
@@ -272,14 +272,14 @@ export function ResultsPage() {
                   <tr className="bg-slate-50/70 border-b border-slate-200 font-semibold text-slate-600">
                     <th className="py-3.5 px-4">{t('results.periodCol')}</th>
                     <th className="py-3.5 px-4">{t('results.topicCol')}</th>
-                    <th className="py-3.5 px-4">GVHD (20%)</th>
-                    <th className="py-3.5 px-4 text-center">Phản biện (30%)</th>
-                    <th className="py-3.5 px-4 text-center">Hội đồng (50%)</th>
+                    <th className="py-3.5 px-4">{t('results.advisorCol')}</th>
+                    <th className="py-3.5 px-4 text-center">{t('results.reviewerCol')}</th>
+                    <th className="py-3.5 px-4 text-center">{t('results.councilCol')}</th>
                     <th className="py-3.5 px-4 text-center font-bold text-slate-900">{t('results.finalScore', 'Điểm tổng kết')}</th>
                     <th className="py-3.5 px-4 text-center">{t('results.resultCol')}</th>
-                    <th className="py-3.5 px-4">Nhận xét GVHD</th>
-                    <th className="py-3.5 px-4">Nhận xét phản biện</th>
-                    <th className="py-3.5 px-4">Nhận xét hội đồng</th>
+                    <th className="py-3.5 px-4">{t('results.advisorCommentCol')}</th>
+                    <th className="py-3.5 px-4">{t('results.reviewerCommentCol')}</th>
+                    <th className="py-3.5 px-4">{t('results.councilCommentCol')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -293,15 +293,15 @@ export function ResultsPage() {
                       <td className="py-3.5 px-4">
                         <div className="font-mono">{formatScore(grade.advisorScore)}</div>
                         <div className="text-xs text-slate-500">{grade.advisorName}</div>
-                        <div className="text-xs text-slate-500">Thành phần: {formatScore(grade.advisorContentScore)} / {formatScore(grade.advisorImplementationScore)} / {formatScore(grade.advisorPresentationScore)}</div>
+                        <div className="text-xs text-slate-500">{t('results.componentsLabel')}: {formatScore(grade.advisorContentScore)} / {formatScore(grade.advisorImplementationScore)} / {formatScore(grade.advisorPresentationScore)}</div>
                       </td>
                       <td className="py-3.5 px-4 text-center font-mono">
                         {formatScore(grade.reviewScore)}
-                        <div className="text-xs text-slate-500 font-sans">Nội dung / triển khai / trình bày: {formatScore(grade.reviewContentScore)} / {formatScore(grade.reviewImplementationScore)} / {formatScore(grade.reviewPresentationScore)}</div>
+                        <div className="text-xs text-slate-500 font-sans">{t('results.criteriaLabel')}: {formatScore(grade.reviewContentScore)} / {formatScore(grade.reviewImplementationScore)} / {formatScore(grade.reviewPresentationScore)}</div>
                       </td>
                       <td className="py-3.5 px-4 text-center font-mono">
                         {formatScore(grade.defenseScore)}
-                        <div className="text-xs text-slate-500 font-sans">Nội dung / triển khai / trình bày: {formatScore(grade.defenseContentScore)} / {formatScore(grade.defenseImplementationScore)} / {formatScore(grade.defensePresentationScore)}</div>
+                        <div className="text-xs text-slate-500 font-sans">{t('results.criteriaLabel')}: {formatScore(grade.defenseContentScore)} / {formatScore(grade.defenseImplementationScore)} / {formatScore(grade.defensePresentationScore)}</div>
                       </td>
                       <td className="py-3.5 px-4 text-center font-semibold font-mono text-blue-600 text-base">{formatScore(grade.finalScore)}</td>
                       <td className="py-3.5 px-4 text-center">
@@ -382,7 +382,7 @@ export function ResultsPage() {
                       >
                         {completedCouncils.map((c) => (
                           <option key={c.id} value={c.id}>
-                            {c.name} {c.room ? `— Phòng ${c.room}` : ''}
+                            {c.name} {c.room ? `— ${t('results.roomLabel')} ${c.room}` : ''}
                           </option>
                         ))}
                       </select>
@@ -407,7 +407,7 @@ export function ResultsPage() {
                         ) : (
                           councilAssignments.map((a) => (
                             <option key={a.id} value={a.id}>
-                              {a.registration.topicTitle} — Nhóm: {a.registration.teamName}
+                              {a.registration.topicTitle} — {t('results.teamLabel')}: {a.registration.teamName}
                             </option>
                           ))
                         )}
@@ -422,7 +422,7 @@ export function ResultsPage() {
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="inline-flex items-center gap-1 font-medium text-slate-700 bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-2xs">
                         <Building2 className="w-3.5 h-3.5 text-slate-500" />
-                        <span>Phòng: {activeCouncil.room || 'Phòng hội đồng'}</span>
+                        <span>{t('results.roomLabel')}: {activeCouncil.room || t('results.defaultRoom')}</span>
                       </span>
                       <span className="inline-flex items-center gap-1 font-medium text-slate-700 bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-2xs">
                         <Clock className="w-3.5 h-3.5 text-slate-500" />
@@ -523,37 +523,37 @@ export function ResultsPage() {
         {/* KPI Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MetricCard
-            title="Tổng sinh viên đánh giá"
+            title={t('results.kpiTotalStudents')}
             value={reportLoading ? '—' : totalStudents}
-            subtitle="Đã hoàn thành khóa luận"
-            trend={`${report.length} đề tài`}
+            subtitle={t('results.kpiTotalStudentsSub')}
+            trend={t('results.kpiTopicsCount', { count: report.length })}
             trendColor="text-blue-600"
             icon={Users}
             iconBg="bg-blue-600"
           />
           <MetricCard
-            title="Điểm trung bình toàn khóa"
+            title={t('results.kpiAvgScore')}
             value={reportLoading ? '—' : overallAvg}
-            subtitle="Thang điểm 10 quy chuẩn"
-            trend="Toàn trường"
+            subtitle={t('results.kpiAvgScoreSub')}
+            trend={t('results.kpiWholeSchool')}
             trendColor="text-indigo-600"
             icon={Award}
             iconBg="bg-indigo-600"
           />
           <MetricCard
-            title="Tỷ lệ đạt chuẩn tốt nghiệp"
+            title={t('results.kpiPassRate')}
             value={reportLoading ? '—' : `${passRate}%`}
-            subtitle={`${totalPassed} sinh viên đạt`}
-            trend=">= 5.0 điểm"
+            subtitle={t('results.kpiPassedSub', { count: totalPassed })}
+            trend={t('results.kpiPassTrend')}
             trendColor="text-emerald-600"
             icon={CheckCircle}
             iconBg="bg-emerald-600"
           />
           <MetricCard
-            title="Số sinh viên không đạt"
+            title={t('results.kpiFailedCount')}
             value={reportLoading ? '—' : totalFailed}
-            subtitle={`${100 - passRate}% chưa đạt`}
-            trend="< 5.0 điểm"
+            subtitle={t('results.kpiFailedSub', { percent: 100 - passRate })}
+            trend={t('results.kpiFailTrend')}
             trendColor="text-rose-600"
             icon={XCircle}
             iconBg="bg-rose-600"
@@ -567,17 +567,17 @@ export function ResultsPage() {
               <div className="flex items-center space-x-2">
                 <BarChart2 className="w-5 h-5 text-blue-600" />
                 <h3 className="text-base font-bold text-slate-900">
-                  Biểu đồ phân bố phổ điểm khóa luận (Grade Distribution)
+                  {t('results.chartDistribution')}
                 </h3>
               </div>
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                {totalStudents} sinh viên
+                {t('results.studentsCount', { count: totalStudents })}
               </span>
             </div>
 
             {totalStudents === 0 ? (
               <div className="h-60 flex items-center justify-center text-sm text-slate-400">
-                Chưa có dữ liệu điểm để vẽ biểu đồ
+                {t('results.noChartData')}
               </div>
             ) : (
               <div className="py-4 space-y-4">
@@ -629,13 +629,13 @@ export function ResultsPage() {
             <div className="flex items-center space-x-2 pb-3 border-b border-slate-100">
               <PieChartIcon className="w-5 h-5 text-blue-600" />
               <h3 className="text-base font-bold text-slate-900">
-                Tỷ lệ Hoàn thành & Đạt chuẩn
+                {t('results.chartCompletionPass')}
               </h3>
             </div>
 
             {totalStudents === 0 ? (
               <div className="h-60 flex items-center justify-center text-sm text-slate-400">
-                Chưa có dữ liệu
+                {t('results.noData')}
               </div>
             ) : (
               <div className="py-4 space-y-5 flex-1 flex flex-col justify-center">
@@ -644,7 +644,7 @@ export function ResultsPage() {
                   <div className="flex justify-between text-sm font-semibold text-slate-800">
                     <span className="flex items-center gap-1.5 text-emerald-700">
                       <CheckCircle className="w-4 h-4 text-emerald-600" />
-                      <span>Đạt chuẩn ({passRate}%)</span>
+                      <span>{t('results.passedLabel', { percent: passRate })}</span>
                     </span>
                     <span className="font-mono">{totalPassed}/{totalStudents}</span>
                   </div>
@@ -660,7 +660,7 @@ export function ResultsPage() {
                   <div className="flex justify-between text-sm font-semibold text-slate-800">
                     <span className="flex items-center gap-1.5 text-rose-700">
                       <XCircle className="w-4 h-4 text-rose-600" />
-                      <span>Không đạt ({100 - passRate}%)</span>
+                      <span>{t('results.failedLabel', { percent: 100 - passRate })}</span>
                     </span>
                     <span className="font-mono">{totalFailed}/{totalStudents}</span>
                   </div>
@@ -673,9 +673,9 @@ export function ResultsPage() {
                 </div>
 
                 <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200/80 text-xs text-blue-800 space-y-1 mt-auto">
-                  <span className="font-semibold block">Quy chế đánh giá khóa luận:</span>
+                  <span className="font-semibold block">{t('results.policyTitle')}</span>
                   <p className="leading-relaxed">
-                    Sinh viên đạt điểm tổng kết từ <strong>5.0/10</strong> trở lên được công nhận hoàn thành khóa luận tốt nghiệp.
+                    {t('results.policyText')}
                   </p>
                 </div>
               </div>
@@ -698,7 +698,7 @@ export function ResultsPage() {
               className={buttonClass('secondary')}
             >
               <Download className="w-4 h-4" />
-              <span>Xuất báo cáo Excel</span>
+              <span>{t('results.exportExcelBtn')}</span>
             </button>
           }
         />
@@ -714,7 +714,7 @@ export function ResultsPage() {
               value={filters.periodId}
               onChange={(e) => updateFilter('periodId', e.target.value)}
             >
-              <option value="">{t('common.all', 'Tất cả đợt')}</option>
+              <option value="">{t('results.allPeriods')}</option>
               {options.periods.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name}
@@ -732,7 +732,7 @@ export function ResultsPage() {
               value={filters.departmentId}
               onChange={(e) => updateFilter('departmentId', e.target.value)}
             >
-              <option value="">{t('common.all', 'Tất cả bộ môn')}</option>
+              <option value="">{t('results.allDepartments')}</option>
               {options.departments.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name}
@@ -750,7 +750,7 @@ export function ResultsPage() {
               value={filters.topicId}
               onChange={(e) => updateFilter('topicId', e.target.value)}
             >
-              <option value="">{t('common.all', 'Tất cả đề tài')}</option>
+              <option value="">{t('results.allTopics')}</option>
               {options.topics
                 .filter(
                   (topic) =>
