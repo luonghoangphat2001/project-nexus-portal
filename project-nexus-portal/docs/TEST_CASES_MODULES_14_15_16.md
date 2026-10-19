@@ -40,4 +40,5 @@ This document lists the automated JUnit tests for Modules 14–16 under `be/src/
 | R-01 | Classify scores at band boundaries | Assigns the correct band |
 | R-02 | Request statistics with allowed filters | Includes published scores only |
 | R-03 | Request a department outside the manager's scope | Denies access before querying reports |
-| R-04 | Download Excel report | Workbook with student, advisor, component scores, final score, pass/fail and comments |
+| R-04 | Download Excel report in Vietnamese (default) | Workbook with student, advisor, component scores, final score, pass/fail and comments |
+| R-05 | Download Excel report with English selected | English column headers, `Passed`/`Failed`, file `thesis-results-report.xlsx` |

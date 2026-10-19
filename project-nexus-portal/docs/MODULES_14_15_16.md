@@ -11,7 +11,7 @@ These modules consume submitted assessments from Module 13 and process only assi
 - Results can be published per assignment or for a whole registration period (every completed, not yet published council of the period within the manager scope). Published scores are stored as immutable snapshots, unique by assignment/student, together with the component scores and comments of the advisor, reviewer and council; republishing is rejected. The publication transaction locks the council to prevent concurrent publication and writes an audit log on success.
 - Administrators can view all departments; department heads can only view departments they manage. Students can only view their own published results, which include component scores, final score, comments and pass/fail. A thesis advisor cannot grade the same project as a council member.
 - Statistics include published scores only and are grouped by registration period, department, and topic. Reports include student count, average score, pass/fail counts, and these score bands: below `5.00`, `5.00–5.99`, `6.00–6.99`, `7.00–7.99`, `8.00–8.99`, and `9.00–10.00`.
-- Academic results are separate from the document reports in Module 11 and system metrics on the Dashboard. The detailed report is exported as an Excel (`.xlsx`) workbook with one row per student: topic, advisor, component scores, final score, pass/fail and comments.
+- Academic results are separate from the document reports in Module 11 and system metrics on the Dashboard. The detailed report is exported as an Excel (`.xlsx`) workbook, in Vietnamese or English according to the `Accept-Language` header sent by the web UI, with one row per student: topic, advisor, component scores, final score, pass/fail and comments.
 
 ## API
 

@@ -10,35 +10,42 @@ import org.springframework.security.core.Authentication;
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class ResultControllerExcelTest {
-    @Test
-    void exportsDetailedStudentRowsAndComponentScoresAsAnExcelWorkbook() throws Exception {
-        ResultService results = mock(ResultService.class);
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getName()).thenReturn("admin");
-        when(results.getDetailedReport(null, null, null, "admin")).thenReturn(List.of(
-                new ResultResponse.Statistics.DetailRow(
-                        "Term 1", "Software Engineering", "Nexus Portal", "Team Five", "S007",
-                        "Student Seven", "Advisor One", new BigDecimal("8.00"),
-                        new BigDecimal("8.00"), new BigDecimal("8.00"), new BigDecimal("8.00"),
-                        new BigDecimal("8.50"), new BigDecimal("8.00"), new BigDecimal("8.50"),
-                        new BigDecimal("9.00"), new BigDecimal("9.00"), new BigDecimal("9.00"),
-                        new BigDecimal("9.00"), new BigDecimal("9.00"), new BigDecimal("8.65"),
-                        true, "Advisor comment", "Reviewer comment", "Defense comments")));
+    private final ResultService results = mock(ResultService.class);
+    private final Authentication authentication = mock(Authentication.class);
 
-        var response = new ResultController(results, mock(com.nexus.portal.service.ScoreCalculationService.class)).exportDetailedReportExcel(
-                null, null, null, authentication);
+    private ResultResponse.Statistics.DetailRow row() {
+        return new ResultResponse.Statistics.DetailRow(
+                "Term 1", "Software Engineering", "Nexus Portal", "Team Five", "S007",
+                "Student Seven", "Advisor One", new BigDecimal("8.00"),
+                new BigDecimal("8.00"), new BigDecimal("8.00"), new BigDecimal("8.00"),
+                new BigDecimal("8.50"), new BigDecimal("8.00"), new BigDecimal("8.50"),
+                new BigDecimal("9.00"), new BigDecimal("9.00"), new BigDecimal("9.00"),
+                new BigDecimal("9.00"), new BigDecimal("9.00"), new BigDecimal("8.65"),
+                true, "Advisor comment", "Reviewer comment", "Defense comments");
+    }
+
+    private org.springframework.http.ResponseEntity<byte[]> export(Locale locale) {
+        when(authentication.getName()).thenReturn("admin");
+        when(results.getDetailedReport(null, null, null, "admin")).thenReturn(List.of(row()));
+        return new ResultController(results, mock(com.nexus.portal.service.ScoreCalculationService.class))
+                .exportDetailedReportExcel(null, null, null, locale, authentication);
+    }
+
+    @Test
+    void exportsVietnameseWorkbookByDefault() throws Exception {
+        var response = export(Locale.forLanguageTag("vi"));
 
         assertEquals(MediaType.parseMediaType(
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
                 response.getHeaders().getContentType());
-        assertTrue(response.getHeaders().getContentDisposition().getFilename().endsWith(".xlsx"));
+        assertEquals("bao-cao-ket-qua-khoa-luan.xlsx", response.getHeaders().getContentDisposition().getFilename());
         try (var workbook = WorkbookFactory.create(new ByteArrayInputStream(response.getBody()))) {
             var sheet = workbook.getSheetAt(0);
             assertEquals("MSSV", sheet.getRow(0).getCell(4).getStringCellValue());
@@ -50,5 +57,19 @@ class ResultControllerExcelTest {
             assertEquals("Defense comments", sheet.getRow(1).getCell(23).getStringCellValue());
         }
     }
+
+    @Test
+    void exportsEnglishWorkbookWhenEnglishIsSelected() throws Exception {
+        var response = export(Locale.ENGLISH);
+
+        assertEquals("thesis-results-report.xlsx", response.getHeaders().getContentDisposition().getFilename());
+        try (var workbook = WorkbookFactory.create(new ByteArrayInputStream(response.getBody()))) {
+            var sheet = workbook.getSheetAt(0);
+            assertEquals("Student ID", sheet.getRow(0).getCell(4).getStringCellValue());
+            assertEquals("Final score", sheet.getRow(0).getCell(19).getStringCellValue());
+            assertEquals("Passed", sheet.getRow(1).getCell(20).getStringCellValue());
+        }
+    }
 }
+
 

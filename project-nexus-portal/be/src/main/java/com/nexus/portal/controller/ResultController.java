@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/results")
@@ -86,12 +87,14 @@ public class ResultController {
             @RequestParam(required = false) Long periodId,
             @RequestParam(required = false) Long departmentId,
             @RequestParam(required = false) Long topicId,
+            Locale locale,
             Authentication auth) {
         byte[] workbook = ResultExcelExporter.export(
-                results.getDetailedReport(periodId, departmentId, topicId, auth.getName()));
+                results.getDetailedReport(periodId, departmentId, topicId, auth.getName()), locale);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(ResultExcelExporter.CONTENT_TYPE));
-        headers.setContentDisposition(ContentDisposition.attachment().filename(ResultExcelExporter.FILE_NAME).build());
+        headers.setContentDisposition(
+                ContentDisposition.attachment().filename(ResultExcelExporter.fileName(locale)).build());
         return ResponseEntity.ok().headers(headers).body(workbook);
     }
 }
