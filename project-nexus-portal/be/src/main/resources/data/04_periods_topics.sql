@@ -6,7 +6,7 @@
 INSERT INTO registration_periods (id, name, academic_year, semester, start_date, end_date, submission_deadline, status, created_at, updated_at) VALUES
   (1, 'Graduation Thesis Registration Term 1 (2026 - 2027)', '2026-2027', 1, '2026-09-01 00:00:00', '2026-11-30 23:59:59', '2027-01-15 17:00:00', 'OPEN', NOW(6), NOW(6)),
   (2, 'Graduation Thesis Registration Term 2 (2026 - 2027)', '2026-2027', 2, '2027-02-01 00:00:00', '2027-04-30 23:59:59', '2027-06-15 17:00:00', 'DRAFT', NOW(6), NOW(6)),
-  (3, 'Capstone Project Registration Term 1 (2026 - 2027)', '2026-2027', 1, '2026-09-15 00:00:00', '2026-12-15 23:59:59', '2027-01-10 17:00:00', 'OPEN', NOW(6), NOW(6)),
+  (3, 'Capstone Project Registration Term 2 (2024 - 2025)', '2024-2025', 2, '2025-02-15 00:00:00', '2025-05-15 23:59:59', '2025-06-10 17:00:00', 'COMPLETED', NOW(6), NOW(6)),
   (4, 'Graduation Thesis Registration Term 2 (2025 - 2026)', '2025-2026', 2, '2026-02-01 00:00:00', '2026-04-30 23:59:59', '2026-06-15 17:00:00', 'COMPLETED', NOW(6), NOW(6)),
   (5, 'Graduation Thesis Registration Term 1 (2025 - 2026)', '2025-2026', 1, '2025-09-01 00:00:00', '2025-11-30 23:59:59', '2026-01-15 17:00:00', 'CLOSED', NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE 
