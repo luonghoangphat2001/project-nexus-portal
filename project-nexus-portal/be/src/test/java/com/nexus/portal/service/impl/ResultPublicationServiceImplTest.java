@@ -94,7 +94,7 @@ class ResultPublicationServiceImplTest {
         assignment.setRegistration(registration);
 
         when(access.getUser("admin")).thenReturn(manager);
-        when(access.canManage(manager, department)).thenReturn(true);
+        lenient().when(access.canManage(manager, department)).thenReturn(true);
         lenient().when(assignments.findById(9L)).thenReturn(Optional.of(assignment));
     }
 
@@ -150,6 +150,34 @@ class ResultPublicationServiceImplTest {
 
         assertThrows(AccessDeniedException.class, () -> service.publishAssignmentResults(9L, "admin"));
         verify(scoreCalculation, never()).calculateScores(any());
+    }
+
+    @Test
+    void publishesEveryPendingAssignmentOfThePeriod() {
+        givenPublishDependencies();
+        when(periods.existsById(3L)).thenReturn(true);
+        when(assignments.findUnpublishedCompletedByPeriodId(3L)).thenReturn(List.of(assignment));
+        when(results.existsByAssignmentId(9L)).thenReturn(false);
+        when(scoreCalculation.calculateScores(assignment)).thenReturn(List.of(
+                new CalculatedScore(student, breakdown("8.00"), breakdown("8.50"), breakdown("9.00"),
+                        new BigDecimal("8.65"), true)));
+        when(results.saveAllAndFlush(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(resultDetails.saveAllAndFlush(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<ResultResponse.Defense> published = service.publishPeriodResults(3L, "admin");
+
+        assertEquals(1, published.size());
+        assertEquals(new BigDecimal("8.65"), published.get(0).finalScore());
+        assertTrue(published.get(0).published());
+    }
+
+    @Test
+    void rejectsPeriodPublicationWhenNothingIsPending() {
+        when(periods.existsById(3L)).thenReturn(true);
+        when(assignments.findUnpublishedCompletedByPeriodId(3L)).thenReturn(List.of());
+
+        assertThrows(BadRequestException.class, () -> service.publishPeriodResults(3L, "admin"));
+        verify(results, never()).saveAllAndFlush(anyList());
     }
 
     private CalculatedScore.AssessmentBreakdown breakdown(String score) {
