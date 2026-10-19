@@ -622,7 +622,9 @@ export const vi = {
     "fieldDueDate": "Hạn hoàn thành",
     "fieldAssignee": "Người thực hiện",
     "savedTask": "Lưu nhiệm vụ thành công!",
-    "savedFeedback": "Lưu phản hồi thành công!"
+    "savedFeedback": "Lưu phản hồi thành công!",
+    "dragGuide": "💡 Mẹo: Bạn có thể kéo thả trực tiếp thẻ công việc giữa các cột để chuyển nhanh trạng thái (Cần làm ⇄ Đang làm ⇄ Hoàn thành).",
+    "dragDropHint": "Kéo thả thẻ vào đây để đổi trạng thái"
   },
   "reports": {
     "title": "Báo cáo & Tài liệu",

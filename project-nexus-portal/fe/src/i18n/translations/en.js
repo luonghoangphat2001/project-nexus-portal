@@ -622,7 +622,9 @@ export const en = {
     "fieldDueDate": "Due Date",
     "fieldAssignee": "Assignee",
     "savedTask": "Task saved successfully!",
-    "savedFeedback": "Feedback saved successfully!"
+    "savedFeedback": "Feedback saved successfully!",
+    "dragGuide": "💡 Tip: You can drag and drop task cards directly between columns to quickly change status (To Do ⇄ In Progress ⇄ Done).",
+    "dragDropHint": "Drag and drop cards here to change status"
   },
   "reports": {
     "title": "Reports & Documents",
