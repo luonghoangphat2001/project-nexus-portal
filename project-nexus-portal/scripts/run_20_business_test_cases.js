@@ -616,9 +616,9 @@ async function main() {
   });
 
   // ----------------------------------------------------------------------------
-  // TC-20: Student queries personal transcript & Dean exports CSV report
+  // TC-20: Student queries personal transcript & Dean exports Excel report
   // ----------------------------------------------------------------------------
-  await runTestCase('TC-20', 'Student queries personal transcript & Dean exports CSV report', 'student & principal', '15 & 16', async () => {
+  await runTestCase('TC-20', 'Student queries personal transcript & Dean exports Excel report', 'student & principal', '15 & 16', async () => {
     // Step 1: Student checks their own published results
     const myGrades = await apiRequest('GET', '/results/me', null, authStudent.token);
     if (!myGrades.ok) throw new Error(`Student getMyPublishedResults failed: ${JSON.stringify(myGrades.data)}`);
@@ -629,12 +629,12 @@ async function main() {
     const reportRes = await apiRequest('GET', `/results/reports?periodId=${periodId}`, null, authPrincipal.token);
     if (!reportRes.ok) throw new Error(`Get statistics report failed`);
 
-    // Step 3: Principal downloads CSV report
-    const csvRes = await apiRequest('GET', `/results/reports.csv?periodId=${periodId}`, null, authPrincipal.token);
-    if (!csvRes.ok) throw new Error(`Export CSV failed`);
-    const csvContent = csvRes.data;
+    // Step 3: Principal downloads Excel report
+    const csvRes = await apiRequest('GET', `/results/reports.xlsx?periodId=${periodId}`, null, authPrincipal.token);
+    if (!csvRes.ok) throw new Error(`Export Excel failed`);
+    
 
-    return `Student checked personal grade: Score ${studentGrade.finalScore} (${studentGrade.passed ? 'PASSED' : 'FAILED'}). Dean exported CSV successfully (${csvContent.split('\n').length} lines, full UTF-8 data).`;
+    return `Student checked personal grade: Score ${studentGrade.finalScore} (${studentGrade.passed ? 'PASSED' : 'FAILED'}). Dean exported the Excel report successfully.`;
   });
 
   // ----------------------------------------------------------------------------

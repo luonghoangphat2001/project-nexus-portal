@@ -241,6 +241,13 @@ public class CouncilServiceImpl implements CouncilService {
             for (DefenseAssignment a : allocated) {
                 List<Assessment> scores = assessments.findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(a.getId());
                 for (DefenseRegistrationResponse.Student student : access.toResponse(a.getRegistration(), user).students()) {
+                    boolean advisorAssessmentSubmitted = a.getRegistration().getTopic().getTopicLecturers().stream()
+                            .filter(advisor -> advisor.getAdvisorRole() == AdvisorRole.PRIMARY)
+                            .anyMatch(advisor -> hasSubmitted(scores, student.id(),
+                                    advisor.getLecturer().getId(), AssessmentType.ADVISOR));
+                    if (!advisorAssessmentSubmitted) {
+                        throw new BadRequestException("The thesis advisor assessment is missing for one or more students");
+                    }
                     for (DefenseCouncilMember member : council.getMembers()) {
                         if (!hasSubmitted(scores, student.id(), member.getLecturer().getId(), AssessmentType.DEFENSE)
                                 || (member.getRole() == CouncilMemberRole.REVIEWER
@@ -278,7 +285,12 @@ public class CouncilServiceImpl implements CouncilService {
                 assignments.findByCouncilId(c.getId()).stream()
                         .filter(a -> manager || ownMember.isPresent() || access.canRead(user, a.getRegistration()))
                         .map(a -> new CouncilResponse.Assignment(a.getId(), access.toResponse(a.getRegistration(), user),
-                                c.getStatus() == CouncilStatus.SCHEDULED && ownMember.filter(m -> m.getRole() == CouncilMemberRole.REVIEWER).isPresent(),
-                                c.getStatus() == CouncilStatus.SCHEDULED && ownMember.isPresent())).toList());
+                                c.getStatus() == CouncilStatus.SCHEDULED && ownMember
+                                        .filter(m -> m.getRole() == CouncilMemberRole.REVIEWER)
+                                        .filter(m -> !access.isAdvisor(user, a.getRegistration())).isPresent(),
+                                c.getStatus() == CouncilStatus.SCHEDULED && ownMember.isPresent()
+                                        && !access.isAdvisor(user, a.getRegistration()),
+                                c.getStatus() == CouncilStatus.SCHEDULED
+                                        && access.isAdvisor(user, a.getRegistration()))).toList());
     }
 }

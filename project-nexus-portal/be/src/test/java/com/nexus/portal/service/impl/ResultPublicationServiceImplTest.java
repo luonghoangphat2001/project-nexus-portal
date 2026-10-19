@@ -7,6 +7,7 @@ import com.nexus.portal.model.*;
 import com.nexus.portal.repository.DefenseAssignmentRepository;
 import com.nexus.portal.repository.DefenseCouncilRepository;
 import com.nexus.portal.repository.DepartmentRepository;
+import com.nexus.portal.repository.PublishedResultDetailsRepository;
 import com.nexus.portal.repository.ResultRepository;
 import com.nexus.portal.repository.RegistrationPeriodRepository;
 import com.nexus.portal.repository.TopicRepository;
@@ -36,6 +37,7 @@ class ResultPublicationServiceImplTest {
     @Mock private DefenseAssignmentRepository assignments;
     @Mock private DefenseCouncilRepository councils;
     @Mock private ResultRepository results;
+    @Mock private PublishedResultDetailsRepository resultDetails;
     @Mock private ScoreCalculationService scoreCalculation;
     @Mock private DefenseAccessPolicy access;
     @Mock private AuditLogService audit;
@@ -44,7 +46,7 @@ class ResultPublicationServiceImplTest {
     @Mock private TopicRepository topics;
 
     private final Clock clock = Clock.fixed(Instant.parse("2026-10-07T00:00:00Z"), ZoneOffset.UTC);
-    private ResultsServiceImpl service;
+    private ResultServiceImpl service;
     private User manager;
     private User student;
     private Department department;
@@ -53,7 +55,7 @@ class ResultPublicationServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new ResultsServiceImpl(assignments, councils, results, scoreCalculation,
+        service = new ResultServiceImpl(assignments, councils, results, resultDetails, scoreCalculation,
             access, audit, clock, departments, periods, topics);
 
         manager = new User();
@@ -101,16 +103,18 @@ class ResultPublicationServiceImplTest {
         givenPublishDependencies();
         when(results.existsByAssignmentId(9L)).thenReturn(false);
         when(scoreCalculation.calculateScores(assignment)).thenReturn(List.of(
-                new CalculatedScore(student, new BigDecimal("8.00"), new BigDecimal("7.50"),
-                        new BigDecimal("7.65"), true)));
+                new CalculatedScore(student, breakdown("8.00"), breakdown("8.50"), breakdown("9.00"),
+                        new BigDecimal("8.65"), true)));
         when(results.saveAllAndFlush(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(resultDetails.saveAllAndFlush(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
 
         List<ResultResponse.Defense> published = service.publishAssignmentResults(9L, "admin");
 
         assertEquals(1, published.size());
-        assertEquals(new BigDecimal("8.00"), published.get(0).reviewScore());
-        assertEquals(new BigDecimal("7.50"), published.get(0).defenseScore());
-        assertEquals(new BigDecimal("7.65"), published.get(0).finalScore());
+        assertEquals(new BigDecimal("8.00"), published.get(0).advisorScore());
+        assertEquals(new BigDecimal("8.50"), published.get(0).reviewScore());
+        assertEquals(new BigDecimal("9.00"), published.get(0).defenseScore());
+        assertEquals(new BigDecimal("8.65"), published.get(0).finalScore());
         assertTrue(published.get(0).passed());
         assertTrue(published.get(0).published());
         assertEquals(Instant.parse("2026-10-07T00:00:00Z"), published.get(0).publishedAt().toInstant(ZoneOffset.UTC));
@@ -146,6 +150,11 @@ class ResultPublicationServiceImplTest {
 
         assertThrows(AccessDeniedException.class, () -> service.publishAssignmentResults(9L, "admin"));
         verify(scoreCalculation, never()).calculateScores(any());
+    }
+
+    private CalculatedScore.AssessmentBreakdown breakdown(String score) {
+        BigDecimal value = new BigDecimal(score);
+        return new CalculatedScore.AssessmentBreakdown(value, value, value, value, "Evaluator", "Comment");
     }
 
     private void givenPublishDependencies() {

@@ -21,11 +21,11 @@ class ScoreCalculationFormulaTest {
     }
 
     @Test
-    void appliesThirtySeventyWeightAndRoundsHalfUpToTwoDecimals() {
+    void appliesAdvisorReviewerCouncilWeightsAndRoundsHalfUpToTwoDecimals() {
         BigDecimal finalScore = ScoreCalculationServiceImpl.calculateFinalScore(
-                new BigDecimal("8.00"), new BigDecimal("7.50"));
+                new BigDecimal("8.00"), new BigDecimal("8.50"), new BigDecimal("9.00"));
 
-        assertEquals(new BigDecimal("7.65"), finalScore);
+        assertEquals(new BigDecimal("8.65"), finalScore);
     }
 
     @Test

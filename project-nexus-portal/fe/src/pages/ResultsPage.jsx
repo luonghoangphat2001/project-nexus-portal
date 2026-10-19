@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Download, RefreshCw, BarChart2, PieChart as PieChartIcon, TrendingUp, CheckCircle, XCircle, Award, Users, BookOpen, Clock, Building2, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import councilService from '../services/councilService';
-import scoreCalculationService from '../services/scoreCalculationService';
 import resultsService from '../services/resultsService';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
@@ -63,7 +62,7 @@ export function ResultsPage() {
     [assignments]
   );
 
-  // Unique defense councils extracted from completed assignments
+  // Danh sách hội đồng duy nhất từ completedAssignments
   const completedCouncils = useMemo(() => {
     const map = new Map();
     completedAssignments.forEach((a) => {
@@ -95,7 +94,7 @@ export function ResultsPage() {
     return () => { active = false; };
   }, [isStudent, refresh, t]);
 
-  // Synchronize selectedCouncilId with available councils
+  // Đồng bộ selectedCouncilId
   useEffect(() => {
     if (isStudent || completedCouncils.length === 0) return;
     setSelectedCouncilId((id) =>
@@ -103,13 +102,13 @@ export function ResultsPage() {
     );
   }, [completedCouncils, isStudent]);
 
-  // Filter topics and student teams assigned to the selected council
+  // Danh sách đề tài & nhóm thuộc hội đồng đang chọn
   const councilAssignments = useMemo(() => {
     if (!selectedCouncilId) return [];
     return completedAssignments.filter((a) => String(a.council.id) === String(selectedCouncilId));
   }, [completedAssignments, selectedCouncilId]);
 
-  // Synchronize selectedId (assignmentId)
+  // Đồng bộ selectedId (assignmentId)
   useEffect(() => {
     if (isStudent || councilAssignments.length === 0) return;
     setSelectedId((id) =>
@@ -132,7 +131,7 @@ export function ResultsPage() {
     if (isStudent || !selectedId) { setGrades([]); return () => { active = false; }; }
     setGradesLoading(true);
     setError('');
-    scoreCalculationService.getAssignmentScores(selectedId)
+    resultsService.getAssignmentScores(selectedId)
       .then((data) => { if (active) setGrades(data); })
       .catch((e) => { if (active) setError(e.message || t('common.error')); })
       .finally(() => { if (active) setGradesLoading(false); });
@@ -151,13 +150,13 @@ export function ResultsPage() {
     return () => { active = false; };
   }, [isStudent, filters, refresh, t]);
 
-  const publish = async () => {
-    if (!selectedId || !window.confirm(t('results.confirmPublish'))) return;
+  const runPublish = async (confirmKey, request) => {
+    if (!window.confirm(t(confirmKey))) return;
     setBusy(true);
     setError('');
     setNotice('');
     try {
-      await resultsService.publishAssignmentResults(selectedId);
+      await request();
       setNotice(t('results.publishSuccess'));
       setRefresh((n) => n + 1);
     } catch (e) {
@@ -167,15 +166,22 @@ export function ResultsPage() {
     }
   };
 
+  const publish = () => selectedId
+    && runPublish('results.confirmPublish', () => resultsService.publishAssignmentResults(selectedId));
+
+  const periodId = activeAssignment?.registration?.periodId;
+  const publishPeriod = () => periodId
+    && runPublish('results.confirmPublishPeriod', () => resultsService.publishPeriodResults(periodId));
+
   const exportReport = async () => {
     setBusy(true);
     setError('');
     try {
-      const blob = await resultsService.exportStatisticsCsv(selectedFilters(filters));
+      const blob = await resultsService.exportDetailedReportExcel(selectedFilters(filters));
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'academic-results-report.csv';
+      link.download = 'academic-results-report.xlsx';
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -194,7 +200,7 @@ export function ResultsPage() {
       ...(key === 'departmentId' || key === 'periodId' ? { topicId: '' } : {}),
     }));
 
-  // === REAL REPORT METRICS & SUMMARY CHARTS ===
+  // === BIỂU ĐỒ & SỐ LIỆU TỔNG HỢP DỰA TRÊN DỮ LIỆU BÁO CÁO THẬT ===
   const totalStudents = report.reduce((sum, r) => sum + (Number(r.studentCount) || 0), 0);
   const totalPassed = report.reduce((sum, r) => sum + (Number(r.passCount) || 0), 0);
   const totalFailed = report.reduce((sum, r) => sum + (Number(r.failCount) || 0), 0);
@@ -203,7 +209,7 @@ export function ResultsPage() {
     : '0.00';
   const passRate = totalStudents > 0 ? Math.round((totalPassed / totalStudents) * 100) : 0;
 
-  // Aggregate grade score distribution bands
+  // Tính tổng phân bổ phổ điểm
   const aggregatedBands = {
     BELOW_FIVE: 0,
     FIVE_TO_SIX: 0,
@@ -266,10 +272,14 @@ export function ResultsPage() {
                   <tr className="bg-slate-50/70 border-b border-slate-200 font-semibold text-slate-600">
                     <th className="py-3.5 px-4">{t('results.periodCol')}</th>
                     <th className="py-3.5 px-4">{t('results.topicCol')}</th>
-                    <th className="py-3.5 px-4 text-center">{t('results.reviewerScore', 'Điểm phản biện')}</th>
-                    <th className="py-3.5 px-4 text-center">{t('results.defenseScore')}</th>
+                    <th className="py-3.5 px-4">GVHD (20%)</th>
+                    <th className="py-3.5 px-4 text-center">Phản biện (30%)</th>
+                    <th className="py-3.5 px-4 text-center">Hội đồng (50%)</th>
                     <th className="py-3.5 px-4 text-center font-bold text-slate-900">{t('results.finalScore', 'Điểm tổng kết')}</th>
                     <th className="py-3.5 px-4 text-center">{t('results.resultCol')}</th>
+                    <th className="py-3.5 px-4">Nhận xét GVHD</th>
+                    <th className="py-3.5 px-4">Nhận xét phản biện</th>
+                    <th className="py-3.5 px-4">Nhận xét hội đồng</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -280,12 +290,26 @@ export function ResultsPage() {
                         <div className="font-semibold text-slate-900">{grade.topicTitle}</div>
                         <div className="text-xs text-slate-500 font-normal">{grade.teamName}</div>
                       </td>
-                      <td className="py-3.5 px-4 text-center font-mono">{formatScore(grade.reviewScore)}</td>
-                      <td className="py-3.5 px-4 text-center font-mono">{formatScore(grade.defenseScore)}</td>
+                      <td className="py-3.5 px-4">
+                        <div className="font-mono">{formatScore(grade.advisorScore)}</div>
+                        <div className="text-xs text-slate-500">{grade.advisorName}</div>
+                        <div className="text-xs text-slate-500">Thành phần: {formatScore(grade.advisorContentScore)} / {formatScore(grade.advisorImplementationScore)} / {formatScore(grade.advisorPresentationScore)}</div>
+                      </td>
+                      <td className="py-3.5 px-4 text-center font-mono">
+                        {formatScore(grade.reviewScore)}
+                        <div className="text-xs text-slate-500 font-sans">Nội dung / triển khai / trình bày: {formatScore(grade.reviewContentScore)} / {formatScore(grade.reviewImplementationScore)} / {formatScore(grade.reviewPresentationScore)}</div>
+                      </td>
+                      <td className="py-3.5 px-4 text-center font-mono">
+                        {formatScore(grade.defenseScore)}
+                        <div className="text-xs text-slate-500 font-sans">Nội dung / triển khai / trình bày: {formatScore(grade.defenseContentScore)} / {formatScore(grade.defenseImplementationScore)} / {formatScore(grade.defensePresentationScore)}</div>
+                      </td>
                       <td className="py-3.5 px-4 text-center font-semibold font-mono text-blue-600 text-base">{formatScore(grade.finalScore)}</td>
                       <td className="py-3.5 px-4 text-center">
                         <StatusBadge value={grade.passed ? 'PASSED' : 'FAILED'} type="status" />
                       </td>
+                      <td className="py-3.5 px-4 whitespace-pre-wrap">{grade.advisorComment || '—'}</td>
+                      <td className="py-3.5 px-4 whitespace-pre-wrap">{grade.reviewComment || '—'}</td>
+                      <td className="py-3.5 px-4 whitespace-pre-wrap">{grade.defenseComments || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -326,7 +350,7 @@ export function ResultsPage() {
         </div>
       )}
 
-      {/* SECTION 1: COUNCIL SCORE CALCULATION & RESULT PUBLISHING */}
+      {/* KHỐI 1: TÍNH ĐIỂM & CÔNG BỐ KẾT QUẢ CHO HỘI ĐỒNG */}
       <TableCard>
         <TableHeaderBar
           title={t('results.calcPublishTitle')}
@@ -340,10 +364,10 @@ export function ResultsPage() {
             <div className="p-8 text-center text-sm text-slate-500">{t('results.noCompletedCouncils')}</div>
           ) : (
             <>
-              {/* CASCADING FILTER CONTROLS: DEFENSE COUNCIL & CAPSTONE TOPIC */}
+              {/* KHỐI 2 BỘ LỌC TÁCH BIỆT: HỘI ĐỒNG CHẤM & ĐỀ TÀI BẢO VỆ */}
               <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4.5 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Filter 1: Defense Council */}
+                  {/* Bộ lọc 1: Hội đồng chấm */}
                   <div>
                     <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
                       <Award className="w-4 h-4 text-blue-600" />
@@ -365,7 +389,7 @@ export function ResultsPage() {
                     </div>
                   </div>
 
-                  {/* Filter 2: Topic & Student Team */}
+                  {/* Bộ lọc 2: Đề tài & Nhóm sinh viên */}
                   <div>
                     <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
                       <BookOpen className="w-4 h-4 text-indigo-600" />
@@ -392,7 +416,7 @@ export function ResultsPage() {
                   </div>
                 </div>
 
-                {/* Active Council & Topic Metadata Ribbon */}
+                {/* Dải thông tin bổ trợ Hội đồng & Đề tài đang chọn */}
                 {activeCouncil && activeAssignment && (
                   <div className="pt-3 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
                     <div className="flex flex-wrap items-center gap-3">
@@ -470,7 +494,15 @@ export function ResultsPage() {
               )}
 
               {grades.length > 0 && (
-                <div className="pt-2 flex justify-end">
+                <div className="pt-2 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    disabled={busy || !periodId}
+                    onClick={publishPeriod}
+                    className={buttonClass('secondary')}
+                  >
+                    {t('results.publishPeriodBtn')}
+                  </button>
                   <button
                     type="button"
                     disabled={busy || grades.every((grade) => grade.published)}
@@ -486,7 +518,7 @@ export function ResultsPage() {
         </div>
       </TableCard>
 
-      {/* SECTION 2: DYNAMIC ACADEMIC ANALYTICS CHARTS */}
+      {/* KHỐI 2: BIỂU ĐỒ TRỰC QUAN HÓA THỐNG KÊ HỌC VỤ (DYNAMIC ANALYTICS CHARTS) */}
       <div className="space-y-4">
         {/* KPI Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -528,7 +560,7 @@ export function ResultsPage() {
           />
         </div>
 
-        {/* Dynamic Bar Chart: Grade Distribution */}
+        {/* Biểu đồ Cột động (Bar Chart) Phổ điểm Khóa luận */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -579,7 +611,7 @@ export function ResultsPage() {
                   })}
                 </div>
 
-                {/* Chart Legend */}
+                {/* Chú thích biểu đồ */}
                 <div className="flex flex-wrap items-center justify-center gap-4 pt-3 border-t border-slate-100 text-xs">
                   {bandConfigs.map((b) => (
                     <div key={b.key} className="flex items-center gap-1.5">
@@ -592,7 +624,7 @@ export function ResultsPage() {
             )}
           </div>
 
-          {/* Pass vs Fail Ratio Analytics */}
+          {/* Biểu đồ tròn / Thống kê tỷ lệ Đạt vs Không đạt */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
             <div className="flex items-center space-x-2 pb-3 border-b border-slate-100">
               <PieChartIcon className="w-5 h-5 text-blue-600" />
@@ -652,7 +684,7 @@ export function ResultsPage() {
         </div>
       </div>
 
-      {/* SECTION 3: DETAILED ACADEMIC REPORT TABLE BY DEPARTMENT & TOPIC */}
+      {/* KHỐI 3: BẢNG BÁO CÁO HỌC VỤ CHI TIẾT THEO BỘ MÔN & ĐỀ TÀI */}
       <TableCard>
         <TableHeaderBar
           title={t('results.academicStatsTitle')}
@@ -666,7 +698,7 @@ export function ResultsPage() {
               className={buttonClass('secondary')}
             >
               <Download className="w-4 h-4" />
-              <span>{t('results.exportCsv')}</span>
+              <span>Xuất báo cáo Excel</span>
             </button>
           }
         />

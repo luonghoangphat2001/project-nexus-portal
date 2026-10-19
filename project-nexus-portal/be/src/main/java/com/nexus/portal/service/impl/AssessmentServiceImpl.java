@@ -47,7 +47,8 @@ public class AssessmentServiceImpl implements AssessmentService {
         User user = access.getUser(identifier);
         DefenseAssignment assignment = getAssignment(assignmentId);
         boolean manager = access.canManage(user, assignment.getCouncil().getDepartment());
-        if (!manager && !access.isCouncilMember(user, assignment.getCouncil())) {
+        boolean advisor = access.isAdvisor(user, assignment.getRegistration());
+        if (!manager && !advisor && !access.isCouncilMember(user, assignment.getCouncil())) {
             throw new AccessDeniedException("Only council members and authorized managers can view assessments before scores are published");
         }
         return assessments.findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(assignmentId).stream()
@@ -133,11 +134,22 @@ public class AssessmentServiceImpl implements AssessmentService {
 
     private void requireEvaluator(User user, DefenseAssignment assignment, AssessmentType type) {
         if (assignment.getCouncil().getStatus() != CouncilStatus.SCHEDULED) throw new BadRequestException("The council has been completed or cancelled");
+        if (type == AssessmentType.ADVISOR) {
+            boolean primaryAdvisor = assignment.getRegistration().getTopic().getTopicLecturers().stream()
+                    .anyMatch(link -> link.getAdvisorRole() == AdvisorRole.PRIMARY
+                            && link.getLecturer().getId().equals(user.getId()));
+            if (!primaryAdvisor) {
+                throw new AccessDeniedException("Only an assigned thesis advisor can submit an advisor assessment");
+            }
+            return;
+        }
+        if (access.isAdvisor(user, assignment.getRegistration())) {
+            throw new AccessDeniedException("A thesis advisor cannot grade their own project as a council member");
+        }
         DefenseCouncilMember member = assignment.getCouncil().getMembers().stream()
                 .filter(m -> m.getLecturer().getId().equals(user.getId())).findFirst()
                 .orElseThrow(() -> new AccessDeniedException("You are not assigned to this council"));
-        if (type == AssessmentType.REVIEW && (member.getRole() != CouncilMemberRole.REVIEWER
-                || access.isAdvisor(user, assignment.getRegistration()))) {
+        if (type == AssessmentType.REVIEW && member.getRole() != CouncilMemberRole.REVIEWER) {
             throw new AccessDeniedException("Only the assigned reviewer can create review assessments");
         }
     }
