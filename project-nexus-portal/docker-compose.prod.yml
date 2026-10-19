@@ -46,6 +46,8 @@ services:
       SQL_INIT_MODE: ${SQL_INIT_MODE:-always}
     ports:
       - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
+    volumes:
+      - ./be/logs:/app/logs
     networks:
       - nexus-network
 

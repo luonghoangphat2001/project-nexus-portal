@@ -46,6 +46,8 @@ services:
       CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN}
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
+    volumes:
+      - ./logs:/app/logs
     networks:
       - backend-network
 

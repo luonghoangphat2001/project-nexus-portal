@@ -23,7 +23,7 @@ RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
 # Copy built JAR file from build stage
 COPY --from=build /app/target/*.jar app.jar
-RUN chown -R appuser:appgroup /app
+RUN mkdir -p /app/logs && chown -R appuser:appgroup /app
 
 USER appuser
 

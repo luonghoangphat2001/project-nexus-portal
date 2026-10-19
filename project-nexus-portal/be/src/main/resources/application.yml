@@ -64,3 +64,14 @@ springdoc:
     display-request-duration: true
     doc-expansion: none
 
+logging:
+  file:
+    name: ${LOG_FILE:logs/nexus-backend.log}
+  logback:
+    rollingpolicy:
+      file-name-pattern: ${LOG_FILE_PATTERN:logs/nexus-backend-%d{yyyy-MM-dd}.%i.log}
+      max-file-size: 10MB
+      max-history: 30
+      total-size-cap: 1GB
+
+

@@ -63,7 +63,7 @@ export function ResultsPage() {
     [assignments]
   );
 
-  // Danh sách hội đồng duy nhất từ completedAssignments
+  // Unique defense councils extracted from completed assignments
   const completedCouncils = useMemo(() => {
     const map = new Map();
     completedAssignments.forEach((a) => {
@@ -95,7 +95,7 @@ export function ResultsPage() {
     return () => { active = false; };
   }, [isStudent, refresh, t]);
 
-  // Đồng bộ selectedCouncilId
+  // Synchronize selectedCouncilId with available councils
   useEffect(() => {
     if (isStudent || completedCouncils.length === 0) return;
     setSelectedCouncilId((id) =>
@@ -103,13 +103,13 @@ export function ResultsPage() {
     );
   }, [completedCouncils, isStudent]);
 
-  // Danh sách đề tài & nhóm thuộc hội đồng đang chọn
+  // Filter topics and student teams assigned to the selected council
   const councilAssignments = useMemo(() => {
     if (!selectedCouncilId) return [];
     return completedAssignments.filter((a) => String(a.council.id) === String(selectedCouncilId));
   }, [completedAssignments, selectedCouncilId]);
 
-  // Đồng bộ selectedId (assignmentId)
+  // Synchronize selectedId (assignmentId)
   useEffect(() => {
     if (isStudent || councilAssignments.length === 0) return;
     setSelectedId((id) =>
@@ -194,7 +194,7 @@ export function ResultsPage() {
       ...(key === 'departmentId' || key === 'periodId' ? { topicId: '' } : {}),
     }));
 
-  // === BIỂU ĐỒ & SỐ LIỆU TỔNG HỢP DỰA TRÊN DỮ LIỆU BÁO CÁO THẬT ===
+  // === REAL REPORT METRICS & SUMMARY CHARTS ===
   const totalStudents = report.reduce((sum, r) => sum + (Number(r.studentCount) || 0), 0);
   const totalPassed = report.reduce((sum, r) => sum + (Number(r.passCount) || 0), 0);
   const totalFailed = report.reduce((sum, r) => sum + (Number(r.failCount) || 0), 0);
@@ -203,7 +203,7 @@ export function ResultsPage() {
     : '0.00';
   const passRate = totalStudents > 0 ? Math.round((totalPassed / totalStudents) * 100) : 0;
 
-  // Tính tổng phân bổ phổ điểm
+  // Aggregate grade score distribution bands
   const aggregatedBands = {
     BELOW_FIVE: 0,
     FIVE_TO_SIX: 0,
@@ -326,7 +326,7 @@ export function ResultsPage() {
         </div>
       )}
 
-      {/* KHỐI 1: TÍNH ĐIỂM & CÔNG BỐ KẾT QUẢ CHO HỘI ĐỒNG */}
+      {/* SECTION 1: COUNCIL SCORE CALCULATION & RESULT PUBLISHING */}
       <TableCard>
         <TableHeaderBar
           title={t('results.calcPublishTitle')}
@@ -340,10 +340,10 @@ export function ResultsPage() {
             <div className="p-8 text-center text-sm text-slate-500">{t('results.noCompletedCouncils')}</div>
           ) : (
             <>
-              {/* KHỐI 2 BỘ LỌC TÁCH BIỆT: HỘI ĐỒNG CHẤM & ĐỀ TÀI BẢO VỆ */}
+              {/* CASCADING FILTER CONTROLS: DEFENSE COUNCIL & CAPSTONE TOPIC */}
               <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4.5 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Bộ lọc 1: Hội đồng chấm */}
+                  {/* Filter 1: Defense Council */}
                   <div>
                     <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
                       <Award className="w-4 h-4 text-blue-600" />
@@ -365,7 +365,7 @@ export function ResultsPage() {
                     </div>
                   </div>
 
-                  {/* Bộ lọc 2: Đề tài & Nhóm sinh viên */}
+                  {/* Filter 2: Topic & Student Team */}
                   <div>
                     <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
                       <BookOpen className="w-4 h-4 text-indigo-600" />
@@ -392,7 +392,7 @@ export function ResultsPage() {
                   </div>
                 </div>
 
-                {/* Dải thông tin bổ trợ Hội đồng & Đề tài đang chọn */}
+                {/* Active Council & Topic Metadata Ribbon */}
                 {activeCouncil && activeAssignment && (
                   <div className="pt-3 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
                     <div className="flex flex-wrap items-center gap-3">
@@ -486,7 +486,7 @@ export function ResultsPage() {
         </div>
       </TableCard>
 
-      {/* KHỐI 2: BIỂU ĐỒ TRỰC QUAN HÓA THỐNG KÊ HỌC VỤ (DYNAMIC ANALYTICS CHARTS) */}
+      {/* SECTION 2: DYNAMIC ACADEMIC ANALYTICS CHARTS */}
       <div className="space-y-4">
         {/* KPI Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -528,7 +528,7 @@ export function ResultsPage() {
           />
         </div>
 
-        {/* Biểu đồ Cột động (Bar Chart) Phổ điểm Khóa luận */}
+        {/* Dynamic Bar Chart: Grade Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -579,7 +579,7 @@ export function ResultsPage() {
                   })}
                 </div>
 
-                {/* Chú thích biểu đồ */}
+                {/* Chart Legend */}
                 <div className="flex flex-wrap items-center justify-center gap-4 pt-3 border-t border-slate-100 text-xs">
                   {bandConfigs.map((b) => (
                     <div key={b.key} className="flex items-center gap-1.5">
@@ -592,7 +592,7 @@ export function ResultsPage() {
             )}
           </div>
 
-          {/* Biểu đồ tròn / Thống kê tỷ lệ Đạt vs Không đạt */}
+          {/* Pass vs Fail Ratio Analytics */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
             <div className="flex items-center space-x-2 pb-3 border-b border-slate-100">
               <PieChartIcon className="w-5 h-5 text-blue-600" />
@@ -652,7 +652,7 @@ export function ResultsPage() {
         </div>
       </div>
 
-      {/* KHỐI 3: BẢNG BÁO CÁO HỌC VỤ CHI TIẾT THEO BỘ MÔN & ĐỀ TÀI */}
+      {/* SECTION 3: DETAILED ACADEMIC REPORT TABLE BY DEPARTMENT & TOPIC */}
       <TableCard>
         <TableHeaderBar
           title={t('results.academicStatsTitle')}
