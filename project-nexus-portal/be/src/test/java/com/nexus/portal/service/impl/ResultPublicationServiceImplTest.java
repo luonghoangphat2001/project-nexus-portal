@@ -135,6 +135,18 @@ class ResultPublicationServiceImplTest {
     }
 
     @Test
+    void rejectsRepublishingTheSameAssignment() {
+        givenPublishDependencies();
+        when(results.existsByAssignmentId(9L)).thenReturn(true);
+
+        BadRequestException error = assertThrows(BadRequestException.class,
+                () -> service.publishAssignmentResults(9L, "admin"));
+
+        assertEquals("Results have already been published for this assignment.", error.getMessage());
+        verify(results, never()).saveAllAndFlush(anyList());
+    }
+
+    @Test
     void refusesToPublishBeforeCouncilCompletion() {
         givenPublishDependencies();
         council.setStatus(CouncilStatus.SCHEDULED);

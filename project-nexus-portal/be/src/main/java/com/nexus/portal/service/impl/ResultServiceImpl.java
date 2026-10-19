@@ -80,7 +80,7 @@ public class ResultServiceImpl implements ResultService {
             throw new BadRequestException("Results can only be published after the council is completed");
         }
         if (results.existsByAssignmentId(assignmentId)) {
-            throw new BadRequestException("Results for this assignment have already been published");
+            throw new BadRequestException("Results have already been published for this assignment.");
         }
 
         LocalDateTime publishedAt = LocalDateTime.now(clock);
