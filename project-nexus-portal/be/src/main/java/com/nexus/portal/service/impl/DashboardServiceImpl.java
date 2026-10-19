@@ -117,26 +117,40 @@ public class DashboardServiceImpl implements DashboardService {
                 });
 
         // 5. Dynamic timeline data computed directly from database records for each RegistrationPeriod
+        // 5. Dynamic timeline data grouped strictly by Academic Semester (academicYear + semester)
+        // Groups multiple registration periods (e.g. Capstone + Thesis) within the same semester into one timeline point
+        Map<String, List<RegistrationPeriod>> semesterGroups = new LinkedHashMap<>();
         periods.sort(Comparator
                 .comparing(RegistrationPeriod::getAcademicYear, Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(RegistrationPeriod::getSemester, Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(RegistrationPeriod::getId));
 
-        List<Map<String, Object>> timeline = new ArrayList<>();
         for (RegistrationPeriod p : periods) {
-            Long pid = p.getId();
+            String semKey = (p.getSemester() != null ? "HK" + p.getSemester() : "") +
+                    (p.getAcademicYear() != null ? " (" + p.getAcademicYear() + ")" : "");
+            if (semKey.isEmpty()) {
+                semKey = p.getName();
+            }
+            semesterGroups.computeIfAbsent(semKey, k -> new ArrayList<>()).add(p);
+        }
+
+        List<Map<String, Object>> timeline = new ArrayList<>();
+        for (Map.Entry<String, List<RegistrationPeriod>> entry : semesterGroups.entrySet()) {
+            String semLabel = entry.getKey();
+            List<RegistrationPeriod> group = entry.getValue();
+            Set<Long> periodIds = group.stream().map(RegistrationPeriod::getId).collect(Collectors.toSet());
 
             long pTopics = allTopics.stream()
-                    .filter(t -> t.getPeriod() != null && pid.equals(t.getPeriod().getId()))
+                    .filter(t -> t.getPeriod() != null && periodIds.contains(t.getPeriod().getId()))
                     .count();
 
             long pRegs = allRegistrations.stream()
-                    .filter(r -> r.getTopic() != null && r.getTopic().getPeriod() != null && pid.equals(r.getTopic().getPeriod().getId()))
+                    .filter(r -> r.getTopic() != null && r.getTopic().getPeriod() != null && periodIds.contains(r.getTopic().getPeriod().getId()))
                     .count();
 
             Set<Long> userIds = new HashSet<>();
             for (Team tm : allTeams) {
-                if (tm.getPeriod() != null && pid.equals(tm.getPeriod().getId())) {
+                if (tm.getPeriod() != null && periodIds.contains(tm.getPeriod().getId())) {
                     if (tm.getLeader() != null) userIds.add(tm.getLeader().getId());
                     if (tm.getMembers() != null) {
                         tm.getMembers().forEach(m -> {
@@ -146,7 +160,7 @@ public class DashboardServiceImpl implements DashboardService {
                 }
             }
             for (Topic t : allTopics) {
-                if (t.getPeriod() != null && pid.equals(t.getPeriod().getId())) {
+                if (t.getPeriod() != null && periodIds.contains(t.getPeriod().getId())) {
                     if (t.getTopicLecturers() != null) {
                         t.getTopicLecturers().forEach(tl -> {
                             if (tl.getLecturer() != null) userIds.add(tl.getLecturer().getId());
@@ -155,19 +169,17 @@ public class DashboardServiceImpl implements DashboardService {
                 }
             }
 
-            String semLabel = (p.getSemester() != null ? "HK" + p.getSemester() : "") +
-                    (p.getAcademicYear() != null ? " (" + p.getAcademicYear() + ")" : "");
-            if (semLabel.isEmpty()) {
-                semLabel = p.getName();
-            }
+            RegistrationPeriod primaryPeriod = group.get(0);
+            String fullSemesterName = (primaryPeriod.getSemester() != null ? "Học kỳ " + primaryPeriod.getSemester() : "Học kỳ") +
+                    (primaryPeriod.getAcademicYear() != null ? " (" + primaryPeriod.getAcademicYear() + ")" : "");
 
             Map<String, Object> point = new HashMap<>();
-            point.put("periodId", pid);
+            point.put("periodId", primaryPeriod.getId());
             point.put("day", semLabel);
-            point.put("semester", p.getName());
-            point.put("academicYear", p.getAcademicYear());
-            point.put("term", p.getSemester());
-            point.put("status", p.getStatus() != null ? p.getStatus().name() : "");
+            point.put("semester", fullSemesterName);
+            point.put("academicYear", primaryPeriod.getAcademicYear());
+            point.put("term", primaryPeriod.getSemester());
+            point.put("status", primaryPeriod.getStatus() != null ? primaryPeriod.getStatus().name() : "");
             point.put("users", (long) userIds.size());
             point.put("topics", pTopics);
             point.put("registrations", pRegs);
