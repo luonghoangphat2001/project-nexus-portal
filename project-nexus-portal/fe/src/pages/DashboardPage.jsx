@@ -51,20 +51,35 @@ export const DashboardPage = () => {
     fetchStats();
   }, [fetchStats]);
 
-  const totalUsers = stats?.totalUsers || 0;
-  const activeUsers = stats?.activeUsers || 0;
-  const totalRoles = stats?.totalRoles || 0;
-  const totalTopics = stats?.totalTopics || 0;
-  const totalTeams = stats?.totalTeams || 0;
-  const totalRegistrations = stats?.totalRegistrations || 0;
+  // Dynamic Chart Points calculated per semester directly from database API
+  const timelineData = stats?.timelineData || [];
+  const selectedPeriod = timelineData.find(d => String(d.periodId) === String(selectedSemester) || d.day === selectedSemester);
+
+  const displayUsers = selectedPeriod ? selectedPeriod.users : (stats?.totalUsers || 0);
+  const displayActiveUsers = stats?.activeUsers || 0;
+  const displayRoles = stats?.totalRoles || 0;
+  const displayTopics = selectedPeriod ? selectedPeriod.topics : (stats?.totalTopics || 0);
+  const displayRegistrations = selectedPeriod ? selectedPeriod.registrations : (stats?.totalRegistrations || 0);
+  const displayTeams = selectedPeriod ? (selectedPeriod.teams != null ? selectedPeriod.teams : 0) : (stats?.totalTeams || 0);
   const uptimeMinutes = stats ? Math.floor(stats.systemUptimeSeconds / 60) : 0;
 
-  // 6 Metric Cards matching Image 2 with 100% REAL application data
+  useEffect(() => {
+    if (selectedSemester !== 'all') {
+      const idx = timelineData.findIndex(d => String(d.periodId) === String(selectedSemester) || d.day === selectedSemester);
+      if (idx !== -1) {
+        setHoveredIndex(idx);
+      }
+    }
+  }, [selectedSemester, timelineData]);
+
+  // 6 Metric Cards with 100% REAL application data from API
   const metricCards = [
     {
       title: t('dashboard.totalUsers', 'Tổng người dùng'),
-      value: loading ? '—' : totalUsers,
-      subtitle: `${activeUsers} ${t('dashboard.activeOnline', 'đang hoạt động')}`,
+      value: loading ? '—' : displayUsers,
+      subtitle: selectedPeriod
+        ? `${selectedPeriod.semester || selectedPeriod.day}`
+        : `${activeUsers} ${t('dashboard.activeOnline', 'đang hoạt động')}`,
       trend: activeUsers > 0 && totalUsers > 0 ? `${Math.round((activeUsers / totalUsers) * 100)}%` : '0%',
       trendColor: 'text-emerald-600',
       icon: Users,
@@ -81,27 +96,29 @@ export const DashboardPage = () => {
     },
     {
       title: t('dashboard.thesisTopics', 'Đề tài khóa luận'),
-      value: loading ? '—' : totalTopics,
-      subtitle: `${totalRegistrations} ${t('dashboard.registrationsCount', 'lượt đăng ký')}`,
-      trend: `${totalTopics} ${t('dashboard.metricTopics', 'đề tài')}`,
+      value: loading ? '—' : displayTopics,
+      subtitle: `${displayRegistrations} ${t('dashboard.registrationsCount', 'lượt đăng ký')}`,
+      trend: `${displayTopics} ${t('dashboard.metricTopics', 'đề tài')}`,
       trendColor: 'text-blue-600',
       icon: FileText,
       iconBg: 'bg-indigo-600',
     },
     {
       title: t('dashboard.teamRoster', 'Nhóm sinh viên'),
-      value: loading ? '—' : totalTeams,
-      subtitle: `${totalTeams} ${t('dashboard.teamsCount', 'nhóm đã lập')}`,
-      trend: `${totalTeams} ${t('dashboard.teamRoster', 'nhóm')}`,
+      value: loading ? '—' : (selectedPeriod ? (displayTeams > 0 ? displayTeams : '—') : stats?.totalTeams || 0),
+      subtitle: selectedPeriod
+        ? `${displayRegistrations} ${t('dashboard.registrationsCount', 'đăng ký')}`
+        : `${stats?.totalTeams || 0} ${t('dashboard.teamsCount', 'nhóm đã lập')}`,
+      trend: selectedPeriod ? `${displayTopics} đề tài` : `${stats?.totalTeams || 0} nhóm`,
       trendColor: 'text-amber-600',
       icon: BookmarkCheck,
       iconBg: 'bg-amber-600',
     },
     {
       title: t('dashboard.securityRoles', 'Vai trò hệ thống'),
-      value: loading ? '—' : totalRoles,
+      value: loading ? '—' : displayRoles,
       subtitle: t('dashboard.rbacMatrix', 'Phân quyền RBAC'),
-      trend: `${totalRoles} roles`,
+      trend: `${displayRoles} roles`,
       trendColor: 'text-purple-600',
       icon: Award,
       iconBg: 'bg-purple-600',
@@ -117,11 +134,9 @@ export const DashboardPage = () => {
     },
   ];
 
-  // Dynamic Chart Points calculated per semester
-  const timelineData = stats?.timelineData || [];
   const maxTimelineValue = Math.max(
     ...timelineData.map(d => Math.max(Number(d.users || 0), Number(d.topics || 0), Number(d.registrations || 0))),
-    20
+    1
   );
 
   const chartWidth = 580;
@@ -480,15 +495,31 @@ export const DashboardPage = () => {
 
                 {/* X-axis Semester badges */}
                 <div className="flex justify-between text-xs font-medium text-slate-600 mt-2 pl-9 pr-4">
-                  {timelineData.map((d, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setHoveredIndex(idx === hoveredIndex ? null : idx)}
-                      className={`px-2.5 py-1 rounded-lg transition-all ${hoveredIndex === idx ? 'bg-blue-100 text-blue-800 font-bold scale-105' : 'hover:bg-slate-100'}`}
-                    >
-                      {d.day}
-                    </button>
-                  ))}
+                  {timelineData.map((d, idx) => {
+                    const isSelected = selectedSemester === (d.periodId || d.day) || selectedSemester === d.day;
+                    const isHovered = hoveredIndex === idx;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedSemester('all');
+                            setHoveredIndex(null);
+                          } else {
+                            setSelectedSemester(d.periodId || d.day);
+                            setHoveredIndex(idx);
+                          }
+                        }}
+                        className={`px-2.5 py-1 rounded-lg transition-all ${
+                          isSelected || isHovered
+                            ? 'bg-blue-600 text-white font-bold shadow-xs scale-105'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        {d.day}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -500,19 +531,19 @@ export const DashboardPage = () => {
               <div className="flex items-center space-x-2">
                 <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
                 <span className="text-slate-700 font-medium">
-                  {t('dashboard.metricUsers', 'Người dùng')} ({totalUsers})
+                  {t('dashboard.metricUsers', 'Người dùng')} ({displayUsers})
                 </span>
               </div>
               <div className="flex items-center space-x-2">
                 <span className="w-3 h-3 rounded-full bg-blue-500"></span>
                 <span className="text-slate-700 font-medium">
-                  {t('dashboard.metricTopics', 'Đề tài')} ({totalTopics})
+                  {t('dashboard.metricTopics', 'Đề tài')} ({displayTopics})
                 </span>
               </div>
               <div className="flex items-center space-x-2">
                 <span className="w-3 h-3 rounded-full bg-indigo-500"></span>
                 <span className="text-slate-700 font-medium">
-                  {t('dashboard.metricRegistrations', 'Lượt đăng ký')} ({totalRegistrations})
+                  {t('dashboard.metricRegistrations', 'Lượt đăng ký')} ({displayRegistrations})
                 </span>
               </div>
             </div>

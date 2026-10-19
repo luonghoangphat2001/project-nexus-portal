@@ -2,7 +2,9 @@ package com.nexus.portal.service.impl;
 
 import com.nexus.portal.dto.response.DashboardStatsResponse;
 import com.nexus.portal.model.Notification;
+import com.nexus.portal.model.RegistrationPeriod;
 import com.nexus.portal.model.Role;
+import com.nexus.portal.model.Team;
 import com.nexus.portal.model.Topic;
 import com.nexus.portal.model.TopicRegistration;
 import com.nexus.portal.model.User;
@@ -49,18 +51,20 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     @Transactional(readOnly = true)
     public DashboardStatsResponse getDashboardStats() {
-        long totalUsers = userRepository.count();
         List<User> users = userRepository.findAll();
+        long totalUsers = users.size();
         long activeUsers = users.stream().filter(User::isActive).count();
         long totalRoles = roleRepository.count();
 
-        long totalTopics = topicRepository.count();
-        List<Topic> topics = topicRepository.findAll();
+        List<Topic> allTopics = topicRepository.findAll();
+        List<TopicRegistration> allRegistrations = topicRegistrationRepository.findAll();
+        List<Team> allTeams = teamRepository.findAll();
+        List<RegistrationPeriod> periods = registrationPeriodRepository.findAll();
+        long totalPeriods = periods.size();
 
-        long totalTeams = teamRepository.count();
-        long totalRegistrations = topicRegistrationRepository.count();
-        List<TopicRegistration> registrations = topicRegistrationRepository.findAll();
-        long totalPeriods = registrationPeriodRepository.count();
+        long totalTopics = allTopics.size();
+        long totalRegistrations = allRegistrations.size();
+        long totalTeams = allTeams.size();
 
         // 1. Role distribution
         Map<String, Long> roleDistribution = new HashMap<>();
@@ -73,7 +77,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         // 2. Topic status distribution
         Map<String, Long> topicStatusDistribution = new HashMap<>();
-        for (Topic topic : topics) {
+        for (Topic topic : allTopics) {
             if (topic.getStatus() != null) {
                 String statusName = topic.getStatus().name();
                 topicStatusDistribution.put(statusName, topicStatusDistribution.getOrDefault(statusName, 0L) + 1);
@@ -112,28 +116,61 @@ public class DashboardServiceImpl implements DashboardService {
                     recentNotifications.add(notif);
                 });
 
-        // 5. Dynamic timeline data grouped by Academic Semester (Học kỳ)
+        // 5. Dynamic timeline data computed directly from database records for each RegistrationPeriod
+        periods.sort(Comparator
+                .comparing(RegistrationPeriod::getAcademicYear, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(RegistrationPeriod::getSemester, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(RegistrationPeriod::getId));
+
         List<Map<String, Object>> timeline = new ArrayList<>();
+        for (RegistrationPeriod p : periods) {
+            Long pid = p.getId();
 
-        // Structured semesters progression: HK1 24-25 -> HK2 24-25 -> HK1 25-26 -> HK2 25-26 -> HK1 26-27 (Current Active)
-        String[][] semesterConfigs = {
-                {"HK1 (24-25)", "Học kỳ 1 (2024 - 2025)", "24", "12", "8"},
-                {"HK2 (24-25)", "Học kỳ 2 (2024 - 2025)", "30", "15", "11"},
-                {"HK1 (25-26)", "Học kỳ 1 (2025 - 2026)", "35", "17", "14"},
-                {"HK2 (25-26)", "Học kỳ 2 (2025 - 2026)", "38", "16", "13"},
-                {"HK1 (26-27)", "Học kỳ 1 (2026 - 2027)",
-                        String.valueOf(totalUsers > 0 ? totalUsers : 45),
-                        String.valueOf(totalTopics > 0 ? totalTopics : 20),
-                        String.valueOf(totalRegistrations > 0 ? totalRegistrations : 9)}
-        };
+            long pTopics = allTopics.stream()
+                    .filter(t -> t.getPeriod() != null && pid.equals(t.getPeriod().getId()))
+                    .count();
 
-        for (String[] config : semesterConfigs) {
+            long pRegs = allRegistrations.stream()
+                    .filter(r -> r.getTopic() != null && r.getTopic().getPeriod() != null && pid.equals(r.getTopic().getPeriod().getId()))
+                    .count();
+
+            Set<Long> userIds = new HashSet<>();
+            for (Team tm : allTeams) {
+                if (tm.getPeriod() != null && pid.equals(tm.getPeriod().getId())) {
+                    if (tm.getLeader() != null) userIds.add(tm.getLeader().getId());
+                    if (tm.getMembers() != null) {
+                        tm.getMembers().forEach(m -> {
+                            if (m.getUser() != null) userIds.add(m.getUser().getId());
+                        });
+                    }
+                }
+            }
+            for (Topic t : allTopics) {
+                if (t.getPeriod() != null && pid.equals(t.getPeriod().getId())) {
+                    if (t.getTopicLecturers() != null) {
+                        t.getTopicLecturers().forEach(tl -> {
+                            if (tl.getLecturer() != null) userIds.add(tl.getLecturer().getId());
+                        });
+                    }
+                }
+            }
+
+            String semLabel = (p.getSemester() != null ? "HK" + p.getSemester() : "") +
+                    (p.getAcademicYear() != null ? " (" + p.getAcademicYear() + ")" : "");
+            if (semLabel.isEmpty()) {
+                semLabel = p.getName();
+            }
+
             Map<String, Object> point = new HashMap<>();
-            point.put("day", config[0]);
-            point.put("semester", config[1]);
-            point.put("users", Long.parseLong(config[2]));
-            point.put("topics", Long.parseLong(config[3]));
-            point.put("registrations", Long.parseLong(config[4]));
+            point.put("periodId", pid);
+            point.put("day", semLabel);
+            point.put("semester", p.getName());
+            point.put("academicYear", p.getAcademicYear());
+            point.put("term", p.getSemester());
+            point.put("status", p.getStatus() != null ? p.getStatus().name() : "");
+            point.put("users", (long) userIds.size());
+            point.put("topics", pTopics);
+            point.put("registrations", pRegs);
             timeline.add(point);
         }
 
