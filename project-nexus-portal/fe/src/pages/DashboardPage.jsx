@@ -595,7 +595,7 @@ export const DashboardPage = () => {
             <div className="flex items-center space-x-2 pb-3 border-b border-slate-100">
               <PieChartIcon className="w-4 h-4 text-blue-600" />
               <h2 className="text-sm font-bold text-slate-900">
-                {t('dashboard.accountDistribution', 'Phân bổ tài khoản')} ({totalUsers})
+                {t('dashboard.accountDistribution', 'Phân bổ tài khoản')} ({displayUsers})
               </h2>
             </div>
 
