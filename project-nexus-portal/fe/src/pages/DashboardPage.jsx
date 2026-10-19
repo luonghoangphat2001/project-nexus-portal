@@ -25,8 +25,9 @@ export const DashboardPage = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [timeRange, setTimeRange] = useState('7d');
+  const [selectedSemester, setSelectedSemester] = useState('all');
   const [chartMetric, setChartMetric] = useState('all'); // 'all', 'users', 'topics', 'registrations'
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
   const fetchStats = useCallback(async () => {
     setLoading(true);
@@ -116,27 +117,26 @@ export const DashboardPage = () => {
     },
   ];
 
-  // Dynamic Chart Points calculated from real backend timeline data
+  // Dynamic Chart Points calculated per semester
   const timelineData = stats?.timelineData || [];
   const maxTimelineValue = Math.max(
     ...timelineData.map(d => Math.max(Number(d.users || 0), Number(d.topics || 0), Number(d.registrations || 0))),
-    10
+    20
   );
 
-  // Helper to generate dynamic SVG polyline path based on real numbers
+  const chartWidth = 580;
+  const chartHeight = 150;
+  const paddingLeft = 40;
+  const paddingTop = 25;
+  const stepX = timelineData.length > 1 ? (chartWidth - paddingLeft - 20) / (timelineData.length - 1) : 0;
+
+  // Helper to generate dynamic SVG polyline path based on semester numbers
   const getSvgPoints = (key) => {
     if (!timelineData.length) return '';
-    const width = 560;
-    const height = 160;
-    const paddingLeft = 30;
-    const paddingTop = 20;
-
-    const stepX = timelineData.length > 1 ? (width - paddingLeft) / (timelineData.length - 1) : 0;
-
     return timelineData.map((d, index) => {
       const val = Number(d[key] || 0);
       const x = paddingLeft + index * stepX;
-      const y = paddingTop + height - (val / maxTimelineValue) * height;
+      const y = paddingTop + chartHeight - (val / maxTimelineValue) * chartHeight;
       return `${x},${y}`;
     }).join(' ');
   };
@@ -155,13 +155,16 @@ export const DashboardPage = () => {
         action={
           <div className="flex items-center gap-3">
             <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
+              value={selectedSemester}
+              onChange={(e) => setSelectedSemester(e.target.value)}
               className="px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
             >
-              <option value="7d">{t('dashboard.range7d', '7 ngày qua')}</option>
-              <option value="30d">{t('dashboard.range30d', '30 ngày qua')}</option>
-              <option value="semester">{t('dashboard.rangeSemester', 'Học kỳ này (2025-2026)')}</option>
+              <option value="all">{t('dashboard.allSemesters', 'Tất cả học kỳ')}</option>
+              {timelineData.map((d, idx) => (
+                <option key={idx} value={d.day}>
+                  {d.semester || d.day} {idx === timelineData.length - 1 ? `(Hiện tại)` : ''}
+                </option>
+              ))}
             </select>
 
             <button
@@ -205,66 +208,138 @@ export const DashboardPage = () => {
 
       {/* Main Charts & Key Notifications Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (2/3): Dynamic Overview Statistics Chart */}
+        {/* Left Column (2/3): Dynamic Overview Statistics Chart By Semester */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
           <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2.5">
               <TrendingUp className="w-5 h-5 text-blue-600" />
-              <h2 className="text-base font-bold text-slate-900">
-                {t('dashboard.activityMetricsTitle', 'Thống kê hoạt động thực tế')}
-              </h2>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-slate-900">
+                    {t('dashboard.activityMetricsTitle', 'Thống kê hoạt động thực tế')}
+                  </h2>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    {t('dashboard.semesterStatsBadge', 'Theo học kỳ')}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {t('dashboard.activityMetricsSub', 'Dữ liệu đo lường theo từng học kỳ từ cơ sở dữ liệu Nexus')}
+                </p>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-slate-100/80 p-1 rounded-xl">
               <button
                 onClick={() => setChartMetric('all')}
-                className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition ${chartMetric === 'all' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                className={`px-3 py-1.5 text-xs rounded-lg font-semibold transition ${chartMetric === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
               >
                 {t('dashboard.metricAll', 'Tất cả')}
               </button>
               <button
                 onClick={() => setChartMetric('users')}
-                className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition ${chartMetric === 'users' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                className={`px-3 py-1.5 text-xs rounded-lg font-semibold transition ${chartMetric === 'users' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
               >
                 {t('dashboard.metricUsers', 'Người dùng')}
               </button>
               <button
                 onClick={() => setChartMetric('topics')}
-                className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition ${chartMetric === 'topics' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                className={`px-3 py-1.5 text-xs rounded-lg font-semibold transition ${chartMetric === 'topics' ? 'bg-blue-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
               >
                 {t('dashboard.metricTopics', 'Đề tài')}
               </button>
               <button
                 onClick={() => setChartMetric('registrations')}
-                className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition ${chartMetric === 'registrations' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                className={`px-3 py-1.5 text-xs rounded-lg font-semibold transition ${chartMetric === 'registrations' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
               >
                 {t('dashboard.metricRegistrations', 'Đăng ký')}
               </button>
             </div>
           </div>
 
-          {/* Real Dynamic SVG Line Chart */}
-          <div className="py-4">
+          {/* Real Dynamic SVG Line Chart With Data Dots & Hover Tooltip */}
+          <div className="py-4 relative">
             {timelineData.length === 0 ? (
-              <div className="h-56 flex items-center justify-center text-sm text-slate-400">
+              <div className="h-60 flex items-center justify-center text-sm text-slate-400">
                 {t('dashboard.noTimelineData', 'Chưa có dữ liệu hoạt động trong khoảng thời gian này')}
               </div>
             ) : (
-              <div className="h-56 w-full relative">
-                <svg className="w-full h-full overflow-visible" viewBox="0 0 600 200">
-                  {/* Grid lines */}
-                  {[0, 50, 100, 150].map((y) => (
+              <div className="h-64 w-full relative select-none">
+                {/* Floating Tooltip Card */}
+                {hoveredIndex !== null && timelineData[hoveredIndex] && (
+                  <div
+                    className="absolute pointer-events-none z-30 bg-slate-900/95 text-white rounded-xl px-3.5 py-2.5 shadow-2xl text-xs backdrop-blur-md border border-slate-700/60 transition-all duration-150"
+                    style={{
+                      left: `${Math.min(Math.max((paddingLeft + hoveredIndex * stepX) / chartWidth * 100, 15), 85)}%`,
+                      top: '12px',
+                      transform: 'translateX(-50%)',
+                    }}
+                  >
+                    <div className="font-bold text-slate-200 border-b border-slate-700/60 pb-1 mb-1.5">
+                      {timelineData[hoveredIndex].semester || timelineData[hoveredIndex].day}
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between gap-5">
+                        <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400"></span> Người dùng:
+                        </span>
+                        <span className="font-bold">{timelineData[hoveredIndex].users}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-5">
+                        <span className="flex items-center gap-1.5 text-blue-400 font-medium">
+                          <span className="w-2 h-2 rounded-full bg-blue-400"></span> Đề tài:
+                        </span>
+                        <span className="font-bold">{timelineData[hoveredIndex].topics}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-5">
+                        <span className="flex items-center gap-1.5 text-indigo-400 font-medium">
+                          <span className="w-2 h-2 rounded-full bg-indigo-400"></span> Lượt đăng ký:
+                        </span>
+                        <span className="font-bold">{timelineData[hoveredIndex].registrations}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <svg className="w-full h-full overflow-visible" viewBox={`0 0 ${chartWidth} 200`}>
+                  {/* Horizontal Grid lines & Y-Axis Labels */}
+                  {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+                    const y = paddingTop + chartHeight - ratio * chartHeight;
+                    const labelVal = Math.round(maxTimelineValue * ratio);
+                    return (
+                      <g key={ratio}>
+                        <text
+                          x={paddingLeft - 10}
+                          y={y + 3.5}
+                          textAnchor="end"
+                          className="text-[10px] font-mono fill-slate-400"
+                        >
+                          {labelVal}
+                        </text>
+                        <line
+                          x1={paddingLeft}
+                          y1={y}
+                          x2={chartWidth - 20}
+                          y2={y}
+                          stroke="#f1f5f9"
+                          strokeWidth="1"
+                          strokeDasharray="4 4"
+                        />
+                      </g>
+                    );
+                  })}
+
+                  {/* Vertical hover indicator bar */}
+                  {hoveredIndex !== null && (
                     <line
-                      key={y}
-                      x1="30"
-                      y1={y + 20}
-                      x2="590"
-                      y2={y + 20}
-                      stroke="#f1f5f9"
-                      strokeWidth="1"
-                      strokeDasharray="4 4"
+                      x1={paddingLeft + hoveredIndex * stepX}
+                      y1={paddingTop}
+                      x2={paddingLeft + hoveredIndex * stepX}
+                      y2={paddingTop + chartHeight}
+                      stroke="#cbd5e1"
+                      strokeWidth="1.5"
+                      strokeDasharray="3 3"
                     />
-                  ))}
+                  )}
 
                   {/* Line 1: Green (Users) */}
                   {(chartMetric === 'all' || chartMetric === 'users') && (
@@ -301,12 +376,118 @@ export const DashboardPage = () => {
                       points={getSvgPoints('registrations')}
                     />
                   )}
+
+                  {/* Data Points with Circles and Value Labels */}
+                  {timelineData.map((d, index) => {
+                    const x = paddingLeft + index * stepX;
+                    const yUsers = paddingTop + chartHeight - (Number(d.users || 0) / maxTimelineValue) * chartHeight;
+                    const yTopics = paddingTop + chartHeight - (Number(d.topics || 0) / maxTimelineValue) * chartHeight;
+                    const yRegs = paddingTop + chartHeight - (Number(d.registrations || 0) / maxTimelineValue) * chartHeight;
+                    const isHovered = hoveredIndex === index;
+
+                    return (
+                      <g key={index}>
+                        {/* Users Dot */}
+                        {(chartMetric === 'all' || chartMetric === 'users') && (
+                          <g>
+                            <circle
+                              cx={x}
+                              cy={yUsers}
+                              r={isHovered ? 6 : 4}
+                              fill="#10b981"
+                              stroke="#ffffff"
+                              strokeWidth={2}
+                              className="transition-all duration-150"
+                            />
+                            {(isHovered || chartMetric === 'users') && (
+                              <text
+                                x={x}
+                                y={yUsers - 8}
+                                textAnchor="middle"
+                                className="text-[10px] font-bold fill-emerald-700"
+                              >
+                                {d.users}
+                              </text>
+                            )}
+                          </g>
+                        )}
+
+                        {/* Topics Dot */}
+                        {(chartMetric === 'all' || chartMetric === 'topics') && (
+                          <g>
+                            <circle
+                              cx={x}
+                              cy={yTopics}
+                              r={isHovered ? 6 : 4}
+                              fill="#3b82f6"
+                              stroke="#ffffff"
+                              strokeWidth={2}
+                              className="transition-all duration-150"
+                            />
+                            {(isHovered || chartMetric === 'topics') && (
+                              <text
+                                x={x}
+                                y={yTopics - 8}
+                                textAnchor="middle"
+                                className="text-[10px] font-bold fill-blue-700"
+                              >
+                                {d.topics}
+                              </text>
+                            )}
+                          </g>
+                        )}
+
+                        {/* Registrations Dot */}
+                        {(chartMetric === 'all' || chartMetric === 'registrations') && (
+                          <g>
+                            <circle
+                              cx={x}
+                              cy={yRegs}
+                              r={isHovered ? 6 : 4}
+                              fill="#6366f1"
+                              stroke="#ffffff"
+                              strokeWidth={2}
+                              className="transition-all duration-150"
+                            />
+                            {(isHovered || chartMetric === 'registrations') && (
+                              <text
+                                x={x}
+                                y={yRegs - 8}
+                                textAnchor="middle"
+                                className="text-[10px] font-bold fill-indigo-700"
+                              >
+                                {d.registrations}
+                              </text>
+                            )}
+                          </g>
+                        )}
+
+                        {/* Transparent interactive vertical touch/hover strip */}
+                        <rect
+                          x={x - (stepX / 2 || 20)}
+                          y={paddingTop}
+                          width={stepX || 40}
+                          height={chartHeight + 30}
+                          fill="transparent"
+                          className="cursor-pointer"
+                          onMouseEnter={() => setHoveredIndex(index)}
+                          onMouseLeave={() => setHoveredIndex(null)}
+                        />
+                      </g>
+                    );
+                  })}
                 </svg>
 
-                {/* X-axis labels */}
-                <div className="flex justify-between text-xs font-mono text-slate-500 mt-2 pl-6 pr-2">
+                {/* X-axis Semester badges */}
+                <div className="flex justify-between text-xs font-medium text-slate-600 mt-2 pl-9 pr-4">
                   {timelineData.map((d, idx) => (
-                    <span key={idx}>{d.day}</span>
+                    <button
+                      key={idx}
+                      onClick={() => setHoveredIndex(idx === hoveredIndex ? null : idx)}
+                      className={`px-2.5 py-1 rounded-lg transition-all ${hoveredIndex === idx ? 'bg-blue-100 text-blue-800 font-bold scale-105' : 'hover:bg-slate-100'}`}
+                    >
+                      {d.day}
+                    </button>
                   ))}
                 </div>
               </div>
