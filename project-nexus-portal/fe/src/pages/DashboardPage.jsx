@@ -79,17 +79,17 @@ export const DashboardPage = () => {
       value: loading ? '—' : displayUsers,
       subtitle: selectedPeriod
         ? `${selectedPeriod.semester || selectedPeriod.day}`
-        : `${activeUsers} ${t('dashboard.activeOnline', 'đang hoạt động')}`,
-      trend: activeUsers > 0 && totalUsers > 0 ? `${Math.round((activeUsers / totalUsers) * 100)}%` : '0%',
+        : `${displayActiveUsers} ${t('dashboard.activeOnline', 'đang hoạt động')}`,
+      trend: displayActiveUsers > 0 && displayUsers > 0 ? `${Math.round((displayActiveUsers / displayUsers) * 100)}%` : '0%',
       trendColor: 'text-emerald-600',
       icon: Users,
       iconBg: 'bg-blue-600',
     },
     {
       title: t('dashboard.activeAccounts', 'Tài khoản hoạt động'),
-      value: loading ? '—' : activeUsers,
+      value: loading ? '—' : displayActiveUsers,
       subtitle: t('dashboard.activeOnline', 'Đang hoạt động'),
-      trend: `${activeUsers}/${totalUsers}`,
+      trend: `${displayActiveUsers}/${displayUsers}`,
       trendColor: 'text-emerald-600',
       icon: Users2,
       iconBg: 'bg-emerald-600',
