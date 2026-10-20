@@ -41,11 +41,13 @@ public class PublishedResultDetails {
     @Column(name = "defense_presentation_score", nullable = false, precision = 4, scale = 2)
     private BigDecimal defensePresentationScore;
 
-    @Column(name = "advisor_comment", length = 4000)
+    @Column(name = "advisor_comment", columnDefinition = "TEXT")
     private String advisorComment;
-    @Column(name = "review_comment", length = 4000)
+
+    @Column(name = "review_comment", columnDefinition = "TEXT")
     private String reviewComment;
-    @Column(name = "defense_comments", length = 12000)
+
+    @Column(name = "defense_comments", columnDefinition = "TEXT")
     private String defenseComments;
 
     public static PublishedResultDetails from(Result result, CalculatedScore score) {
