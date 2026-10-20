@@ -6,16 +6,16 @@ services:
     env_file:
       - ./be/.env
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-Nexus@Secure2026#Db}
       MYSQL_DATABASE: ${DB_NAME:-nexus_db}
     ports:
-      - "${DB_PORT:-3306}:3306"
+      - "${DB_PORT:-3307}:3306"
     volumes:
       - nexus_mysql_data:/var/lib/mysql
     networks:
       - nexus-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-root}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-Nexus@Secure2026#Db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -37,7 +37,7 @@ services:
       DB_PORT: 3306
       DB_NAME: ${DB_NAME:-nexus_db}
       DB_USER: ${DB_USER:-root}
-      DB_PASSWORD: ${DB_PASSWORD:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-Nexus@Secure2026#Db}
       SERVER_PORT: ${SERVER_PORT:-8080}
       CONTEXT_PATH: ${CONTEXT_PATH:-}
       JWT_SECRET: ${JWT_SECRET:-9a6747f6f64535e3b5acf29c3645e4612482e16136f019f945e7a3ce8b46445b}

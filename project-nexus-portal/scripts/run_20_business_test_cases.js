@@ -161,8 +161,8 @@ async function main() {
     periodId = res.data.data.id;
 
     // Clean and align Team 2 to this new period for end-to-end flow without destroying master seed data
-    const { execSync } = require('child_process');
-    execSync(`docker exec nexus_mysql_db mysql -uroot -proot nexus_db -e "
+    const dbPass = process.env.DB_PASSWORD || 'Nexus@Secure2026#Db';
+    execSync(`docker exec nexus_mysql_db mysql -uroot -p"${dbPass}" nexus_db -e "
       SET FOREIGN_KEY_CHECKS = 0;
       DELETE pr FROM nexus_db.published_results pr JOIN nexus_db.defense_assignments da ON pr.assignment_id = da.id JOIN nexus_db.topic_registrations tr ON da.registration_id = tr.id WHERE tr.team_id = 2;
       DELETE a FROM nexus_db.assessments a JOIN nexus_db.defense_assignments da ON a.assignment_id = da.id JOIN nexus_db.topic_registrations tr ON da.registration_id = tr.id WHERE tr.team_id = 2;

@@ -32,7 +32,7 @@ flowchart TD
         direction TB
         GitPull["git reset --hard origin/main"]
         DeployScript["Chạy scripts/deploy.sh"]
-        MySQL["Container nexus_mysql_db (Port 3306)"]
+        MySQL["Container nexus_mysql_db (Port 3307)"]
         BE["Container nexus_backend_api (Port 8080)"]
         FE["Container nexus_frontend_app (Nginx Port 80 / Reverse Proxy /api)"]
         

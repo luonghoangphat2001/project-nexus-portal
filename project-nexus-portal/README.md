@@ -24,7 +24,7 @@ cd project-nexus-portal/be
 docker-compose up -d --build
 ```
 - **Backend API**: [http://localhost:8080/api](http://localhost:8080/api)
-- **MySQL Database**: `localhost:3306` (`nexus_db`)
+- **MySQL Database**: `localhost:3307` (`nexus_db`)
 
 ### 1.2 Khởi chạy Frontend (React + Nginx)
 ```bash

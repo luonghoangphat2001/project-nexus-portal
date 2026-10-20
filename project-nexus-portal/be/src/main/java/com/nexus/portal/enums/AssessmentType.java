@@ -1,3 +1,3 @@
 package com.nexus.portal.enums;
 
-public enum AssessmentType { REVIEW, DEFENSE }
+public enum AssessmentType { ADVISOR, REVIEW, DEFENSE }
