@@ -543,9 +543,9 @@ CREATE TABLE IF NOT EXISTS published_result_details (
   defense_content_score DECIMAL(4,2) NOT NULL,
   defense_implementation_score DECIMAL(4,2) NOT NULL,
   defense_presentation_score DECIMAL(4,2) NOT NULL,
-  advisor_comment VARCHAR(4000),
-  review_comment VARCHAR(4000),
-  defense_comments VARCHAR(12000),
+  advisor_comment TEXT,
+  review_comment TEXT,
+  defense_comments TEXT,
   CONSTRAINT fk_published_result_details_result FOREIGN KEY (result_id)
     REFERENCES published_results(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

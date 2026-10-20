@@ -28,22 +28,20 @@ if [ ! -f "fe/.env" ] && [ -f "fe/.env.example" ]; then
     cp fe/.env.example fe/.env
 fi
 
-if [ -d "../.git" ] || [ -d ".git" ]; then
-    git fetch origin main || true
-    git reset --hard origin/main || true
-fi
+# Refuse an ambiguous database target before building or recreating containers.
+$DOCKER_COMPOSE_CMD --env-file be/.env -p nexus-portal -f docker-compose.prod.yml config --quiet
 
 TARGET_SERVICE="${1:-all}"
 if [ "$TARGET_SERVICE" = "backend" ]; then
-    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml build --no-cache backend_api
-    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d backend_api
+    $DOCKER_COMPOSE_CMD --env-file be/.env -p nexus-portal -f docker-compose.prod.yml build --no-cache backend_api
+    $DOCKER_COMPOSE_CMD --env-file be/.env -p nexus-portal -f docker-compose.prod.yml up -d --remove-orphans
 elif [ "$TARGET_SERVICE" = "frontend" ]; then
-    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml build --no-cache frontend_app
-    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d frontend_app
+    $DOCKER_COMPOSE_CMD --env-file be/.env -p nexus-portal -f docker-compose.prod.yml build --no-cache frontend_app
+    $DOCKER_COMPOSE_CMD --env-file be/.env -p nexus-portal -f docker-compose.prod.yml up -d --remove-orphans
 else
-    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml build --no-cache
-    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --remove-orphans
+    $DOCKER_COMPOSE_CMD --env-file be/.env -p nexus-portal -f docker-compose.prod.yml build --no-cache
+    $DOCKER_COMPOSE_CMD --env-file be/.env -p nexus-portal -f docker-compose.prod.yml up -d --remove-orphans
 fi
 
 docker image prune -f
-$DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps
+$DOCKER_COMPOSE_CMD --env-file be/.env -p nexus-portal -f docker-compose.prod.yml ps
