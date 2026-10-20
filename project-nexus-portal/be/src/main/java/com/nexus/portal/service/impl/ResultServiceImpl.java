@@ -11,6 +11,7 @@ import com.nexus.portal.repository.DepartmentRepository;
 import com.nexus.portal.repository.DefenseAssignmentRepository;
 import com.nexus.portal.repository.DefenseCouncilRepository;
 import com.nexus.portal.repository.ResultRepository;
+import com.nexus.portal.repository.PublishedResultDetailsRepository;
 import com.nexus.portal.repository.RegistrationPeriodRepository;
 import com.nexus.portal.repository.TopicRepository;
 import com.nexus.portal.service.AuditLogService;
@@ -32,10 +33,11 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
-public class ResultsServiceImpl implements ResultService {
+public class ResultServiceImpl implements ResultService {
     private final DefenseAssignmentRepository assignments;
     private final DefenseCouncilRepository councils;
     private final ResultRepository results;
+    private final PublishedResultDetailsRepository resultDetails;
     private final ScoreCalculationService scoreCalculation;
     private final DefenseAccessPolicy access;
     private final AuditLogService audit;
@@ -44,14 +46,16 @@ public class ResultsServiceImpl implements ResultService {
     private final RegistrationPeriodRepository periods;
     private final TopicRepository topics;
 
-    public ResultsServiceImpl(DefenseAssignmentRepository assignments, DefenseCouncilRepository councils,
-                              ResultRepository results, ScoreCalculationService scoreCalculation,
+    public ResultServiceImpl(DefenseAssignmentRepository assignments, DefenseCouncilRepository councils,
+                              ResultRepository results, PublishedResultDetailsRepository resultDetails,
+                              ScoreCalculationService scoreCalculation,
                               DefenseAccessPolicy access, AuditLogService audit, Clock clock,
                               DepartmentRepository departments, RegistrationPeriodRepository periods,
                               TopicRepository topics) {
         this.assignments = assignments;
         this.councils = councils;
         this.results = results;
+        this.resultDetails = resultDetails;
         this.scoreCalculation = scoreCalculation;
         this.access = access;
         this.audit = audit;
@@ -76,7 +80,7 @@ public class ResultsServiceImpl implements ResultService {
             throw new BadRequestException("Results can only be published after the council is completed");
         }
         if (results.existsByAssignmentId(assignmentId)) {
-            throw new BadRequestException("Results for this assignment have already been published");
+            throw new BadRequestException("Results have already been published for this assignment.");
         }
 
         LocalDateTime publishedAt = LocalDateTime.now(clock);
@@ -85,8 +89,8 @@ public class ResultsServiceImpl implements ResultService {
             Result result = new Result();
             result.setAssignment(assignment);
             result.setStudent(score.student());
-            result.setReviewScore(score.reviewScore());
-            result.setDefenseScore(score.defenseScore());
+            result.setReviewScore(score.reviewer().score());
+            result.setDefenseScore(score.defense().score());
             result.setFinalScore(score.finalScore());
             result.setPassed(score.passed());
             result.setPublishedBy(manager);
@@ -94,11 +98,39 @@ public class ResultsServiceImpl implements ResultService {
             return result;
         }).toList();
         List<Result> saved = results.saveAllAndFlush(published);
+        List<com.nexus.portal.model.PublishedResultDetails> detailsToSave =
+                java.util.stream.IntStream.range(0, saved.size())
+                .mapToObj(index -> com.nexus.portal.model.PublishedResultDetails.from(
+                        saved.get(index), calculatedScores.get(index)))
+                .toList();
+        List<com.nexus.portal.model.PublishedResultDetails> snapshots =
+                resultDetails.saveAllAndFlush(detailsToSave);
         audit.log(manager.getId(), manager.getUsername(), "PUBLISH_RESULTS",
                 "results/assignments/" + assignmentId,
                 "Published " + saved.size() + " results for registration "
                         + assignment.getRegistration().getId(), null, null, "SUCCESS");
-        return saved.stream().map(this::toResponse).toList();
+        Map<Long, com.nexus.portal.model.PublishedResultDetails> savedDetails = snapshots.stream()
+                .collect(Collectors.toMap(com.nexus.portal.model.PublishedResultDetails::getId, detail -> detail));
+        return saved.stream().map(result -> toResponse(result, savedDetails.get(result.getId()))).toList();
+    }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public List<ResultResponse.Defense> publishPeriodResults(Long periodId, String identifier) {
+        User manager = access.getUser(identifier);
+        if (!periods.existsById(periodId)) {
+            throw new ResourceNotFoundException("Registration period not found");
+        }
+        List<DefenseAssignment> pending = assignments.findUnpublishedCompletedByPeriodId(periodId).stream()
+                .filter(assignment -> access.canManage(manager,
+                        assignment.getRegistration().getTopic().getDepartment()))
+                .toList();
+        if (pending.isEmpty()) {
+            throw new BadRequestException("There are no completed councils waiting for result publication in this period");
+        }
+        List<ResultResponse.Defense> published = new ArrayList<>();
+        pending.forEach(assignment -> published.addAll(publishAssignmentResults(assignment.getId(), identifier)));
+        return published;
     }
 
     @Override
@@ -107,8 +139,8 @@ public class ResultsServiceImpl implements ResultService {
         if (!access.hasRole(student, RoleName.ROLE_USER)) {
             throw new AccessDeniedException("Only students can view their own results");
         }
-        return results.findByStudentIdAndPublishedAtIsNotNullOrderByPublishedAtDesc(student.getId())
-                .stream().map(this::toResponse).toList();
+        return responsesWithDetails(
+                results.findByStudentIdAndPublishedAtIsNotNullOrderByPublishedAtDesc(student.getId()));
     }
 
     @Override
@@ -174,6 +206,59 @@ public class ResultsServiceImpl implements ResultService {
                 .toList();
     }
 
+    @Override
+    public List<ResultResponse.Statistics.DetailRow> getDetailedReport(
+            Long periodId, Long departmentId, Long topicId, String identifier) {
+        getStatistics(periodId, departmentId, topicId, identifier);
+        User manager = access.getUser(identifier);
+        Set<Long> allowedDepartmentIds = getManagedDepartments(manager).stream()
+                .map(Department::getId)
+                .collect(Collectors.toSet());
+        List<Result> published = results.findPublishedForReport(
+                allowedDepartmentIds, periodId, departmentId, topicId);
+        Map<Long, com.nexus.portal.model.PublishedResultDetails> details = resultDetails
+                .findByIdIn(published.stream().map(Result::getId).toList()).stream()
+                .collect(Collectors.toMap(com.nexus.portal.model.PublishedResultDetails::getId, value -> value));
+        return published.stream().map(result -> {
+            Topic topic = result.getAssignment().getRegistration().getTopic();
+            User student = result.getStudent();
+            Team team = result.getAssignment().getRegistration().getTeam();
+            var detail = details.get(result.getId());
+            return new ResultResponse.Statistics.DetailRow(
+                    topic.getPeriod().getName(), topic.getDepartment().getName(), topic.getTitle(), team.getName(),
+                    student.getStudentCode(), student.getFullName(),
+                    detail == null ? "" : detail.getAdvisorName(),
+                    detail == null ? null : average(detail.getAdvisorContentScore(), detail.getAdvisorImplementationScore(), detail.getAdvisorPresentationScore()),
+                    detail == null ? null : detail.getAdvisorContentScore(),
+                    detail == null ? null : detail.getAdvisorImplementationScore(),
+                    detail == null ? null : detail.getAdvisorPresentationScore(),
+                    result.getReviewScore(),
+                    detail == null ? null : detail.getReviewContentScore(),
+                    detail == null ? null : detail.getReviewImplementationScore(),
+                    detail == null ? null : detail.getReviewPresentationScore(),
+                    result.getDefenseScore(),
+                    detail == null ? null : detail.getDefenseContentScore(),
+                    detail == null ? null : detail.getDefenseImplementationScore(),
+                    detail == null ? null : detail.getDefensePresentationScore(),
+                    result.getFinalScore(), result.isPassed(),
+                    detail == null ? null : detail.getAdvisorComment(),
+                    detail == null ? null : detail.getReviewComment(),
+                    detail == null ? null : detail.getDefenseComments());
+        }).toList();
+    }
+
+    private BigDecimal average(BigDecimal content, BigDecimal implementation, BigDecimal presentation) {
+        return content.add(implementation).add(presentation)
+                .divide(BigDecimal.valueOf(3), 2, RoundingMode.HALF_UP);
+    }
+
+    private List<ResultResponse.Defense> responsesWithDetails(List<Result> values) {
+        Map<Long, com.nexus.portal.model.PublishedResultDetails> snapshots = resultDetails
+                .findByIdIn(values.stream().map(Result::getId).toList()).stream()
+                .collect(Collectors.toMap(com.nexus.portal.model.PublishedResultDetails::getId, value -> value));
+        return values.stream().map(result -> toResponse(result, snapshots.get(result.getId()))).toList();
+    }
+
     private ResultResponse.Statistics.Row toReportRow(ReportKey key, List<Result> rows) {
         BigDecimal total = rows.stream().map(Result::getFinalScore)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -217,7 +302,8 @@ public class ResultsServiceImpl implements ResultService {
                 .orElseThrow(() -> new ResourceNotFoundException("Defense assignment not found"));
     }
 
-    private ResultResponse.Defense toResponse(Result result) {
+    private ResultResponse.Defense toResponse(
+            Result result, com.nexus.portal.model.PublishedResultDetails details) {
         DefenseAssignment assignment = result.getAssignment();
         Topic topic = assignment.getRegistration().getTopic();
         User student = result.getStudent();
@@ -225,7 +311,22 @@ public class ResultsServiceImpl implements ResultService {
                 topic.getPeriod().getId(), topic.getPeriod().getName(), topic.getDepartment().getId(),
                 topic.getDepartment().getName(), topic.getId(), topic.getTitle(),
                 assignment.getRegistration().getTeam().getName(), student.getId(), student.getFullName(),
-                student.getStudentCode(), result.getReviewScore(), result.getDefenseScore(),
+                student.getStudentCode(),
+                details == null ? null : average(details.getAdvisorContentScore(), details.getAdvisorImplementationScore(), details.getAdvisorPresentationScore()),
+                result.getReviewScore(), result.getDefenseScore(),
+                details == null ? null : details.getAdvisorContentScore(),
+                details == null ? null : details.getAdvisorImplementationScore(),
+                details == null ? null : details.getAdvisorPresentationScore(),
+                details == null ? null : details.getReviewContentScore(),
+                details == null ? null : details.getReviewImplementationScore(),
+                details == null ? null : details.getReviewPresentationScore(),
+                details == null ? null : details.getDefenseContentScore(),
+                details == null ? null : details.getDefenseImplementationScore(),
+                details == null ? null : details.getDefensePresentationScore(),
+                details == null ? null : details.getAdvisorName(),
+                details == null ? null : details.getAdvisorComment(),
+                details == null ? null : details.getReviewComment(),
+                details == null ? null : details.getDefenseComments(),
                 result.getFinalScore(), result.isPassed(), true, result.getPublishedAt());
     }
 

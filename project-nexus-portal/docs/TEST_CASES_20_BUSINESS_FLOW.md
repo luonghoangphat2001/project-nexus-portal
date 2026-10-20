@@ -40,9 +40,9 @@
 | **TC-15** | Giai đoạn 8: Hội đồng | Thành lập Hội đồng đánh giá & Phân công lịch phản biện | Trưởng khoa (`principal`) | 12 |
 | **TC-16** | Giai đoạn 8: Hội đồng | **Kiểm tra xung đột: Chặn GVHD tự chấm hoặc phản biện đề tài mình** | Trưởng khoa (`principal`) | 12, 18 |
 | **TC-17** | Giai đoạn 9: Chấm điểm | Giảng viên phản biện chấm điểm 3 tiêu chí & Submit khóa điểm | Giảng viên phản biện (`council`) | 13, 18 |
-| **TC-18** | Giai đoạn 10: Tổng kết | Tự động tính điểm trung bình (Tỷ lệ 30% PB + 70% HĐ) & Xét Đậu/Rớt | Hệ thống / Trưởng khoa | 14 |
+| **TC-18** | Giai đoạn 10: Tổng kết | Tự động tính điểm trung bình (20% GVHD + 30% PB + 50% HĐ) & Xét Đậu/Rớt | Hệ thống / Trưởng khoa | 14 |
 | **TC-19** | Giai đoạn 10: Tổng kết | Trưởng khoa duyệt công bố điểm (Publish) & Lưu snapshot bất biến | Trưởng khoa (`principal`) | 15, 18 |
-| **TC-20** | Giai đoạn 11: Kết thúc | Sinh viên tra cứu bảng điểm & Trưởng khoa xuất báo cáo CSV | Sinh viên (`student`), Trưởng khoa | 15, 16 |
+| **TC-20** | Giai đoạn 11: Kết thúc | Sinh viên tra cứu bảng điểm & Trưởng khoa xuất báo cáo Excel | Sinh viên (`student`), Trưởng khoa | 15, 16 |
 
 ---
 
@@ -386,13 +386,12 @@
 
 ---
 
-### TC-18: Tự động tính điểm trung bình (Công thức 30% PB + 70% HĐ) & Xét Đậu/Rớt
+### TC-18: Tự động tính điểm trung bình (20% GVHD + 30% PB + 50% HĐ) & Xét Đậu/Rớt
 - **Module**: 14 (Tính điểm và xét kết quả)
 - **Mục tiêu**: Kiểm tra hệ thống tự động tổng hợp tất cả phiếu chấm, áp dụng công thức trọng số chính xác, làm tròn 2 chữ số thập phân và xét Đậu/Rớt.
 - **Actor**: `principal` / `password123`
 - **Tiền điều kiện**:
-  - Sinh viên `Lê Anh Tuấn` có điểm Review = `(8.50 + 9.00 + 8.50) / 3 = 8.67`.
-  - Các thành viên hội đồng nhập điểm bảo vệ (DEFENSE), điểm TB bảo vệ = `8.20`.
+  - Điểm GVHD = `8.00`, điểm phản biện (REVIEW) = `8.50`, điểm TB hội đồng (DEFENSE) = `9.00`.
   - Hội đồng chuyển trạng thái `COMPLETED`.
 - **Các bước thực hiện**:
   1. Đăng nhập `principal`, vào trang Kết quả `/results`.
@@ -400,7 +399,7 @@
   3. Xem bảng tính điểm preview do hệ thống tự sinh qua API `/api/results/assignments/{id}`.
 - **Kết quả mong đợi**:
   - Điểm tổng kết tính đúng công thức:
-    $$\text{Final Score} = (0.30 \times 8.67) + (0.70 \times 8.20) = 2.601 + 5.74 = 8.341 \approx 8.34$$
+    $$\text{Final Score} = (0.20 \times 8.00) + (0.30 \times 8.50) + (0.50 \times 9.00) = 1.60 + 2.55 + 4.50 = 8.65$$
   - Điểm $\ge 5.00 \rightarrow$ Trạng thái tự động phân loại: `PASSED = true` (ĐẬU).
   - Trả về mã HTTP `200 OK` kèm chi tiết điểm thành phần từng tiêu chí.
 
@@ -412,7 +411,7 @@
 - **Actor**: `principal` / `password123`
 - **Tiền điều kiện**: Điểm đã được tính toán đầy đủ và hợp lệ ở TC-18.
 - **Các bước thực hiện**:
-  1. Tại trang `/results`, Trưởng khoa bấm nút **"Công bố kết quả" (Publish results)**.
+  1. Tại trang `/results`, Trưởng khoa bấm **"Công bố điểm cả đợt"** (hoặc **"Công bố điểm nhóm"** cho một nhóm).
   2. Xác nhận popup cảnh báo: *"Kết quả sau khi công bố sẽ được khóa vĩnh viễn và gửi đến sinh viên."*
   3. Thử bấm công bố lại lần thứ hai.
 - **Kết quả mong đợi**:
@@ -422,21 +421,21 @@
 
 ---
 
-### TC-20: Sinh viên tra cứu bảng điểm cá nhân & Trưởng khoa xuất báo cáo CSV
+### TC-20: Sinh viên tra cứu bảng điểm cá nhân & Trưởng khoa xuất báo cáo Excel
 - **Module**: 15 (Công bố điểm) & 16 (Báo cáo và thống kê)
 - **Mục tiêu**:
-  - Sinh viên xem đúng điểm của mình, không lộ điểm người khác hoặc nhận xét nhạy cảm.
-  - Trưởng khoa lọc thống kê và xuất báo cáo CSV chuẩn UTF-8.
+  - Sinh viên xem đúng điểm của mình, không lộ điểm người khác; thấy điểm thành phần, nhận xét và Đạt/Không đạt sau khi công bố.
+  - Trưởng khoa lọc thống kê và xuất báo cáo Excel.
 - **Actor**: `student` (Tra cứu điểm), `principal` (Xuất thống kê)
 - **Tiền điều kiện**: Điểm đã được công bố ở TC-19.
 - **Các bước thực hiện**:
   1. **Sinh viên**: Đăng nhập `student`, truy cập trang Kết quả `/results`.
-     - $\rightarrow$ Kiểm tra: Hiển thị bảng điểm cá nhân gồm Điểm phản biện (`8.67`), Điểm bảo vệ (`8.20`), Điểm tổng kết (`8.34`) và Huy hiệu **"ĐẬU" (PASSED)**.
+     - $\rightarrow$ Kiểm tra: Hiển thị bảng điểm cá nhân gồm Điểm GVHD (`8.00`), Điểm phản biện (`8.50`), Điểm hội đồng (`9.00`), nhận xét, Điểm tổng kết (`8.65`) và Huy hiệu **"ĐẬU" (PASSED)**.
   2. **Trưởng khoa**: Đăng nhập `principal`, vào trang `/results`.
      - Lọc theo Đợt: `Kỳ 1 2026-2027`, Bộ môn: `Kỹ thuật phần mềm`.
      - Xem bảng phân bố dải điểm (Score bands: `8.00–8.99`).
-     - Bấm nút **"Xuất báo cáo CSV" (Export CSV)**.
+     - Bấm nút **"Xuất báo cáo Excel"**.
 - **Kết quả mong đợi**:
   - Phía sinh viên: API `/api/results/me` chỉ trả về đúng dữ liệu của `student`, không trả về thông tin sinh viên khác.
-  - Phía trưởng khoa: Trình duyệt tải về file `academic-results-report.csv` chuẩn mã hóa UTF-8, không lỗi font tiếng Việt, có đầy đủ cột: Tên đợt, Bộ môn, Tên đề tài, Số SV, Điểm trung bình, Số lượng Đậu, Số lượng Rớt và số lượng theo từng dải điểm.
+  - Phía trưởng khoa: Trình duyệt tải về file `.xlsx` gồm: Đợt, Bộ môn, Đề tài, Nhóm, MSSV, Sinh viên, GVHD, điểm thành phần, điểm tổng kết, Đạt/Không đạt và nhận xét.
 

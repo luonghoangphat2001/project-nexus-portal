@@ -157,5 +157,5 @@ Tất cả các bảng cơ sở dữ liệu được định nghĩa dưới dạ
 - Mutation có transaction `READ_COMMITTED` và khóa pessimistic để tránh trùng phiên bản, phân công trùng, lịch giao nhau hoặc ghi đè phiếu đã gửi khi có request đồng thời. Trạng thái và quyền trên FE do BE cung cấp; service luôn kiểm tra lại quyền khi xử lý request.
 - Chi tiết quy tắc và hợp đồng API: [MODULES_11_12_13.md](./docs/MODULES_11_12_13.md).
 - Modules 14–16 tính điểm từ phiếu đã gửi, công bố kết quả và thống kê điểm đã công bố; chi tiết tại [MODULES_14_15_16.md](./docs/MODULES_14_15_16.md).
-- `ScoreCalculationController` → `ScoreCalculationService` → `ScoreCalculationServiceImpl` (tính điểm); `ResultController` → `ResultService` → `ResultsServiceImpl` → `ResultRepository` → `Result` (công bố kết quả, tra cứu và thống kê/CSV từ điểm đã công bố).
+- `ResultController` → `ScoreCalculationService` → `ScoreCalculationServiceImpl` (tính điểm 20% GVHD + 30% phản biện + 50% hội đồng); `ResultController` → `ResultService` → `ResultServiceImpl` → `ResultRepository`/`PublishedResultDetailsRepository` (công bố theo nhóm hoặc đợt, tra cứu, thống kê); `ResultExcelExporter` (xuất Excel).
 - `ResultsPage` dùng `resultPublicationService` và `resultStatisticsService`; route `/results` và sidebar tích hợp với layout hiện có.

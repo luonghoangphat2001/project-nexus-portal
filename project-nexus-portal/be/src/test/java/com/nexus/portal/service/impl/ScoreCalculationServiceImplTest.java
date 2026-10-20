@@ -8,6 +8,7 @@ import com.nexus.portal.exception.BadRequestException;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.AssessmentRepository;
 import com.nexus.portal.repository.DefenseAssignmentRepository;
+import com.nexus.portal.repository.PublishedResultDetailsRepository;
 import com.nexus.portal.repository.ResultRepository;
 import com.nexus.portal.repository.TeamMemberRepository;
 import com.nexus.portal.service.CalculatedScore;
@@ -31,6 +32,7 @@ class ScoreCalculationServiceImplTest {
     @Mock private DefenseAssignmentRepository assignments;
     @Mock private TeamMemberRepository members;
     @Mock private ResultRepository publishedResultsReader;
+    @Mock private PublishedResultDetailsRepository publishedDetails;
     @Mock private DefenseAccessPolicy access;
 
     private ScoreCalculationServiceImpl service;
@@ -43,7 +45,8 @@ class ScoreCalculationServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new ScoreCalculationServiceImpl(assessments, assignments, members, publishedResultsReader, access);
+        service = new ScoreCalculationServiceImpl(assessments, assignments, members, publishedResultsReader,
+                publishedDetails, access);
 
         manager = new User();
         manager.setId(1L);
@@ -80,6 +83,7 @@ class ScoreCalculationServiceImplTest {
         assignment.setRegistration(registration);
 
         submitted = List.of(
+                assessment(AssessmentType.ADVISOR, "8.00", "8.00", "8.00"),
                 assessment(AssessmentType.REVIEW, "8.00", "8.00", "8.00"),
                 assessment(AssessmentType.DEFENSE, "7.00", "7.50", "8.00"));
     }
@@ -95,7 +99,7 @@ class ScoreCalculationServiceImplTest {
         assertEquals(1, result.size());
         assertEquals(new BigDecimal("8.00"), result.get(0).reviewScore());
         assertEquals(new BigDecimal("7.50"), result.get(0).defenseScore());
-        assertEquals(new BigDecimal("7.65"), result.get(0).finalScore());
+        assertEquals(new BigDecimal("7.75"), result.get(0).finalScore());
         assertTrue(result.get(0).passed());
         assertFalse(result.get(0).published());
     }
@@ -121,7 +125,7 @@ class ScoreCalculationServiceImplTest {
 
     @Test
     void rejectsIncompleteAssessments() {
-        givenCalculationDependencies(List.of(submitted.get(0)));
+        givenCalculationDependencies(List.of(submitted.get(1)));
 
         assertThrows(BadRequestException.class, () -> service.calculateScores(assignment));
     }
@@ -149,6 +153,7 @@ class ScoreCalculationServiceImplTest {
         assessment.setType(type);
         assessment.setStatus(AssessmentStatus.SUBMITTED);
         assessment.setStudent(student);
+        assessment.setEvaluator(manager);
         assessment.setContentScore(new BigDecimal(content));
         assessment.setImplementationScore(new BigDecimal(implementation));
         assessment.setPresentationScore(new BigDecimal(presentation));

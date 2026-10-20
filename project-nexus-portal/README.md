@@ -69,7 +69,7 @@ Các endpoint ghép theo `API_PREFIX`; `.env.example` hiện dùng `/api`, tươ
 
 ## 5. Modules 14–16
 
-Score calculation (`/results/assignments/{id}`), result publication (`/results/assignments/{id}/publish`, `/results/me`), and academic reports/statistics (`/results/reports`, `/results/reports.csv`) are available in the `/results` interface. These modules consume submitted assessments from Module 13 and process only completed councils.
+Score calculation (`/results/assignments/{id}`), result publication (`/results/assignments/{id}/publish`, `/results/periods/{id}/publish`, `/results/me`), and academic reports/statistics (`/results/reports`, `/results/reports.xlsx`) are available in the `/results` interface. These modules consume submitted assessments from Module 13 and process only completed councils.
 
 See the [business rules and API guide](./docs/MODULES_14_15_16.md) and [test cases](./docs/TEST_CASES_MODULES_14_15_16.md). The backend adds the `published_results` table in `schema.sql`. Run `mvn test` from `be` and `npm run build` from `fe` to verify.
 

@@ -1,12 +1,14 @@
 package com.nexus.portal.controller;
 
-import com.nexus.portal.controller.base.CsvExportController;
 import com.nexus.portal.dto.response.ApiResponse;
 import com.nexus.portal.dto.response.ResultResponse;
-import com.nexus.portal.enums.ScoreRange;
+import com.nexus.portal.service.ResultExcelExporter;
 import com.nexus.portal.service.ResultService;
-import com.nexus.portal.service.ScoreCalculationService.ScoreRangeClassifier;
+import com.nexus.portal.service.ScoreCalculationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -17,18 +19,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/results")
-@Tag(name = "Results", description = "Endpoints for publishing results and viewing academic statistics")
-public class ResultController extends CsvExportController<ResultResponse.Statistics.Row> {
+@Tag(name = "Results", description = "Score calculation, result publication and academic reports")
+public class ResultController {
     private final ResultService results;
+    private final ScoreCalculationService scoreCalculation;
 
-    public ResultController(ResultService results) {
+    public ResultController(ResultService results, ScoreCalculationService scoreCalculation) {
         this.results = results;
+        this.scoreCalculation = scoreCalculation;
+    }
+
+    @GetMapping("/assignments/{assignmentId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
+    public ResponseEntity<ApiResponse<List<ResultResponse.Defense>>> getAssignmentScores(
+            @PathVariable Long assignmentId, Authentication auth) {
+        return ResponseEntity.ok(ApiResponse.success(
+                scoreCalculation.getAssignmentScores(assignmentId, auth.getName())));
     }
 
     @PostMapping("/assignments/{assignmentId}/publish")
@@ -36,7 +47,15 @@ public class ResultController extends CsvExportController<ResultResponse.Statist
     public ResponseEntity<ApiResponse<List<ResultResponse.Defense>>> publishAssignmentResults(
             @PathVariable Long assignmentId, Authentication auth) {
         return ResponseEntity.ok(ApiResponse.success(
-                    results.publishAssignmentResults(assignmentId, auth.getName()), "Results published"));
+                results.publishAssignmentResults(assignmentId, auth.getName()), "Results published"));
+    }
+
+    @PostMapping("/periods/{periodId}/publish")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
+    public ResponseEntity<ApiResponse<List<ResultResponse.Defense>>> publishPeriodResults(
+            @PathVariable Long periodId, Authentication auth) {
+        return ResponseEntity.ok(ApiResponse.success(
+                results.publishPeriodResults(periodId, auth.getName()), "Results published"));
     }
 
     @GetMapping("/me")
@@ -59,40 +78,23 @@ public class ResultController extends CsvExportController<ResultResponse.Statist
             @RequestParam(required = false) Long topicId,
             Authentication auth) {
         return ResponseEntity.ok(ApiResponse.success(
-                    results.getStatistics(periodId, departmentId, topicId, auth.getName())));
+                results.getStatistics(periodId, departmentId, topicId, auth.getName())));
     }
 
-    @GetMapping(value = "/reports.csv", produces = "text/csv")
+    @GetMapping(value = "/reports.xlsx", produces = ResultExcelExporter.CONTENT_TYPE)
     @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
-    public ResponseEntity<byte[]> exportStatisticsCsv(
+    public ResponseEntity<byte[]> exportDetailedReportExcel(
             @RequestParam(required = false) Long periodId,
             @RequestParam(required = false) Long departmentId,
             @RequestParam(required = false) Long topicId,
+            Locale locale,
             Authentication auth) {
-        return buildCsvResponse(results.getStatistics(periodId, departmentId, topicId, auth.getName()));
-    }
-
-    @Override
-    protected String exportFileName() {
-        return "academic-results-report.csv";
-    }
-
-    @Override
-    protected List<String> exportHeaders() {
-        List<String> headers = new ArrayList<>(List.of(
-                "Registration Period", "Department", "Topic", "Students", "Average Score", "Passed", "Failed"));
-        Arrays.stream(ScoreRange.values())
-                .forEach(range -> headers.add("Score " + ScoreRangeClassifier.labelOf(range)));
-        return headers;
-    }
-
-    @Override
-    protected List<?> exportRow(ResultResponse.Statistics.Row row) {
-        List<Object> cells = new ArrayList<>(Arrays.asList(
-                row.periodName(), row.departmentName(), row.topicTitle(),
-                row.studentCount(), row.averageFinalScore(), row.passCount(), row.failCount()));
-        Arrays.stream(ScoreRange.values()).forEach(range -> cells.add(
-                row.scoreDistribution().getOrDefault(ScoreRangeClassifier.labelOf(range), 0L)));
-        return cells;
+        byte[] workbook = ResultExcelExporter.export(
+                results.getDetailedReport(periodId, departmentId, topicId, auth.getName()), locale);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(ResultExcelExporter.CONTENT_TYPE));
+        headers.setContentDisposition(
+                ContentDisposition.attachment().filename(ResultExcelExporter.fileName(locale)).build());
+        return ResponseEntity.ok().headers(headers).body(workbook);
     }
 }

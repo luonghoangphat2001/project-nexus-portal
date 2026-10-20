@@ -5,6 +5,7 @@ import com.nexus.portal.enums.RoleName;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.DefenseAssignmentRepository;
 import com.nexus.portal.repository.DefenseCouncilRepository;
+import com.nexus.portal.repository.PublishedResultDetailsRepository;
 import com.nexus.portal.repository.ResultRepository;
 import com.nexus.portal.repository.DepartmentRepository;
 import com.nexus.portal.repository.RegistrationPeriodRepository;
@@ -32,6 +33,7 @@ class ResultStatisticsServiceImplTest {
     @Mock private DefenseAssignmentRepository assignments;
     @Mock private DefenseCouncilRepository councils;
     @Mock private ResultRepository results;
+    @Mock private PublishedResultDetailsRepository resultDetails;
     @Mock private ScoreCalculationService scoreCalculation;
     @Mock private DepartmentRepository departments;
     @Mock private RegistrationPeriodRepository periods;
@@ -39,7 +41,7 @@ class ResultStatisticsServiceImplTest {
     @Mock private DefenseAccessPolicy access;
     @Mock private AuditLogService audit;
 
-    private ResultsServiceImpl service;
+    private ResultServiceImpl service;
     private User manager;
     private Department department;
     private RegistrationPeriod period;
@@ -47,7 +49,7 @@ class ResultStatisticsServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new ResultsServiceImpl(assignments, councils, results, scoreCalculation,
+        service = new ResultServiceImpl(assignments, councils, results, resultDetails, scoreCalculation,
             access, audit, java.time.Clock.systemUTC(), departments, periods, topics);
 
         manager = new User();
