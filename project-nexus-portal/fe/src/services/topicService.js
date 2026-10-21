@@ -41,6 +41,11 @@ export const topicService = {
     const response = await api.delete(`/topics/${id}`);
     return response.data;
   },
+
+  exportTopicsExcel: async (params = {}) => {
+    const response = await api.get('/topics/export.xlsx', { params, responseType: 'blob' });
+    return response.data;
+  },
 };
 
 export default topicService;

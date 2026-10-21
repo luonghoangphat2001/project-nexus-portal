@@ -7,13 +7,16 @@ import com.nexus.portal.exception.*;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.*;
 import com.nexus.portal.security.UserPrincipal;
+import com.nexus.portal.service.NotificationService;
 import com.nexus.portal.service.ProgressService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -24,6 +27,7 @@ public class ProgressServiceImpl implements ProgressService {
     private final TopicLecturerRepository advisors;
     private final ProgressTaskRepository tasks;
     private final UserRepository users;
+    private NotificationService notificationService;
 
     public ProgressServiceImpl(TeamRepository teams, TeamMemberRepository members, TopicRegistrationRepository registrations,
             TopicLecturerRepository advisors, ProgressTaskRepository tasks, UserRepository users) {
@@ -33,6 +37,21 @@ public class ProgressServiceImpl implements ProgressService {
         this.advisors = advisors;
         this.tasks = tasks;
         this.users = users;
+    }
+
+    @Autowired
+    public void setNotificationService(NotificationService notificationService) {
+        this.notificationService = notificationService;
+    }
+
+    private List<User> getTeamAdvisors(Long teamId) {
+        return registrations.findByTeamId(teamId).stream()
+                .filter(r -> r.getStatus() == RegistrationStatus.APPROVED)
+                .flatMap(r -> advisors.findByTopicId(r.getTopic().getId()).stream())
+                .map(TopicLecturer::getLecturer)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
     }
     @Transactional(readOnly = true)
     public List<ProgressTeamResponse> getTeams(UserPrincipal actor) {
@@ -62,14 +81,52 @@ public class ProgressServiceImpl implements ProgressService {
         task.setDescription(request.description());
         task.setDueDate(request.dueDate());
         task.setAssignee(users.findById(request.assigneeId()).orElseThrow(() -> new ResourceNotFoundException("Assignee not found")));
-        return response(tasks.save(task));
+        ProgressTask saved = tasks.save(task);
+
+        if (notificationService != null) {
+            User currentStudent = users.findById(actor.getId()).orElse(null);
+            String studentName = currentStudent != null ? currentStudent.getFullName() : "Thành viên nhóm";
+            List<User> advisorsList = getTeamAdvisors(teamId);
+            for (User advisor : advisorsList) {
+                notificationService.sendNotification(
+                        advisor,
+                        currentStudent,
+                        "[VI] Nhiệm vụ tiến độ mới: " + task.getTitle() + " | [EN] New progress task: " + task.getTitle(),
+                        "[VI] " + studentName + " thuộc nhóm \"" + team.getName() + "\" đã cập nhật kế hoạch/nhiệm vụ tiến độ: \""
+                                + task.getTitle() + "\" (Hạn chót: " + task.getDueDate() + ").\n"
+                                + "[EN] " + studentName + " from team \"" + team.getName() + "\" updated progress plan/task: \""
+                                + task.getTitle() + "\" (Due date: " + task.getDueDate() + ")."
+                );
+            }
+        }
+
+        return response(saved);
     }
     public ProgressTaskResponse updateStatus(Long id, ProgressStatusRequest request, UserPrincipal actor) {
         ProgressTask task = findTask(id);
         require(canManage(task.getTeam(), actor) || (members.existsByTeamIdAndUserId(task.getTeam().getId(), actor.getId())
                 && task.getAssignee().getId().equals(actor.getId())));
         task.setStatus(request.status());
-        return response(tasks.save(task));
+        ProgressTask saved = tasks.save(task);
+
+        if (notificationService != null) {
+            User currentStudent = users.findById(actor.getId()).orElse(null);
+            String studentName = currentStudent != null ? currentStudent.getFullName() : "Sinh viên";
+            List<User> advisorsList = getTeamAdvisors(task.getTeam().getId());
+            for (User advisor : advisorsList) {
+                notificationService.sendNotification(
+                        advisor,
+                        currentStudent,
+                        "[VI] Cập nhật tiến độ nhiệm vụ: " + task.getTitle() + " | [EN] Task progress updated: " + task.getTitle(),
+                        "[VI] Sinh viên " + studentName + " (Nhóm \"" + task.getTeam().getName() + "\") đã cập nhật trạng thái nhiệm vụ \""
+                                + task.getTitle() + "\" sang " + request.status() + ".\n"
+                                + "[EN] Student " + studentName + " (Team \"" + task.getTeam().getName() + "\") updated task \""
+                                + task.getTitle() + "\" status to " + request.status() + "."
+                );
+            }
+        }
+
+        return response(saved);
     }
     public ProgressTaskResponse review(Long id, ProgressFeedbackRequest request, UserPrincipal actor) {
         ProgressTask task = findTask(id);

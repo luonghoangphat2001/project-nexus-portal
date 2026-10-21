@@ -39,8 +39,26 @@ spring:
         - classpath:data/06_notifications_kanban.sql
         - classpath:data/07_councils_assessments_results.sql
         - classpath:data/08_audit_settings.sql
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SPRING_MAIL_AUTH:true}
+          starttls:
+            enable: ${SPRING_MAIL_STARTTLS:true}
+          timeout: 5000
+          connectiontimeout: 5000
+          writetimeout: 5000
 
 app:
+  mail:
+    enabled: ${APP_MAIL_ENABLED:false}
+    from: ${APP_MAIL_FROM:noreply@nexus.edu.vn}
+    frontend-url: ${APP_FRONTEND_URL:${FRONTEND_URL:http://localhost:5173}}
   reports:
     max-file-bytes: ${REPORT_MAX_FILE_BYTES:10485760}
   jwt:

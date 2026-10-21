@@ -6,7 +6,9 @@ import com.nexus.portal.enums.*;
 import com.nexus.portal.exception.*;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.*;
+import com.nexus.portal.service.NotificationService;
 import com.nexus.portal.service.ReportService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ public class ReportServiceImpl implements ReportService {
     private final AssessmentRepository assessments;
     private final DefenseAccessPolicy access;
     private final long maxFileBytes;
+    private NotificationService notificationService;
 
     public ReportServiceImpl(ReportDocumentRepository documents, TopicRegistrationRepository registrations,
                              DefenseAssignmentRepository assignments, AssessmentRepository assessments,
@@ -37,6 +40,11 @@ public class ReportServiceImpl implements ReportService {
         this.assessments = assessments;
         this.access = access;
         this.maxFileBytes = maxFileBytes;
+    }
+
+    @Autowired
+    public void setNotificationService(NotificationService notificationService) {
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -95,7 +103,27 @@ public class ReportServiceImpl implements ReportService {
         document.setContent(content);
         document.setFileSize((long) content.length);
         document.setVersion(documents.findLastVersion(registrationId, request.type()) + 1);
-        return toResponse(documents.saveAndFlush(document));
+        ReportDocument saved = documents.saveAndFlush(document);
+
+        if (notificationService != null && registration.getTopic() != null && registration.getTopic().getTopicLecturers() != null) {
+            String topicTitle = registration.getTopic().getTitle();
+            String teamName = registration.getTeam() != null ? registration.getTeam().getName() : "";
+            for (com.nexus.portal.model.TopicLecturer tl : registration.getTopic().getTopicLecturers()) {
+                if (tl.getLecturer() != null) {
+                    notificationService.sendNotification(
+                            tl.getLecturer(),
+                            user,
+                            "[VI] Nhóm nộp báo cáo tiến độ: " + saved.getTitle() + " | [EN] Progress document submitted: " + saved.getTitle(),
+                            "[VI] Trưởng nhóm " + user.getFullName() + (!teamName.isBlank() ? (" (Nhóm \"" + teamName + "\")") : "")
+                                    + " đã nộp tài liệu/báo cáo \"" + saved.getTitle() + "\" (" + saved.getFileName() + ") cho đề tài \"" + topicTitle + "\".\n"
+                                    + "[EN] Team leader " + user.getFullName() + (!teamName.isBlank() ? (" (Team \"" + teamName + "\")") : "")
+                                    + " uploaded report document \"" + saved.getTitle() + "\" (" + saved.getFileName() + ") for topic \"" + topicTitle + "\"."
+                    );
+                }
+            }
+        }
+
+        return toResponse(saved);
     }
 
     private String validateContent(String name, byte[] bytes) {

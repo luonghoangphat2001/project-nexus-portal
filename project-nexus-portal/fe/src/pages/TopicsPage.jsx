@@ -11,10 +11,15 @@ import {
   RotateCcw,
   CheckCircle,
   Building,
+  Download,
+  SlidersHorizontal,
+  X,
+  Filter,
 } from 'lucide-react';
 import topicService from '../services/topicService';
 import academicService from '../services/academicService';
 import registrationService from '../services/registrationService';
+import { periodService } from '../services/periodService';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
@@ -48,8 +53,14 @@ export const TopicsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedMajor, setSelectedMajor] = useState('');
+  const [selectedPeriod, setSelectedPeriod] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedSort, setSelectedSort] = useState('desc');
   const [departments, setDepartments] = useState([]);
   const [majors, setMajors] = useState([]);
+  const [periods, setPeriods] = useState([]);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
 
   // Comparison state (up to 3)
   const [compareList, setCompareList] = useState([]);
@@ -100,12 +111,14 @@ export const TopicsPage = () => {
 
   const loadAcademicData = async () => {
     try {
-      const [deptRes, majorRes] = await Promise.all([
+      const [deptRes, majorRes, periodRes] = await Promise.all([
         academicService.getAllDepartments(),
         academicService.getAllMajors(),
+        periodService.getAll().catch(() => []),
       ]);
       setDepartments(deptRes || []);
       setMajors(majorRes || []);
+      setPeriods(periodRes || []);
     } catch (err) {
       console.error('Failed to load academic data:', err);
     }
@@ -124,11 +137,17 @@ export const TopicsPage = () => {
       const q = customFilters.query !== undefined ? customFilters.query : searchQuery;
       const dept = customFilters.departmentId !== undefined ? customFilters.departmentId : selectedDept;
       const maj = customFilters.majorId !== undefined ? customFilters.majorId : selectedMajor;
+      const period = customFilters.periodId !== undefined ? customFilters.periodId : selectedPeriod;
+      const status = customFilters.status !== undefined ? customFilters.status : selectedStatus;
+      const sort = customFilters.direction !== undefined ? customFilters.direction : selectedSort;
 
       const params = {
         query: q || undefined,
         departmentId: dept || undefined,
         majorId: maj || undefined,
+        periodId: period || undefined,
+        status: status || undefined,
+        direction: sort || 'desc',
         page: customPage,
         size: 9,
       };
@@ -139,6 +158,33 @@ export const TopicsPage = () => {
       setError(err.message || 'Failed to fetch topics');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setExportLoading(true);
+    setError(null);
+    try {
+      const params = {
+        query: searchQuery || undefined,
+        departmentId: selectedDept || undefined,
+        majorId: selectedMajor || undefined,
+        periodId: selectedPeriod || undefined,
+        status: selectedStatus || undefined,
+      };
+      const blob = await topicService.exportTopicsExcel(params);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'danh-sach-de-tai-khoa-luan.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message || 'Không thể xuất danh sách đề tài ra Excel');
+    } finally {
+      setExportLoading(false);
     }
   };
 

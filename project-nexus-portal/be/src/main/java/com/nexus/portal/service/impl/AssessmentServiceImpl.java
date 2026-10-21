@@ -7,6 +7,7 @@ import com.nexus.portal.exception.*;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.*;
 import com.nexus.portal.service.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final DefenseAccessPolicy access;
     private final AuditLogService audit;
     private final Clock clock;
+    private NotificationService notificationService;
 
     public AssessmentServiceImpl(AssessmentRepository assessments, DefenseAssignmentRepository assignments,
                                  DefenseCouncilRepository councils, TeamMemberRepository members,
@@ -40,6 +42,11 @@ public class AssessmentServiceImpl implements AssessmentService {
         this.access = access;
         this.audit = audit;
         this.clock = clock;
+    }
+
+    @Autowired
+    public void setNotificationService(NotificationService notificationService) {
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -102,6 +109,44 @@ public class AssessmentServiceImpl implements AssessmentService {
         assessments.saveAndFlush(score);
         audit.log(user.getId(), user.getUsername(), "SUBMIT_ASSESSMENT", "assessments/" + id,
                 "Submitted " + score.getType() + " for student " + score.getStudent().getId(), null, null, "SUCCESS");
+
+        if (notificationService != null) {
+            String topicTitle = score.getAssignment() != null && score.getAssignment().getRegistration() != null
+                    && score.getAssignment().getRegistration().getTopic() != null
+                    ? score.getAssignment().getRegistration().getTopic().getTitle()
+                    : "Khóa luận tốt nghiệp";
+            // Notify evaluated student
+            if (score.getStudent() != null) {
+                notificationService.sendNotification(
+                        score.getStudent(),
+                        user,
+                        "[VI] Hoàn tất chấm điểm: " + score.getType() + " | [EN] Assessment submitted: " + score.getType(),
+                        "[VI] " + user.getFullName() + " đã hoàn tất chấm điểm đánh giá phần " + score.getType()
+                                + " cho bạn trong đề tài \"" + topicTitle + "\".\n"
+                                + "[EN] " + user.getFullName() + " has submitted the " + score.getType()
+                                + " assessment for you in topic \"" + topicTitle + "\"."
+                );
+            }
+            // Also notify topic advisors
+            Topic topic = score.getAssignment() != null && score.getAssignment().getRegistration() != null
+                    ? score.getAssignment().getRegistration().getTopic() : null;
+            if (topic != null && topic.getTopicLecturers() != null) {
+                for (com.nexus.portal.model.TopicLecturer tl : topic.getTopicLecturers()) {
+                    if (tl.getLecturer() != null && !tl.getLecturer().getId().equals(user.getId())) {
+                        notificationService.sendNotification(
+                                tl.getLecturer(),
+                                user,
+                                "[VI] Điểm đánh giá đề tài: " + topicTitle + " | [EN] Assessment update: " + topicTitle,
+                                "[VI] " + user.getFullName() + " đã chấm điểm " + score.getType()
+                                        + " cho sinh viên " + score.getStudent().getFullName() + ".\n"
+                                        + "[EN] " + user.getFullName() + " submitted " + score.getType()
+                                        + " evaluation for student " + score.getStudent().getFullName() + "."
+                        );
+                    }
+                }
+            }
+        }
+
         return toResponse(score, user);
     }
 

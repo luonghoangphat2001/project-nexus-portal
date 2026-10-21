@@ -7,6 +7,7 @@ import com.nexus.portal.exception.ResourceNotFoundException;
 import com.nexus.portal.model.User;
 import com.nexus.portal.repository.UserRepository;
 import com.nexus.portal.service.RegistrationPeriodService;
+import com.nexus.portal.service.TopicExcelExporter;
 import com.nexus.portal.service.TopicService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @RestController
@@ -60,6 +63,24 @@ public class TopicController {
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<TopicResponse> topics = topicService.searchTopics(query, departmentId, majorId, lecturerId, status, periodId, pageable);
         return ResponseEntity.ok(ApiResponse.success(topics, "Topics retrieved successfully"));
+    }
+
+    @GetMapping(value = "/export.xlsx", produces = TopicExcelExporter.CONTENT_TYPE)
+    @Operation(summary = "Export topics to Excel", description = "Export filtered list of topics to an Excel spreadsheet")
+    public ResponseEntity<byte[]> exportTopicsExcel(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) Long majorId,
+            @RequestParam(required = false) Long lecturerId,
+            @RequestParam(required = false) TopicStatus status,
+            @RequestParam(required = false) Long periodId,
+            Locale locale) {
+        Pageable pageable = PageRequest.of(0, 5000, Sort.by("id").descending());
+        Page<TopicResponse> topics = topicService.searchTopics(query, departmentId, majorId, lecturerId, status, periodId, pageable);
+        byte[] workbook = TopicExcelExporter.export(topics.getContent(), locale);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + TopicExcelExporter.fileName(locale) + "\"")
+                .body(workbook);
     }
 
     @GetMapping("/{id}")

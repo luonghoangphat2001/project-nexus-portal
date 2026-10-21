@@ -8,6 +8,8 @@ import com.nexus.portal.repository.*;
 import com.nexus.portal.security.UserPrincipal;
 import com.nexus.portal.service.NotificationService;
 import com.nexus.portal.service.NotificationDelivery;
+import com.nexus.portal.service.EmailService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.http.HttpStatus;
@@ -25,6 +27,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final UserRepository users;
     private final FacultyRepository faculties;
     private final List<NotificationDelivery> deliveries;
+    private EmailService emailService;
 
     public NotificationServiceImpl(NotificationRepository notifications, NotificationReadRepository reads,
             UserRepository users, FacultyRepository faculties, List<NotificationDelivery> deliveries) {
@@ -33,6 +36,11 @@ public class NotificationServiceImpl implements NotificationService {
         this.users = users;
         this.faculties = faculties;
         this.deliveries = deliveries;
+    }
+
+    @Autowired
+    public void setEmailService(EmailService emailService) {
+        this.emailService = emailService;
     }
 
     @Override
@@ -85,6 +93,13 @@ public class NotificationServiceImpl implements NotificationService {
 
         notifications.save(notification);
         notifyAfterCommit(recipient.getId());
+
+        if (emailService != null && recipient.getEmail() != null && !recipient.getEmail().trim().isEmpty()) {
+            try {
+                emailService.sendNotificationEmail(recipient.getEmail(), title, content);
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     @Override

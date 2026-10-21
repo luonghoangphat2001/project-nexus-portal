@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { auditLogService } from '../services/auditLogService';
 import { userService } from '../services/userService';
+import { emailService } from '../services/emailService';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
   ShieldAlert,
@@ -12,6 +13,8 @@ import {
   CheckCircle,
   AlertTriangle,
   FileSpreadsheet,
+  Mail,
+  Send,
 } from 'lucide-react';
 import {
   PageHeader,
@@ -45,6 +48,37 @@ export const SecurityPage = () => {
   const [exportLoading, setExportLoading] = useState(false);
   const [notification, setNotification] = useState('');
   const [error, setError] = useState('');
+
+  // Email & SMTP Status
+  const [emailStatus, setEmailStatus] = useState(null);
+  const [testEmailRecipient, setTestEmailRecipient] = useState('');
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [testEmailMsg, setTestEmailMsg] = useState('');
+
+  const fetchEmailStatus = async () => {
+    try {
+      const res = await emailService.getEmailStatus();
+      if (res && res.data) {
+        setEmailStatus(res.data);
+      }
+    } catch (_) {}
+  };
+
+  const handleSendTestEmail = async (e) => {
+    e.preventDefault();
+    if (!testEmailRecipient) return;
+    setSendingTestEmail(true);
+    setTestEmailMsg('');
+    try {
+      const res = await emailService.sendTestEmail(testEmailRecipient);
+      setTestEmailMsg(res.message || 'Email thử nghiệm đã được xử lý!');
+      showToast('Đã gửi yêu cầu gửi email thử nghiệm thành công.');
+    } catch (err) {
+      setTestEmailMsg(err.message || 'Lỗi gửi email.');
+    } finally {
+      setSendingTestEmail(false);
+    }
+  };
 
   const showToast = (msg) => {
     setNotification(msg);
@@ -90,6 +124,7 @@ export const SecurityPage = () => {
   useEffect(() => {
     fetchActions();
     fetchLogs(0);
+    fetchEmailStatus();
   }, [actionFilter, statusFilter]);
 
   const handleSearchSubmit = (e) => {
@@ -224,6 +259,88 @@ export const SecurityPage = () => {
           iconBg="bg-rose-600"
           subtitle={t('security.attentionNeeded', 'Attention needed')}
         />
+      </div>
+
+      {/* SMTP & Email Notification Service Card */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Mail className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900 text-sm">Hệ Thống Gửi Email Tự Động (SMTP Mail Service)</h3>
+              <p className="text-xs text-slate-500">
+                Tự động gửi email thông báo khi: Xin gia nhập nhóm, Đăng ký đề tài, Phê duyệt đề tài, Nộp báo cáo tiến độ và Chấm điểm.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${
+                emailStatus?.configured
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-amber-50 text-amber-700 border-amber-200'
+              }`}
+            >
+              {emailStatus?.configured ? 'SMTP Đã Cấu Hình' : 'Chế độ Giả lập / Mock Mode'}
+            </span>
+            <span
+              className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${
+                emailStatus?.enabled
+                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                  : 'bg-slate-100 text-slate-600 border-slate-200'
+              }`}
+            >
+              {emailStatus?.enabled ? 'Đang Bật' : 'Đang Tắt'}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/60">
+          <div>
+            <span className="text-slate-400 block mb-0.5">Máy chủ SMTP:</span>
+            <span className="font-mono font-semibold text-slate-700">{emailStatus?.host || 'smtp.gmail.com'}:{emailStatus?.port || 587}</span>
+          </div>
+          <div>
+            <span className="text-slate-400 block mb-0.5">Địa chỉ gửi:</span>
+            <span className="font-mono font-semibold text-slate-700">{emailStatus?.sender || 'noreply@nexus.edu.vn'}</span>
+          </div>
+          <div>
+            <span className="text-slate-400 block mb-0.5">Trạng thái phát thông báo:</span>
+            <span className="font-semibold text-slate-700">Tích hợp SSE In-app & Email Mime HTML</span>
+          </div>
+        </div>
+
+        {/* Test Email Form */}
+        <form onSubmit={handleSendTestEmail} className="flex flex-wrap items-center gap-2.5 pt-1">
+          <div className="relative flex-1 min-w-[240px]">
+            <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="email"
+              required
+              placeholder="Nhập email người nhận để gửi thử nghiệm..."
+              value={testEmailRecipient}
+              onChange={(e) => setTestEmailRecipient(e.target.value)}
+              className={`${inputClass} pl-8.5`}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={sendingTestEmail || !testEmailRecipient}
+            className={buttonClass.primary}
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>{sendingTestEmail ? 'Đang gửi...' : 'Gửi Email Thử'}</span>
+          </button>
+        </form>
+
+        {testEmailMsg && (
+          <div className="text-xs p-2.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+            {testEmailMsg}
+          </div>
+        )}
       </div>
 
       {/* Filter Card */}

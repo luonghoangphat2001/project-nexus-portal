@@ -2,12 +2,16 @@ package com.nexus.portal.controller;
 
 import com.nexus.portal.dto.request.RegistrationPeriodRequest;
 import com.nexus.portal.dto.response.*;
+import com.nexus.portal.service.PeriodExcelExporter;
 import com.nexus.portal.service.RegistrationPeriodService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/periods")
@@ -19,6 +23,17 @@ public class RegistrationPeriodController {
     @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
     public ResponseEntity<ApiResponse<List<RegistrationPeriodResponse>>> getAll() {
         return ResponseEntity.ok(ApiResponse.success(service.getAll(), "Registration periods retrieved"));
+    }
+
+    @GetMapping(value = "/export.xlsx", produces = PeriodExcelExporter.CONTENT_TYPE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
+    @Operation(summary = "Export registration periods to Excel")
+    public ResponseEntity<byte[]> exportPeriodsExcel(Locale locale) {
+        List<RegistrationPeriodResponse> periods = service.getAll();
+        byte[] workbook = PeriodExcelExporter.export(periods, locale);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + PeriodExcelExporter.fileName(locale) + "\"")
+                .body(workbook);
     }
 
     @PostMapping
