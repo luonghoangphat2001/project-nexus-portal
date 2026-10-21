@@ -101,6 +101,14 @@ export const App = () => {
                 </RoleBasedRoute>
               }
             />
+            <Route
+              path="admin/system-settings"
+              element={
+                <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_PRINCIPAL']}>
+                  <SystemAdminPage />
+                </RoleBasedRoute>
+              }
+            />
 
             {/* Module 18: Security & Audit Logs */}
             <Route

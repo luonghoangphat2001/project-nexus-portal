@@ -7,6 +7,7 @@ import jakarta.servlet.DispatcherType;
 import com.nexus.portal.controller.NotificationStreamController;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -119,6 +120,13 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/webjars/**"
                         ).permitAll()
+                        // Role-based protection for Period Creation & Management at filter level
+                        .requestMatchers(HttpMethod.POST, "/periods", "/api/periods").hasAnyRole("ADMIN", "PRINCIPAL")
+                        .requestMatchers(HttpMethod.PUT, "/periods/**", "/api/periods/**").hasAnyRole("ADMIN", "PRINCIPAL")
+                        .requestMatchers(HttpMethod.DELETE, "/periods/**", "/api/periods/**").hasRole("ADMIN")
+                        // Admin system endpoints role enforcement
+                        .requestMatchers("/admin/audit-logs/**", "/api/admin/audit-logs/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**", "/api/admin/**").hasAnyRole("ADMIN", "PRINCIPAL")
                         // All other APIs require JWT authentication
                         .anyRequest().authenticated()
                 )

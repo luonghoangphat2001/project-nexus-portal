@@ -1134,6 +1134,7 @@ export const vi = {
     "default": "Đã xảy ra lỗi không xác định. Vui lòng thử lại sau.",
     "network": "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng.",
     "invalidCredentials": "Tên đăng nhập hoặc mật khẩu không chính xác.",
+    "accountLocked": "Tài khoản tạm thời bị khóa 15 phút do nhập sai mật khẩu quá 5 lần",
     "unauthorized": "Phiên làm việc đã hết hạn hoặc chưa đăng nhập. Vui lòng đăng nhập lại.",
     "forbidden": "Truy cập bị từ chối: Tài khoản của bạn không có đủ quyền thực hiện thao tác này.",
     "onlyStudentsTeam": "Chỉ có sinh viên mới được phép tham gia vào nhóm.",

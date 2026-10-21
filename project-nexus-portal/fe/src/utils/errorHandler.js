@@ -12,6 +12,10 @@ const dictionaries = {
 const ERROR_KEY_RULES = [
   // Auth
   {
+    pattern: /account is temporarily locked|account temporarily locked|locked for 15 minutes/i,
+    key: 'errors.accountLocked',
+  },
+  {
     pattern: /invalid username or password|authentication failed|bad credentials/i,
     key: 'errors.invalidCredentials',
   },
