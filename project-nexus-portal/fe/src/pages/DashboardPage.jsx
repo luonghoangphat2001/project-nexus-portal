@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import api from '../services/api';
+import { teamService } from '../services/teamService';
+import { registrationService } from '../services/registrationService';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { localizeNotification } from '../services/notificationService';
@@ -37,6 +39,8 @@ export const DashboardPage = () => {
   const [selectedSemester, setSelectedSemester] = useState('all');
   const [chartMetric, setChartMetric] = useState('all'); // 'all', 'users', 'topics', 'registrations'
   const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [studentTeam, setStudentTeam] = useState(null);
+  const [studentReg, setStudentReg] = useState(null);
 
   // Exact role determination
   const isAdmin = user?.roles?.includes('ROLE_ADMIN');
@@ -49,11 +53,22 @@ export const DashboardPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get('/dashboard/stats');
+      const promises = [api.get('/dashboard/stats')];
+      if (isStudent) {
+        promises.push(teamService.getMyTeam().catch(() => null));
+        promises.push(registrationService.getMyTeamRegistrations().catch(() => []));
+      }
+      const results = await Promise.all(promises);
+      const res = results[0];
       if (res && res.data) {
         setStats(res.data);
       } else {
         setStats(null);
+      }
+      if (isStudent) {
+        setStudentTeam(results[1] || null);
+        const myRegs = results[2] || [];
+        setStudentReg(myRegs.length > 0 ? myRegs[0] : null);
       }
     } catch (err) {
       setError(err.message || t('common.error'));
@@ -61,13 +76,20 @@ export const DashboardPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, isStudent]);
 
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
 
   const scoped = stats?.scopedStats || {};
+
+  const hasTeam = Boolean(studentTeam?.id || scoped.hasTeam);
+  const teamName = studentTeam?.name || scoped.teamName || t('dashboard.studentNoTeam', 'Chưa vào nhóm');
+  const memberCount = studentTeam?.members ? studentTeam.members.length : (scoped.memberCount || 1);
+  const topicTitle = studentReg?.topicTitle || scoped.topicTitle;
+  const registrationStatus = studentReg?.status || scoped.registrationStatus;
+  const advisorName = scoped.advisorName || t('dashboard.unassigned', 'Chưa phân công');
 
   // Dynamic Chart Points calculated per semester directly from database API
   const timelineData = stats?.timelineData || [];
@@ -97,27 +119,27 @@ export const DashboardPage = () => {
     metricCards = [
       {
         title: t('dashboard.studentTeam', 'Nhóm sinh viên'),
-        value: loading ? '—' : (scoped.hasTeam ? scoped.teamName : t('dashboard.studentNoTeam', 'Chưa vào nhóm')),
-        subtitle: scoped.hasTeam ? `${scoped.memberCount || 1} ${t('dashboard.teamMembersCount', 'thành viên')}` : t('dashboard.studentNeedTeam', 'Cần tạo hoặc tham gia nhóm'),
-        trend: scoped.hasTeam ? t('dashboard.activeTeam', 'Đã tham gia') : t('dashboard.noTeamWarning', 'Chưa có nhóm'),
-        trendColor: scoped.hasTeam ? 'text-emerald-600' : 'text-amber-600',
+        value: loading ? '—' : (hasTeam ? teamName : t('dashboard.studentNoTeam', 'Chưa vào nhóm')),
+        subtitle: hasTeam ? `${memberCount} ${t('dashboard.teamMembersCount', 'thành viên')}` : t('dashboard.studentNeedTeam', 'Cần tạo hoặc tham gia nhóm'),
+        trend: hasTeam ? t('dashboard.activeTeam', 'Đã tham gia') : t('dashboard.noTeamWarning', 'Chưa có nhóm'),
+        trendColor: hasTeam ? 'text-emerald-600' : 'text-amber-600',
         icon: Users2,
         iconBg: 'bg-blue-600',
       },
       {
         title: t('dashboard.studentTopic', 'Đề tài khóa luận'),
-        value: loading ? '—' : (scoped.topicTitle ? (scoped.topicTitle.length > 22 ? scoped.topicTitle.substring(0, 22) + '...' : scoped.topicTitle) : t('dashboard.noTopic', 'Chưa đăng ký')),
-        subtitle: scoped.registrationStatus === 'APPROVED' ? t('dashboard.topicApproved', 'Đã duyệt chính thức') : scoped.registrationStatus === 'PENDING' ? t('dashboard.topicPending', 'Chờ GVHD xét duyệt') : t('dashboard.noTopicSub', 'Chưa đăng ký đề tài'),
-        trend: scoped.registrationStatus === 'APPROVED' ? 'APPROVED' : (scoped.registrationStatus || 'NONE'),
-        trendColor: scoped.registrationStatus === 'APPROVED' ? 'text-emerald-600' : 'text-blue-600',
+        value: loading ? '—' : (topicTitle ? (topicTitle.length > 22 ? topicTitle.substring(0, 22) + '...' : topicTitle) : t('dashboard.noTopic', 'Chưa đăng ký')),
+        subtitle: registrationStatus === 'APPROVED' ? t('dashboard.topicApproved', 'Đã duyệt chính thức') : registrationStatus === 'PENDING' ? t('dashboard.topicPending', 'Chờ GVHD xét duyệt') : t('dashboard.noTopicSub', 'Chưa đăng ký đề tài'),
+        trend: registrationStatus === 'APPROVED' ? 'APPROVED' : (registrationStatus || 'NONE'),
+        trendColor: registrationStatus === 'APPROVED' ? 'text-emerald-600' : 'text-blue-600',
         icon: FileText,
         iconBg: 'bg-indigo-600',
       },
       {
         title: t('dashboard.advisor', 'Giảng viên hướng dẫn'),
-        value: loading ? '—' : (scoped.advisorName || t('dashboard.unassigned', 'Chưa phân công')),
-        subtitle: scoped.topicTitle ? t('dashboard.primaryAdvisor', 'Người hướng dẫn trực tiếp') : t('dashboard.byRegisteredTopic', 'Theo đề tài đăng ký'),
-        trend: scoped.advisorName && scoped.advisorName !== 'Chưa phân công' ? t('dashboard.assigned', 'Đã phân công') : t('dashboard.pending', 'Chờ cập nhật'),
+        value: loading ? '—' : advisorName,
+        subtitle: topicTitle ? t('dashboard.primaryAdvisor', 'Người hướng dẫn trực tiếp') : t('dashboard.byRegisteredTopic', 'Theo đề tài đăng ký'),
+        trend: advisorName && advisorName !== 'Chưa phân công' ? t('dashboard.assigned', 'Đã phân công') : t('dashboard.pending', 'Chờ cập nhật'),
         trendColor: 'text-emerald-600',
         icon: Award,
         iconBg: 'bg-emerald-600',
@@ -533,15 +555,15 @@ export const DashboardPage = () => {
                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       {t('dashboard.teamStatusLabel', 'Nhóm sinh viên')}
                     </span>
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${scoped.hasTeam ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                      {scoped.hasTeam ? t('dashboard.teamFormed', 'Đã lập nhóm') : t('dashboard.noTeam', 'Chưa có nhóm')}
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${hasTeam ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                      {hasTeam ? t('dashboard.teamFormed', 'Đã lập nhóm') : t('dashboard.noTeam', 'Chưa có nhóm')}
                     </span>
                   </div>
-                  <p className="text-base font-bold text-slate-900">{scoped.teamName || t('dashboard.studentNoTeam', 'Chưa vào nhóm')}</p>
+                  <p className="text-base font-bold text-slate-900">{teamName}</p>
                   <p className="text-xs text-slate-600">
-                    {scoped.hasTeam ? `${scoped.memberCount || 1} ${t('dashboard.membersInTeam', 'thành viên tham gia khóa luận')}` : t('dashboard.joinTeamPrompt', 'Hãy tạo hoặc tìm nhóm cùng chuyên ngành')}
+                    {hasTeam ? `${memberCount} ${t('dashboard.membersInTeam', 'thành viên tham gia khóa luận')}` : t('dashboard.joinTeamPrompt', 'Hãy tạo hoặc tìm nhóm cùng chuyên ngành')}
                   </p>
-                  {!scoped.hasTeam && (
+                  {!hasTeam && (
                     <NavLink
                       to="/teams"
                       className="inline-flex items-center space-x-1 text-xs font-semibold text-blue-600 hover:underline pt-1"
@@ -558,13 +580,13 @@ export const DashboardPage = () => {
                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       {t('dashboard.topicStatusLabel', 'Đề tài đăng ký')}
                     </span>
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${scoped.registrationStatus === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : scoped.registrationStatus === 'PENDING' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'}`}>
-                      {scoped.registrationStatus || 'NONE'}
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${registrationStatus === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : registrationStatus === 'PENDING' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'}`}>
+                      {registrationStatus || 'NONE'}
                     </span>
                   </div>
-                  <p className="text-base font-bold text-slate-900 line-clamp-1">{scoped.topicTitle || t('dashboard.noTopic', 'Chưa đăng ký đề tài')}</p>
+                  <p className="text-base font-bold text-slate-900 line-clamp-1">{topicTitle || t('dashboard.noTopic', 'Chưa đăng ký đề tài')}</p>
                   <p className="text-xs text-slate-600">
-                    {t('dashboard.advisor', 'GVHD')}: <span className="font-semibold text-slate-800">{scoped.advisorName || t('dashboard.unassigned', 'Chưa phân công')}</span>
+                    {t('dashboard.advisor', 'GVHD')}: <span className="font-semibold text-slate-800">{advisorName}</span>
                   </p>
                   {scoped.registrationStatus !== 'APPROVED' && (
                     <NavLink

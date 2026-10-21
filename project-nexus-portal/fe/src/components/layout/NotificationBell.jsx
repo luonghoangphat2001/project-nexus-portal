@@ -1,11 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell } from 'lucide-react';
-import { notificationService } from '../../services/notificationService';
+import { notificationService, localizeNotification } from '../../services/notificationService';
 import { subscribeNotifications } from '../../services/notificationStream';
+import { useToast } from '../../context/ToastContext';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 export function NotificationBell() {
   const [unread, setUnread] = useState(0);
+  const { toast } = useToast();
+  const { language } = useTranslation();
+  const unreadRef = useRef(null);
+
   useEffect(() => {
     let active = true;
     let version = 0;
@@ -13,13 +19,26 @@ export function NotificationBell() {
       const current = ++version;
       try {
         const items = await notificationService.getAll();
-        if (active && current === version) setUnread(items.filter(item => !item.read).length);
+        if (active && current === version) {
+          const unreadItems = items.filter(item => !item.read);
+          const newCount = unreadItems.length;
+
+          // If not initial load and new notifications arrived, show real-time toast
+          if (unreadRef.current !== null && newCount > unreadRef.current && unreadItems.length > 0) {
+            const latest = unreadItems[0];
+            const title = localizeNotification(latest.title, language);
+            const content = localizeNotification(latest.content, language);
+            toast.info(content, title);
+          }
+          unreadRef.current = newCount;
+          setUnread(newCount);
+        }
       } catch { /* Existing API interceptor handles expired sessions. */ }
     }
     refresh();
     const stop = subscribeNotifications(refresh, () => {});
     return () => { active = false; stop(); };
-  }, []);
+  }, [language, toast]);
   return (
     <Link
       to="/notifications"

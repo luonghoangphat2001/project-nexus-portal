@@ -26,6 +26,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final TopicRegistrationRepository topicRegistrationRepository;
     private final RegistrationPeriodRepository registrationPeriodRepository;
     private final NotificationRepository notificationRepository;
+    private final TeamMemberRepository teamMemberRepository;
     private final DefenseCouncilRepository defenseCouncilRepository;
     private final DefenseAssignmentRepository defenseAssignmentRepository;
     private final AssessmentRepository assessmentRepository;
@@ -40,6 +41,7 @@ public class DashboardServiceImpl implements DashboardService {
             TopicRegistrationRepository topicRegistrationRepository,
             RegistrationPeriodRepository registrationPeriodRepository,
             NotificationRepository notificationRepository,
+            TeamMemberRepository teamMemberRepository,
             DefenseCouncilRepository defenseCouncilRepository,
             DefenseAssignmentRepository defenseAssignmentRepository,
             AssessmentRepository assessmentRepository,
@@ -52,6 +54,7 @@ public class DashboardServiceImpl implements DashboardService {
         this.topicRegistrationRepository = topicRegistrationRepository;
         this.registrationPeriodRepository = registrationPeriodRepository;
         this.notificationRepository = notificationRepository;
+        this.teamMemberRepository = teamMemberRepository;
         this.defenseCouncilRepository = defenseCouncilRepository;
         this.defenseAssignmentRepository = defenseAssignmentRepository;
         this.assessmentRepository = assessmentRepository;
@@ -202,7 +205,25 @@ public class DashboardServiceImpl implements DashboardService {
         }
 
         // 6. Role-specific scoped metrics calculation
-        User currentUser = username != null ? userRepository.findByUsername(username).orElse(null) : null;
+        User currentUser = null;
+        if (username != null) {
+            currentUser = userRepository.findByUsername(username)
+                    .or(() -> userRepository.findByEmail(username))
+                    .orElse(null);
+        }
+        if (currentUser == null) {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null) {
+                if (auth.getPrincipal() instanceof com.nexus.portal.security.UserPrincipal up) {
+                    currentUser = userRepository.findById(up.getId()).orElse(null);
+                } else if (auth.getName() != null) {
+                    String principalName = auth.getName();
+                    currentUser = userRepository.findByUsername(principalName)
+                            .or(() -> userRepository.findByEmail(principalName))
+                            .orElse(null);
+                }
+            }
+        }
         String currentRole = "ROLE_ADMIN";
         Map<String, Object> scopedStats = new HashMap<>();
 
@@ -372,12 +393,47 @@ public class DashboardServiceImpl implements DashboardService {
 
         } else if ("ROLE_USER".equals(currentRole) && currentUser != null) {
             // Student Scoped Metrics
-            List<Team> userTeams = teamRepository.findAllTeamsByUserId(currentUser.getId());
-            Team myTeam = userTeams.isEmpty() ? null : userTeams.get(0);
+            final Long uid = currentUser.getId();
+            Team myTeam = null;
+
+            // 1. Search in memory allTeams for either Leader or Member
+            for (Team t : allTeams) {
+                boolean isLeader = t.getLeader() != null && t.getLeader().getId().equals(uid);
+                boolean isMember = t.getMembers() != null && t.getMembers().stream()
+                        .anyMatch(m -> m.getUser() != null && m.getUser().getId().equals(uid));
+                if (isLeader || isMember) {
+                    myTeam = t;
+                    break;
+                }
+            }
+
+            // 2. Query by user teams repository if not found
+            if (myTeam == null) {
+                List<Team> userTeams = teamRepository.findAllTeamsByUserId(uid);
+                if (!userTeams.isEmpty()) {
+                    myTeam = userTeams.get(0);
+                }
+            }
+
+            // 3. Query by team member repository if not found
+            if (myTeam == null) {
+                List<TeamMember> tms = teamMemberRepository.findByUserId(uid);
+                if (!tms.isEmpty() && tms.get(0).getTeam() != null) {
+                    myTeam = tms.get(0).getTeam();
+                }
+            }
 
             boolean hasTeam = myTeam != null;
             String teamName = hasTeam ? myTeam.getName() : "Chưa có nhóm";
-            int memberCount = hasTeam && myTeam.getMembers() != null ? myTeam.getMembers().size() + 1 : (hasTeam ? 1 : 0);
+            int memberCount = 1;
+            if (hasTeam) {
+                if (myTeam.getMembers() != null && !myTeam.getMembers().isEmpty()) {
+                    memberCount = myTeam.getMembers().size();
+                } else {
+                    long count = teamMemberRepository.countByTeamId(myTeam.getId());
+                    memberCount = count > 0 ? (int) count : 1;
+                }
+            }
 
             String topicTitle = "Chưa đăng ký đề tài";
             String registrationStatus = "NONE";
@@ -414,7 +470,13 @@ public class DashboardServiceImpl implements DashboardService {
                 if (approvedReg != null) {
                     defenseAssignmentRepository.findByRegistrationId(approvedReg.getId()).ifPresent(da -> {
                         if (da.getCouncil() != null) {
-                            // council room & schedule
+                            DefenseCouncil dc = da.getCouncil();
+                            if (dc.getRoom() != null && !dc.getRoom().isBlank()) {
+                                councilRoom = dc.getRoom();
+                            }
+                            if (dc.getStartsAt() != null) {
+                                defenseSchedule = dc.getName() + " (" + dc.getStartsAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + ")";
+                            }
                         }
                     });
                 }
