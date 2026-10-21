@@ -205,13 +205,14 @@ export const TopicsPage = () => {
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedTopic) return;
+    if (!selectedTopic || !isStudent || studentHasTopic) return;
     try {
       await registrationService.submitRegistration({
         topicId: selectedTopic.id,
         message: registrationMessage,
       });
       setMyPendingTopicIds((prev) => new Set([...prev, selectedTopic.id]));
+      await loadStudentRegistrations();
       setRegisterSuccess(t('topics.registeredSuccess'));
       setTimeout(() => {
         setRegisterModalOpen(false);
@@ -222,6 +223,27 @@ export const TopicsPage = () => {
       alert(err.message || 'Registration failed');
     }
   };
+
+  const isStudentAssignedToTopic = (t) => {
+    if (!isStudent || !t) return false;
+    if (approvedTopicId && String(t.id) === String(approvedTopicId)) return true;
+    return Boolean(
+      t.assignedTeam?.members?.some(
+        (m) =>
+          (m.userId && user?.id && String(m.userId) === String(user.id)) ||
+          (m.id && user?.id && String(m.id) === String(user.id)) ||
+          (m.studentCode && user?.studentCode && m.studentCode === user.studentCode) ||
+          (m.username && user?.username && m.username === user.username) ||
+          (m.email && user?.email && m.email === user.email)
+      )
+    );
+  };
+
+  const studentHasTopic = useMemo(() => {
+    if (!isStudent) return false;
+    if (hasApprovedTopic) return true;
+    return topics.some((t) => isStudentAssignedToTopic(t));
+  }, [isStudent, hasApprovedTopic, topics, approvedTopicId, user]);
 
   // Filter topics for students: PENDING_APPROVAL topics are only visible to students waiting for approval on that topic
   const displayedTopics = useMemo(() => {
@@ -272,6 +294,16 @@ export const TopicsPage = () => {
           </div>
         }
       />
+
+      {/* Notice if student already has a capstone topic */}
+      {isStudent && studentHasTopic && (
+        <div className="p-4 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl flex items-center space-x-3 text-xs text-emerald-800 shadow-xs">
+          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="font-medium">
+            {t('topics.studentAlreadyHasTopicBanner', 'Bạn đã có đề tài tốt nghiệp chính thức. Chức năng đăng ký các đề tài khác đã được khóa.')}
+          </span>
+        </div>
+      )}
 
       {/* Filter and Search Card */}
       <FilterCard
@@ -460,16 +492,21 @@ export const TopicsPage = () => {
                     >
                       {t('topics.viewDetails')}
                     </button>
-                    {isStudent && myPendingTopicIds.has(topic.id) ? (
+                    {isStudent && isStudentAssignedToTopic(topic) ? (
+                      <span className="text-xs px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium flex items-center space-x-1">
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        <span>{t('topics.myTopic', 'Đề tài của bạn')}</span>
+                      </span>
+                    ) : isStudent && myPendingTopicIds.has(topic.id) ? (
                       <span className="text-xs px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-medium">
                         {t('enums.registrationStatus.PENDING', 'Chờ duyệt')}
                       </span>
                     ) : (
                       <button
                         type="button"
-                        disabled={!isStudent || topic.status !== 'OPEN'}
+                        disabled={!isStudent || topic.status !== 'OPEN' || studentHasTopic || myPendingTopicIds.size > 0}
                         onClick={() => {
-                          if (!isStudent || topic.status !== 'OPEN') return;
+                          if (!isStudent || topic.status !== 'OPEN' || studentHasTopic || myPendingTopicIds.size > 0) return;
                           setSelectedTopic(topic);
                           setRegisterModalOpen(true);
                         }}
@@ -477,6 +514,10 @@ export const TopicsPage = () => {
                         title={
                           !isStudent
                             ? t('topics.studentOnlyRegistration')
+                            : studentHasTopic
+                            ? t('topics.alreadyHasTopic', 'Bạn đã có đề tài tốt nghiệp')
+                            : myPendingTopicIds.size > 0
+                            ? t('topics.alreadyHasPendingRegistration', 'Bạn đang có đơn đăng ký chờ duyệt')
                             : topic.status !== 'OPEN'
                             ? t('topics.registrationClosed')
                             : ''
@@ -518,22 +559,31 @@ export const TopicsPage = () => {
             >
               {t('common.close')}
             </button>
-            {isStudent && myPendingTopicIds.has(selectedTopic?.id) ? (
+            {isStudent && isStudentAssignedToTopic(selectedTopic) ? (
+              <span className="text-xs px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium flex items-center space-x-1.5">
+                <CheckCircle className="w-4 h-4" />
+                <span>{t('topics.myTopic', 'Đề tài của bạn')}</span>
+              </span>
+            ) : isStudent && myPendingTopicIds.has(selectedTopic?.id) ? (
               <span className="text-xs px-3 py-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-medium">
                 {t('enums.registrationStatus.PENDING', 'Đang chờ duyệt')}
               </span>
             ) : (
               <button
                 type="button"
-                disabled={!isStudent || selectedTopic?.status !== 'OPEN'}
+                disabled={!isStudent || selectedTopic?.status !== 'OPEN' || studentHasTopic || myPendingTopicIds.size > 0}
                 onClick={() => {
-                  if (!isStudent || selectedTopic?.status !== 'OPEN') return;
+                  if (!isStudent || selectedTopic?.status !== 'OPEN' || studentHasTopic || myPendingTopicIds.size > 0) return;
                   setRegisterModalOpen(true);
                 }}
                 className={buttonClass.primary}
                 title={
                   !isStudent
                     ? t('topics.studentOnlyRegistration')
+                    : studentHasTopic
+                    ? t('topics.alreadyHasTopic', 'Bạn đã có đề tài tốt nghiệp')
+                    : myPendingTopicIds.size > 0
+                    ? t('topics.alreadyHasPendingRegistration', 'Bạn đang có đơn đăng ký chờ duyệt')
                     : selectedTopic?.status !== 'OPEN'
                     ? t('topics.registrationClosed')
                     : ''
