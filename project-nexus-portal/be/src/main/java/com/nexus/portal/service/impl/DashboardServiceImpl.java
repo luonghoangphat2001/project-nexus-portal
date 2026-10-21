@@ -205,25 +205,26 @@ public class DashboardServiceImpl implements DashboardService {
         }
 
         // 6. Role-specific scoped metrics calculation
-        User currentUser = null;
+        User resolvedUser = null;
         if (username != null) {
-            currentUser = userRepository.findByUsername(username)
+            resolvedUser = userRepository.findByUsername(username)
                     .or(() -> userRepository.findByEmail(username))
                     .orElse(null);
         }
-        if (currentUser == null) {
+        if (resolvedUser == null) {
             org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
             if (auth != null) {
                 if (auth.getPrincipal() instanceof com.nexus.portal.security.UserPrincipal up) {
-                    currentUser = userRepository.findById(up.getId()).orElse(null);
+                    resolvedUser = userRepository.findById(up.getId()).orElse(null);
                 } else if (auth.getName() != null) {
                     String principalName = auth.getName();
-                    currentUser = userRepository.findByUsername(principalName)
+                    resolvedUser = userRepository.findByUsername(principalName)
                             .or(() -> userRepository.findByEmail(principalName))
                             .orElse(null);
                 }
             }
         }
+        final User currentUser = resolvedUser;
         String currentRole = "ROLE_ADMIN";
         Map<String, Object> scopedStats = new HashMap<>();
 
@@ -468,17 +469,16 @@ public class DashboardServiceImpl implements DashboardService {
                 progressPercent = totalTasks > 0 ? (int) Math.round((double) completedTasks / totalTasks * 100) : 0;
 
                 if (approvedReg != null) {
-                    defenseAssignmentRepository.findByRegistrationId(approvedReg.getId()).ifPresent(da -> {
-                        if (da.getCouncil() != null) {
-                            DefenseCouncil dc = da.getCouncil();
-                            if (dc.getRoom() != null && !dc.getRoom().isBlank()) {
-                                councilRoom = dc.getRoom();
-                            }
-                            if (dc.getStartsAt() != null) {
-                                defenseSchedule = dc.getName() + " (" + dc.getStartsAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + ")";
-                            }
+                    Optional<DefenseAssignment> daOpt = defenseAssignmentRepository.findByRegistrationId(approvedReg.getId());
+                    if (daOpt.isPresent() && daOpt.get().getCouncil() != null) {
+                        DefenseCouncil dc = daOpt.get().getCouncil();
+                        if (dc.getRoom() != null && !dc.getRoom().isBlank()) {
+                            councilRoom = dc.getRoom();
                         }
-                    });
+                        if (dc.getStartsAt() != null) {
+                            defenseSchedule = dc.getName() + " (" + dc.getStartsAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + ")";
+                        }
+                    }
                 }
             }
 

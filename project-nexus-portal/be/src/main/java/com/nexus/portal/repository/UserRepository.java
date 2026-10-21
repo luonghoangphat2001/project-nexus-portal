@@ -51,6 +51,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
            ")")
     List<User> findAssociatedLecturers(@Param("lecturerId") Long lecturerId);
 
+    @Query("SELECT DISTINCT u FROM User u " +
+           "JOIN u.roles r " +
+           "LEFT JOIN u.departments d " +
+           "LEFT JOIN u.faculties f " +
+           "WHERE r.name = com.nexus.portal.enums.RoleName.ROLE_PRINCIPAL " +
+           "AND ((:deptId IS NOT NULL AND d.id = :deptId) OR (:facultyId IS NOT NULL AND f.id = :facultyId))")
+    List<User> findPrincipalsByDepartmentOrFaculty(@Param("deptId") Long deptId, @Param("facultyId") Long facultyId);
+
     long countByActiveTrue();
 
     long countByRolesContaining(com.nexus.portal.model.Role role);

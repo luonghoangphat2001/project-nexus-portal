@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { ToastProvider } from './context/ToastContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { RoleBasedRoute } from './routes/RoleBasedRoute';
 import { MainLayout } from './components/layout/MainLayout';
@@ -27,6 +27,23 @@ import { CouncilsPage } from './pages/CouncilsPage';
 import { AssessmentsPage } from './pages/AssessmentsPage';
 import { ResultsPage } from './pages/ResultsPage';
 
+const DefaultRedirect = () => {
+  const { user } = useAuth();
+  if (user?.roles?.includes('ROLE_ADMIN')) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  if (user?.roles?.includes('ROLE_PRINCIPAL')) {
+    return <Navigate to="/topics" replace />;
+  }
+  if (user?.roles?.includes('ROLE_TEACHER')) {
+    return <Navigate to="/registrations" replace />;
+  }
+  if (user?.roles?.includes('ROLE_COUNCIL')) {
+    return <Navigate to="/assessments" replace />;
+  }
+  return <Navigate to="/topics" replace />;
+};
+
 export const App = () => {
   return (
     <LanguageProvider>
@@ -46,8 +63,15 @@ export const App = () => {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
+            <Route index element={<DefaultRedirect />} />
+            <Route
+              path="dashboard"
+              element={
+                <RoleBasedRoute allowedRoles={['ROLE_ADMIN']}>
+                  <DashboardPage />
+                </RoleBasedRoute>
+              }
+            />
             <Route
               path="academic"
               element={
