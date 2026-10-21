@@ -386,12 +386,15 @@ CREATE TABLE IF NOT EXISTS notifications (
   title VARCHAR(150) NOT NULL,
   content TEXT NOT NULL,
   faculty_id BIGINT NULL,
+  recipient_id BIGINT NULL,
   author_id BIGINT NOT NULL,
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   KEY idx_notifications_faculty_created (faculty_id, created_at),
+  KEY idx_notifications_recipient_created (recipient_id, created_at),
   KEY idx_notifications_author_created (author_id, created_at),
   CONSTRAINT fk_notifications_faculty FOREIGN KEY (faculty_id) REFERENCES faculties(id),
+  CONSTRAINT fk_notifications_recipient FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT fk_notifications_author FOREIGN KEY (author_id) REFERENCES users(id)
 );
 

@@ -5,6 +5,7 @@ import {
   Plus,
   Send,
   Search,
+  CheckCircle,
 } from 'lucide-react';
 import matchmakingService from '../services/matchmakingService';
 import teamService from '../services/teamService';
@@ -195,6 +196,25 @@ export const MatchmakingPage = () => {
       {/* Notifications */}
       <Banner error={error} success={success} />
 
+      {/* Notice if student already belongs to a team */}
+      {myTeam && (
+        <div className="p-4 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl flex items-center space-x-3 text-xs text-emerald-800 shadow-xs">
+          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="font-medium">
+            {myTeam.name
+              ? t(
+                  'matchmaking.alreadyHasTeamNamedBanner',
+                  `Bạn đã tham gia nhóm "${myTeam.name}". Chức năng ứng tuyển và ghép nhóm khác đã được khóa.`,
+                  { name: myTeam.name }
+                )
+              : t(
+                  'matchmaking.alreadyHasTeamBanner',
+                  'Bạn đã tham gia một nhóm trong đợt này. Chức năng ứng tuyển và ghép nhóm khác đã được khóa.'
+                )}
+          </span>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl self-start max-w-fit">
         <button
@@ -346,15 +366,7 @@ export const MatchmakingPage = () => {
                       }
 
                       if (hasTeam) {
-                        return (
-                          <button
-                            disabled
-                            className="px-3 py-1.5 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-medium cursor-not-allowed"
-                            title={t('errors.alreadyInTeam', 'Sinh viên đã thuộc về một nhóm trong đợt này.')}
-                          >
-                            {t('teams.alreadyHasTeam', 'Đã có nhóm')}
-                          </button>
-                        );
+                        return null;
                       }
 
                       if (isTargetTeamLocked) {

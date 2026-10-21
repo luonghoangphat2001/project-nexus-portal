@@ -16,6 +16,7 @@ public class RegistrationPeriodController {
     public RegistrationPeriodController(RegistrationPeriodService service) { this.service = service; }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
     public ResponseEntity<ApiResponse<List<RegistrationPeriodResponse>>> getAll() {
         return ResponseEntity.ok(ApiResponse.success(service.getAll(), "Registration periods retrieved"));
     }

@@ -8,6 +8,7 @@ import com.nexus.portal.exception.BadRequestException;
 import com.nexus.portal.exception.ResourceNotFoundException;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.*;
+import com.nexus.portal.service.NotificationService;
 import com.nexus.portal.service.TeamService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -27,19 +28,22 @@ public class TeamServiceImpl implements TeamService {
     private final TeamJoinRequestRepository teamJoinRequestRepository;
     private final UserRepository userRepository;
     private final RegistrationPeriodRepository registrationPeriodRepository;
+    private final NotificationService notificationService;
 
     public TeamServiceImpl(TeamRepository teamRepository,
                            TeamMemberRepository teamMemberRepository,
                            TeamInvitationRepository teamInvitationRepository,
                            TeamJoinRequestRepository teamJoinRequestRepository,
                            UserRepository userRepository,
-                           RegistrationPeriodRepository registrationPeriodRepository) {
+                           RegistrationPeriodRepository registrationPeriodRepository,
+                           NotificationService notificationService) {
         this.teamRepository = teamRepository;
         this.teamMemberRepository = teamMemberRepository;
         this.teamInvitationRepository = teamInvitationRepository;
         this.teamJoinRequestRepository = teamJoinRequestRepository;
         this.userRepository = userRepository;
         this.registrationPeriodRepository = registrationPeriodRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -192,6 +196,19 @@ public class TeamServiceImpl implements TeamService {
                 .build();
 
         TeamInvitation saved = teamInvitationRepository.save(invitation);
+
+        String msgVi = (request.getMessage() != null && !request.getMessage().isBlank())
+                ? (": \"" + request.getMessage() + "\"") : ".";
+        String msgEn = (request.getMessage() != null && !request.getMessage().isBlank())
+                ? (": \"" + request.getMessage() + "\"") : ".";
+        notificationService.sendNotification(
+                invitee,
+                inviter,
+                "[VI] Lời mời tham gia nhóm | [EN] Team invitation: " + team.getName(),
+                "[VI] Bạn nhận được lời mời tham gia nhóm \"" + team.getName() + "\" từ " + inviter.getFullName() + msgVi + "\n"
+                        + "[EN] You received an invitation to join team \"" + team.getName() + "\" from " + inviter.getFullName() + msgEn
+        );
+
         return mapToInvitationResponse(saved);
     }
 
@@ -221,6 +238,17 @@ public class TeamServiceImpl implements TeamService {
         if (!accept) {
             invitation.setStatus(InvitationStatus.REJECTED);
             teamInvitationRepository.save(invitation);
+
+            User inviter = invitation.getInviter() != null ? invitation.getInviter() : team.getLeader();
+            if (inviter != null) {
+                notificationService.sendNotification(
+                        inviter,
+                        invitation.getInvitee(),
+                        "[VI] Lời mời tham gia nhóm bị từ chối | [EN] Team invitation declined",
+                        "[VI] Sinh viên " + invitation.getInvitee().getFullName() + " đã từ chối lời mời gia nhập nhóm \"" + team.getName() + "\".\n"
+                                + "[EN] Student " + invitation.getInvitee().getFullName() + " has declined the invitation to join team \"" + team.getName() + "\"."
+                );
+            }
             return mapToResponse(team);
         }
 
@@ -270,6 +298,17 @@ public class TeamServiceImpl implements TeamService {
         // AUTO-CANCEL ALL OTHER PENDING INVITATIONS AND JOIN REQUESTS FOR THIS STUDENT
         teamInvitationRepository.cancelAllPendingInvitationsForInvitee(userId);
         teamJoinRequestRepository.cancelAllPendingRequestsForApplicant(userId);
+
+        User inviter = invitation.getInviter() != null ? invitation.getInviter() : team.getLeader();
+        if (inviter != null) {
+            notificationService.sendNotification(
+                    inviter,
+                    user,
+                    "[VI] Lời mời tham gia nhóm đã được chấp nhận | [EN] Team invitation accepted",
+                    "[VI] Sinh viên " + user.getFullName() + " đã chấp nhận lời mời gia nhập nhóm \"" + team.getName() + "\".\n"
+                            + "[EN] Student " + user.getFullName() + " has accepted the invitation to join team \"" + team.getName() + "\"."
+            );
+        }
 
         return mapToResponse(team);
     }

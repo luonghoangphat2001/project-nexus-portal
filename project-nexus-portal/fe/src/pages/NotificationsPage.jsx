@@ -14,7 +14,7 @@ import {
   CheckCheck,
 } from 'lucide-react';
 import { subscribeNotifications } from '../services/notificationStream';
-import { notificationService } from '../services/notificationService';
+import { notificationService, localizeNotification } from '../services/notificationService';
 import { academicService } from '../services/academicService';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -32,8 +32,8 @@ import {
 } from '../components/common/CommonUi';
 
 export function NotificationsPage() {
-  const { hasRole } = useAuth();
-  const { t } = useTranslation();
+  const { user, hasRole } = useAuth();
+  const { t, language } = useTranslation();
   const canPublish = hasRole('ROLE_ADMIN') || hasRole('ROLE_PRINCIPAL');
 
   const [items, setItems] = useState([]);
@@ -281,7 +281,9 @@ export function NotificationsPage() {
         <div className="space-y-3">
           {filteredItems.map((item) => {
             const facultyObj = faculties.find((f) => f.id === item.facultyId);
-            const audienceText = facultyObj ? facultyObj.name : t('notifications.allFaculties');
+            const audienceText = item.recipientId
+              ? t('notifications.personal', 'Cá nhân')
+              : (facultyObj ? facultyObj.name : t('notifications.allFaculties'));
 
             return (
               <article
@@ -305,8 +307,13 @@ export function NotificationsPage() {
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                          {item.title}
+                          {localizeNotification(item.title, language)}
                         </h2>
+                        {item.content?.includes('[VI]') && item.content?.includes('[EN]') && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-500 border border-slate-200">
+                            VI / EN
+                          </span>
+                        )}
                         {!item.read && (
                           <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-100 text-blue-700">
                             {t('notifications.unread')}
@@ -315,7 +322,7 @@ export function NotificationsPage() {
                       </div>
 
                       <p className="mt-2 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
-                        {item.content}
+                        {localizeNotification(item.content, language)}
                       </p>
 
                       <div className="mt-4 flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-400">
@@ -352,7 +359,7 @@ export function NotificationsPage() {
                       </button>
                     )}
 
-                    {canPublish && (
+                    {(canPublish || (user && item.recipientId && String(item.recipientId) === String(user.id))) && (
                       <button
                         type="button"
                         disabled={busy}

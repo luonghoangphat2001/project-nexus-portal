@@ -7,14 +7,17 @@ import com.nexus.portal.enums.*;
 import com.nexus.portal.exception.ResourceNotFoundException;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.*;
+import com.nexus.portal.service.NotificationService;
 import com.nexus.portal.service.TopicRegistrationService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,17 +28,20 @@ public class TopicRegistrationServiceImpl implements TopicRegistrationService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public TopicRegistrationServiceImpl(TopicRegistrationRepository topicRegistrationRepository,
                                         TopicRepository topicRepository,
                                         TeamRepository teamRepository,
                                         TeamMemberRepository teamMemberRepository,
-                                        UserRepository userRepository) {
+                                        UserRepository userRepository,
+                                        NotificationService notificationService) {
         this.topicRegistrationRepository = topicRegistrationRepository;
         this.topicRepository = topicRepository;
         this.teamRepository = teamRepository;
         this.teamMemberRepository = teamMemberRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -106,6 +112,23 @@ public class TopicRegistrationServiceImpl implements TopicRegistrationService {
                 .build();
 
         TopicRegistration saved = topicRegistrationRepository.save(registration);
+
+        if (topic.getTopicLecturers() != null) {
+            for (com.nexus.portal.model.TopicLecturer tl : topic.getTopicLecturers()) {
+                if (tl.getLecturer() != null) {
+                    notificationService.sendNotification(
+                            tl.getLecturer(),
+                            currentUser,
+                            "[VI] Nhóm mới đăng ký đề tài: " + topic.getTitle() + " | [EN] New topic registration: " + topic.getTitle(),
+                            "[VI] Nhóm \"" + team.getName() + "\" do sinh viên " + currentUser.getFullName()
+                                    + " làm trưởng nhóm đã gửi đơn đăng ký đề tài \"" + topic.getTitle() + "\".\n"
+                                    + "[EN] Team \"" + team.getName() + "\" led by student " + currentUser.getFullName()
+                                    + " has submitted a registration for topic \"" + topic.getTitle() + "\"."
+                    );
+                }
+            }
+        }
+
         return mapToResponse(saved);
     }
 
@@ -170,6 +193,40 @@ public class TopicRegistrationServiceImpl implements TopicRegistrationService {
         }
 
         TopicRegistration updated = topicRegistrationRepository.save(registration);
+
+        // Notify team students about topic registration approval/rejection
+        Team team = registration.getTeam();
+        Set<User> recipients = new HashSet<>();
+        if (team.getLeader() != null) recipients.add(team.getLeader());
+        teamMemberRepository.findByTeamId(team.getId()).forEach(tm -> {
+            if (tm.getUser() != null) recipients.add(tm.getUser());
+        });
+
+        String feedbackMsgVi = (request.getFeedback() != null && !request.getFeedback().isBlank())
+                ? (" Nhận xét: " + request.getFeedback()) : "";
+        String feedbackMsgEn = (request.getFeedback() != null && !request.getFeedback().isBlank())
+                ? (" Feedback: " + request.getFeedback()) : "";
+        String reasonMsgVi = (request.getFeedback() != null && !request.getFeedback().isBlank())
+                ? (" Lý do: " + request.getFeedback()) : "";
+        String reasonMsgEn = (request.getFeedback() != null && !request.getFeedback().isBlank())
+                ? (" Reason: " + request.getFeedback()) : "";
+
+        if (request.getStatus() == RegistrationStatus.APPROVED) {
+            String title = "[VI] Đề tài đã được duyệt: " + topic.getTitle() + " | [EN] Topic registration approved: " + topic.getTitle();
+            String content = "[VI] Chúc mừng! Đăng ký đề tài \"" + topic.getTitle() + "\" của nhóm bạn đã được phê duyệt bởi "
+                    + reviewer.getFullName() + "." + feedbackMsgVi + "\n"
+                    + "[EN] Congratulations! Your team's registration for topic \"" + topic.getTitle() + "\" has been approved by "
+                    + reviewer.getFullName() + "." + feedbackMsgEn;
+            notificationService.sendNotificationToUsers(recipients, reviewer, title, content);
+        } else {
+            String title = "[VI] Đăng ký đề tài bị từ chối: " + topic.getTitle() + " | [EN] Topic registration rejected: " + topic.getTitle();
+            String content = "[VI] Đăng ký đề tài \"" + topic.getTitle() + "\" của nhóm bạn đã bị từ chối bởi "
+                    + reviewer.getFullName() + "." + reasonMsgVi + "\n"
+                    + "[EN] Your team's registration for topic \"" + topic.getTitle() + "\" has been rejected by "
+                    + reviewer.getFullName() + "." + reasonMsgEn;
+            notificationService.sendNotificationToUsers(recipients, reviewer, title, content);
+        }
+
         return mapToResponse(updated);
     }
 

@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.nexus.portal.service.NotificationService;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,6 +28,7 @@ public class MatchmakingServiceImpl implements MatchmakingService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final DepartmentRepository departmentRepository;
+    private final NotificationService notificationService;
 
     public MatchmakingServiceImpl(MatchmakingPostRepository postRepository,
                                   TeamJoinRequestRepository joinRequestRepository,
@@ -34,7 +36,8 @@ public class MatchmakingServiceImpl implements MatchmakingService {
                                   UserRepository userRepository,
                                   TeamRepository teamRepository,
                                   TeamMemberRepository teamMemberRepository,
-                                  DepartmentRepository departmentRepository) {
+                                  DepartmentRepository departmentRepository,
+                                  NotificationService notificationService) {
         this.postRepository = postRepository;
         this.joinRequestRepository = joinRequestRepository;
         this.invitationRepository = invitationRepository;
@@ -42,6 +45,7 @@ public class MatchmakingServiceImpl implements MatchmakingService {
         this.teamRepository = teamRepository;
         this.teamMemberRepository = teamMemberRepository;
         this.departmentRepository = departmentRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -277,6 +281,25 @@ public class MatchmakingServiceImpl implements MatchmakingService {
                 .build();
 
         TeamJoinRequest saved = joinRequestRepository.save(joinRequest);
+
+        Team team = post.getTeam();
+        User leader = teamMemberRepository.findByTeamIdAndRoleInTeam(team.getId(), TeamRole.LEADER)
+                .map(TeamMember::getUser)
+                .orElse(team.getLeader());
+        if (leader != null) {
+            String msgVi = (request.getMessage() != null && !request.getMessage().isBlank())
+                    ? (": \"" + request.getMessage() + "\"") : ".";
+            String msgEn = (request.getMessage() != null && !request.getMessage().isBlank())
+                    ? (": \"" + request.getMessage() + "\"") : ".";
+            notificationService.sendNotification(
+                    leader,
+                    applicant,
+                    "[VI] Yêu cầu tham gia nhóm mới | [EN] New team join request: " + team.getName(),
+                    "[VI] Sinh viên " + applicant.getFullName() + " đã gửi yêu cầu tham gia nhóm \"" + team.getName() + "\"" + msgVi + "\n"
+                            + "[EN] Student " + applicant.getFullName() + " has requested to join team \"" + team.getName() + "\"" + msgEn
+            );
+        }
+
         return mapToJoinResponse(saved);
     }
 
@@ -342,6 +365,28 @@ public class MatchmakingServiceImpl implements MatchmakingService {
         }
 
         TeamJoinRequest updated = joinRequestRepository.save(joinReq);
+
+        User applicant = joinReq.getApplicant();
+        if (applicant != null) {
+            if (decision == RequestStatus.ACCEPTED) {
+                notificationService.sendNotification(
+                        applicant,
+                        reviewer,
+                        "[VI] Yêu cầu tham gia nhóm đã được chấp nhận | [EN] Team join request accepted",
+                        "[VI] Chúc mừng! Yêu cầu tham gia nhóm \"" + team.getName() + "\" của bạn đã được trưởng nhóm chấp nhận.\n"
+                                + "[EN] Congratulations! Your request to join team \"" + team.getName() + "\" has been accepted by the team leader."
+                );
+            } else {
+                notificationService.sendNotification(
+                        applicant,
+                        reviewer,
+                        "[VI] Yêu cầu tham gia nhóm đã bị từ chối | [EN] Team join request rejected",
+                        "[VI] Yêu cầu tham gia nhóm \"" + team.getName() + "\" của bạn đã bị từ chối.\n"
+                                + "[EN] Your request to join team \"" + team.getName() + "\" has been rejected."
+                );
+            }
+        }
+
         return mapToJoinResponse(updated);
     }
 

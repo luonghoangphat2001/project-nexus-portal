@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Download, Upload, FileText, RefreshCw, CalendarClock, GraduationCap, Paperclip } from 'lucide-react';
+import { Download, Upload, FileText, RefreshCw, CalendarClock, GraduationCap, Paperclip, CheckCircle2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import reportService from '../services/reportService';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -18,13 +18,20 @@ import {
 function formatDate(date) {
   if (!date) return '—';
   try {
-    return new Date(date).toLocaleString(undefined, {
+    const raw = String(date).trim();
+    const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
+    const hasTz = /Z$|[+-]\d{2}(:\d{2})?$/.test(normalized);
+    const dateObj = new Date(hasTz ? normalized : `${normalized}+07:00`);
+    if (isNaN(dateObj.getTime())) return raw;
+    return new Intl.DateTimeFormat('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
-    });
+      minute: '2-digit',
+      hour12: false,
+    }).format(dateObj);
   } catch {
     return String(date);
   }
@@ -46,6 +53,7 @@ export function ReportsPage() {
   const [values, setValues] = useState({ type: 'REPORT', title: '', note: '', file: null });
   const fileInput = useRef(null);
   const selected = registrations.find((r) => String(r.id) === selectedId);
+  const hasSubmitted = documents.length > 0;
 
   useEffect(() => {
     let active = true;
@@ -191,16 +199,41 @@ export function ReportsPage() {
               {/* Right Column: Submission Deadline Milestone */}
               <div className="lg:col-span-5">
                 {selected && (
-                  <div className="bg-gradient-to-br from-amber-50/80 to-orange-50/50 border border-amber-200/80 rounded-xl p-4 flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-amber-100/80 text-amber-700 shrink-0 mt-0.5">
-                      <CalendarClock className="w-5 h-5" />
+                  <div
+                    className={`border rounded-xl p-4 flex items-start gap-3 transition-all ${
+                      hasSubmitted
+                        ? 'bg-gradient-to-br from-emerald-50/90 to-teal-50/50 border-emerald-200/90 shadow-xs'
+                        : 'bg-gradient-to-br from-amber-50/80 to-orange-50/50 border-amber-200/80'
+                    }`}
+                  >
+                    <div
+                      className={`p-2 rounded-lg shrink-0 mt-0.5 ${
+                        hasSubmitted
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-amber-100/80 text-amber-700'
+                      }`}
+                    >
+                      {hasSubmitted ? (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                      ) : (
+                        <CalendarClock className="w-5 h-5" />
+                      )}
                     </div>
-                    <div className="space-y-1 min-w-0 flex-1">
+                    <div className="space-y-1.5 min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-bold text-amber-900 uppercase tracking-wider">
-                          {t('reports.deadlineNotice', 'Hạn chót nộp tài liệu')}
+                        <span
+                          className={`text-xs font-bold uppercase tracking-wider ${
+                            hasSubmitted ? 'text-emerald-900' : 'text-amber-900'
+                          }`}
+                        >
+                          {t('reports.deadlineNotice', 'Hạn chót nộp tài liệu đợt này là')}
                         </span>
-                        {selected.canSubmit ? (
+                        {hasSubmitted ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            {t('reports.statusDone', 'Đã nộp')}
+                          </span>
+                        ) : selected.canSubmit ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                             {t('common.open', 'Đang mở nộp')}
@@ -211,12 +244,30 @@ export function ReportsPage() {
                           </span>
                         )}
                       </div>
-                      <div className="text-sm font-bold text-slate-900 font-mono">
-                        {formatDate(selected.submissionDeadline)}
+                      <div className="text-sm font-bold text-slate-900 font-mono flex items-center gap-2">
+                        <span>{formatDate(selected.submissionDeadline)}</span>
+                        <span className="text-[10px] font-sans font-medium text-slate-600 bg-white/80 px-1.5 py-0.5 rounded border border-slate-200/80">
+                          GMT+7
+                        </span>
                       </div>
-                      <p className="text-xs text-slate-500 leading-relaxed">
-                        {t('reports.deadlineSub', '(Vui lòng nộp đầy đủ file báo cáo/slide trước thời hạn)')}
-                      </p>
+                      {hasSubmitted ? (
+                        <p className="text-xs text-emerald-700 leading-relaxed font-medium">
+                          {t(
+                            'reports.submittedNotice',
+                            `Đã hoàn thành nộp tài liệu (${documents.length} tệp tin)`,
+                            { count: documents.length }
+                          )}
+                          {selected.canSubmit && (
+                            <span className="text-slate-500 font-normal block sm:inline sm:ml-1">
+                              — {t('reports.canResubmit', 'vẫn có thể nộp phiên bản cập nhật trước hạn chót.')}
+                            </span>
+                          )}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                          {t('reports.deadlineSub', '(Vui lòng nộp đầy đủ file báo cáo/slide trước thời hạn)')}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}

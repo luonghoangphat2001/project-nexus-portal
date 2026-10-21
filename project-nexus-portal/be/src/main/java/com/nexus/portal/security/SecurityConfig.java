@@ -121,6 +121,7 @@ public class SecurityConfig {
                                 "/webjars/**"
                         ).permitAll()
                         // Role-based protection for Period Creation & Management at filter level
+                        .requestMatchers(HttpMethod.GET, "/periods", "/api/periods").hasAnyRole("ADMIN", "PRINCIPAL")
                         .requestMatchers(HttpMethod.POST, "/periods", "/api/periods").hasAnyRole("ADMIN", "PRINCIPAL")
                         .requestMatchers(HttpMethod.PUT, "/periods/**", "/api/periods/**").hasAnyRole("ADMIN", "PRINCIPAL")
                         .requestMatchers(HttpMethod.DELETE, "/periods/**", "/api/periods/**").hasRole("ADMIN")

@@ -13,6 +13,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -23,6 +25,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final UserRepository users;
     private final FacultyRepository faculties;
     private final List<NotificationDelivery> deliveries;
+
     public NotificationServiceImpl(NotificationRepository notifications, NotificationReadRepository reads,
             UserRepository users, FacultyRepository faculties, List<NotificationDelivery> deliveries) {
         this.notifications = notifications;
@@ -31,12 +34,16 @@ public class NotificationServiceImpl implements NotificationService {
         this.faculties = faculties;
         this.deliveries = deliveries;
     }
+
+    @Override
     @Transactional(readOnly = true)
     public List<NotificationResponse> getAll(UserPrincipal actor) {
         User user = users.findById(actor.getId()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return notifications.findAll(org.springframework.data.domain.Sort.by("createdAt").descending()).stream()
                 .filter(notification -> visible(notification, user, actor)).map(notification -> response(notification, actor)).toList();
     }
+
+    @Override
     public NotificationResponse create(NotificationRequest request, UserPrincipal actor) {
         Notification notification = new Notification();
         notification.setTitle(request.title().trim());
@@ -49,6 +56,48 @@ public class NotificationServiceImpl implements NotificationService {
         notifyAfterCommit(null);
         return result;
     }
+
+    @Override
+    public void sendNotification(User recipient, User author, String title, String content) {
+        sendNotification(recipient, author, title, content, null);
+    }
+
+    @Override
+    public void sendNotification(User recipient, User author, String title, String content, Faculty faculty) {
+        if (recipient == null) return;
+        User resolvedAuthor = author;
+        if (resolvedAuthor == null) {
+            resolvedAuthor = users.findByUsername("superadmin")
+                    .or(() -> users.findById(1L))
+                    .orElse(recipient);
+        }
+
+        Notification notification = new Notification();
+        notification.setTitle(title.trim());
+        notification.setContent(content.trim());
+        notification.setAuthor(resolvedAuthor);
+        notification.setRecipient(recipient);
+        if (faculty != null) {
+            notification.setFaculty(faculty);
+        } else if (recipient.getFaculties() != null && !recipient.getFaculties().isEmpty()) {
+            notification.setFaculty(recipient.getFaculties().iterator().next());
+        }
+
+        notifications.save(notification);
+        notifyAfterCommit(recipient.getId());
+    }
+
+    @Override
+    public void sendNotificationToUsers(Collection<User> recipients, User author, String title, String content) {
+        if (recipients == null || recipients.isEmpty()) return;
+        for (User recipient : recipients) {
+            if (recipient != null) {
+                sendNotification(recipient, author, title, content, null);
+            }
+        }
+    }
+
+    @Override
     public void markRead(Long id, UserPrincipal actor) {
         Notification notification = find(id);
         User user = users.findById(actor.getId()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -56,30 +105,66 @@ public class NotificationServiceImpl implements NotificationService {
         if (!reads.existsByNotificationIdAndUserId(id, actor.getId())) reads.save(new NotificationRead(notification, user));
         notifyAfterCommit(actor.getId());
     }
+
+    @Override
     public void delete(Long id) {
         Notification notification = find(id);
         reads.deleteByNotificationId(id);
         notifications.delete(notification);
         notifyAfterCommit(null);
     }
-    private void notifyAfterCommit(Long userId) {
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override public void afterCommit() {
-                deliveries.forEach(delivery -> delivery.changed(userId));
-            }
-        });
+
+    @Override
+    public void delete(Long id, UserPrincipal actor) {
+        Notification notification = find(id);
+        boolean isPrivileged = actor.getAuthorities().stream().anyMatch(auth ->
+                auth.getAuthority().equals("ROLE_ADMIN") || auth.getAuthority().equals("ROLE_PRINCIPAL"));
+        boolean isRecipient = notification.getRecipient() != null && notification.getRecipient().getId().equals(actor.getId());
+
+        if (!isPrivileged && !isRecipient) {
+            throw new AppException("Notification deletion denied", HttpStatus.FORBIDDEN);
+        }
+
+        reads.deleteByNotificationId(id);
+        notifications.delete(notification);
+        notifyAfterCommit(notification.getRecipient() != null ? notification.getRecipient().getId() : null);
     }
+
+    private void notifyAfterCommit(Long userId) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() {
+                    deliveries.forEach(delivery -> delivery.changed(userId));
+                }
+            });
+        } else {
+            deliveries.forEach(delivery -> delivery.changed(userId));
+        }
+    }
+
     private Notification find(Long id) {
         return notifications.findById(id).orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
     }
+
     private boolean visible(Notification notification, User user, UserPrincipal actor) {
+        if (notification.getRecipient() != null) {
+            return notification.getRecipient().getId().equals(actor.getId());
+        }
         return notification.getFaculty() == null || actor.getAuthorities().stream().anyMatch(authority ->
                 authority.getAuthority().equals("ROLE_ADMIN") || authority.getAuthority().equals("ROLE_PRINCIPAL"))
-                || user.getFaculties().stream().anyMatch(faculty -> faculty.getId().equals(notification.getFaculty().getId()));
+                || (user.getFaculties() != null && user.getFaculties().stream().anyMatch(faculty -> faculty.getId().equals(notification.getFaculty().getId())));
     }
+
     private NotificationResponse response(Notification notification, UserPrincipal actor) {
-        return new NotificationResponse(notification.getId(), notification.getTitle(), notification.getContent(),
-                notification.getFaculty() == null ? null : notification.getFaculty().getId(), notification.getAuthor().getFullName(),
-                notification.getCreatedAt(), reads.existsByNotificationIdAndUserId(notification.getId(), actor.getId()));
+        return new NotificationResponse(
+                notification.getId(),
+                notification.getTitle(),
+                notification.getContent(),
+                notification.getFaculty() == null ? null : notification.getFaculty().getId(),
+                notification.getAuthor() != null ? notification.getAuthor().getFullName() : "Hệ thống",
+                notification.getCreatedAt(),
+                reads.existsByNotificationIdAndUserId(notification.getId(), actor.getId()),
+                notification.getRecipient() != null ? notification.getRecipient().getId() : null
+        );
     }
 }

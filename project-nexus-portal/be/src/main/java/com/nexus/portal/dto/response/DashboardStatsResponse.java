@@ -17,6 +17,8 @@ public class DashboardStatsResponse {
     private Map<String, Long> userRoleDistribution;
     private Map<String, Long> topicStatusDistribution;
     private List<Map<String, Object>> timelineData;
+    private String currentRole;
+    private Map<String, Object> scopedStats;
 
     public DashboardStatsResponse() {
     }
@@ -26,6 +28,18 @@ public class DashboardStatsResponse {
                                   List<Map<String, Object>> recentActivities, List<Map<String, Object>> recentNotifications,
                                   Map<String, Long> userRoleDistribution, Map<String, Long> topicStatusDistribution,
                                   List<Map<String, Object>> timelineData) {
+        this(totalUsers, activeUsers, totalRoles, systemUptimeSeconds,
+             totalTopics, totalTeams, totalRegistrations, totalPeriods,
+             recentActivities, recentNotifications,
+             userRoleDistribution, topicStatusDistribution,
+             timelineData, null, null);
+    }
+
+    public DashboardStatsResponse(long totalUsers, long activeUsers, long totalRoles, long systemUptimeSeconds,
+                                  long totalTopics, long totalTeams, long totalRegistrations, long totalPeriods,
+                                  List<Map<String, Object>> recentActivities, List<Map<String, Object>> recentNotifications,
+                                  Map<String, Long> userRoleDistribution, Map<String, Long> topicStatusDistribution,
+                                  List<Map<String, Object>> timelineData, String currentRole, Map<String, Object> scopedStats) {
         this.totalUsers = totalUsers;
         this.activeUsers = activeUsers;
         this.totalRoles = totalRoles;
@@ -39,6 +53,8 @@ public class DashboardStatsResponse {
         this.userRoleDistribution = userRoleDistribution;
         this.topicStatusDistribution = topicStatusDistribution;
         this.timelineData = timelineData;
+        this.currentRole = currentRole;
+        this.scopedStats = scopedStats;
     }
 
     public static Builder builder() {
@@ -59,6 +75,18 @@ public class DashboardStatsResponse {
         private Map<String, Long> userRoleDistribution;
         private Map<String, Long> topicStatusDistribution;
         private List<Map<String, Object>> timelineData;
+        private String currentRole;
+        private Map<String, Object> scopedStats;
+
+        public Builder currentRole(String currentRole) {
+            this.currentRole = currentRole;
+            return this;
+        }
+
+        public Builder scopedStats(Map<String, Object> scopedStats) {
+            this.scopedStats = scopedStats;
+            return this;
+        }
 
         public Builder totalUsers(long totalUsers) {
             this.totalUsers = totalUsers;
@@ -130,9 +158,26 @@ public class DashboardStatsResponse {
                     totalUsers, activeUsers, totalRoles, systemUptimeSeconds,
                     totalTopics, totalTeams, totalRegistrations, totalPeriods,
                     recentActivities, recentNotifications,
-                    userRoleDistribution, topicStatusDistribution, timelineData
+                    userRoleDistribution, topicStatusDistribution, timelineData,
+                    currentRole, scopedStats
             );
         }
+    }
+
+    public String getCurrentRole() {
+        return currentRole;
+    }
+
+    public void setCurrentRole(String currentRole) {
+        this.currentRole = currentRole;
+    }
+
+    public Map<String, Object> getScopedStats() {
+        return scopedStats;
+    }
+
+    public void setScopedStats(Map<String, Object> scopedStats) {
+        this.scopedStats = scopedStats;
     }
 
     public long getTotalUsers() {

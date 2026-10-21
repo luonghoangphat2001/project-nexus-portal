@@ -50,8 +50,12 @@ export const Sidebar = ({ isOpen = true, mobileOpen = false, onCloseMobile }) =>
       title: t('navGroups.academic'),
       icon: GraduationCap,
       items: [
-        { name: t('nav.periods'), path: '/periods', icon: CalendarRange },
-        { name: t('nav.academic'), path: '/academic', icon: GraduationCap },
+        ...(isAdmin || isPrincipal
+          ? [
+              { name: t('nav.periods'), path: '/periods', icon: CalendarRange },
+              { name: t('nav.academic'), path: '/academic', icon: GraduationCap },
+            ]
+          : []),
       ],
     },
     {

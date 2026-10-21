@@ -48,8 +48,22 @@ export const App = () => {
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="academic" element={<AcademicPage />} />
-            <Route path="periods" element={<PeriodsPage />} />
+            <Route
+              path="academic"
+              element={
+                <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_PRINCIPAL']}>
+                  <AcademicPage />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="periods"
+              element={
+                <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_PRINCIPAL']}>
+                  <PeriodsPage />
+                </RoleBasedRoute>
+              }
+            />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="progress" element={<ProgressPage />} />
 

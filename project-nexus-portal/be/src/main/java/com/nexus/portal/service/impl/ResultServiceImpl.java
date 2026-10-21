@@ -17,6 +17,7 @@ import com.nexus.portal.repository.TopicRepository;
 import com.nexus.portal.service.AuditLogService;
 import com.nexus.portal.service.CalculatedScore;
 import com.nexus.portal.service.ResultService;
+import com.nexus.portal.service.NotificationService;
 import com.nexus.portal.service.ScoreCalculationService;
 import com.nexus.portal.service.ScoreCalculationService.ScoreRangeClassifier;
 import org.springframework.security.access.AccessDeniedException;
@@ -45,13 +46,14 @@ public class ResultServiceImpl implements ResultService {
     private final DepartmentRepository departments;
     private final RegistrationPeriodRepository periods;
     private final TopicRepository topics;
+    private final NotificationService notificationService;
 
     public ResultServiceImpl(DefenseAssignmentRepository assignments, DefenseCouncilRepository councils,
                               ResultRepository results, PublishedResultDetailsRepository resultDetails,
                               ScoreCalculationService scoreCalculation,
                               DefenseAccessPolicy access, AuditLogService audit, Clock clock,
                               DepartmentRepository departments, RegistrationPeriodRepository periods,
-                              TopicRepository topics) {
+                              TopicRepository topics, NotificationService notificationService) {
         this.assignments = assignments;
         this.councils = councils;
         this.results = results;
@@ -63,6 +65,16 @@ public class ResultServiceImpl implements ResultService {
         this.departments = departments;
         this.periods = periods;
         this.topics = topics;
+        this.notificationService = notificationService;
+    }
+
+    public ResultServiceImpl(DefenseAssignmentRepository assignments, DefenseCouncilRepository councils,
+                              ResultRepository results, PublishedResultDetailsRepository resultDetails,
+                              ScoreCalculationService scoreCalculation,
+                              DefenseAccessPolicy access, AuditLogService audit, Clock clock,
+                              DepartmentRepository departments, RegistrationPeriodRepository periods,
+                              TopicRepository topics) {
+        this(assignments, councils, results, resultDetails, scoreCalculation, access, audit, clock, departments, periods, topics, null);
     }
 
     @Override
@@ -111,6 +123,29 @@ public class ResultServiceImpl implements ResultService {
                         + assignment.getRegistration().getId(), null, null, "SUCCESS");
         Map<Long, com.nexus.portal.model.PublishedResultDetails> savedDetails = snapshots.stream()
                 .collect(Collectors.toMap(com.nexus.portal.model.PublishedResultDetails::getId, detail -> detail));
+
+        if (notificationService != null) {
+            String topicTitle = assignment.getRegistration() != null && assignment.getRegistration().getTopic() != null
+                    ? assignment.getRegistration().getTopic().getTitle() : "Khóa luận tốt nghiệp";
+            for (Result r : saved) {
+                if (r.getStudent() != null) {
+                    String statusVi = r.isPassed() ? "Đạt" : "Không đạt";
+                    String statusEn = r.isPassed() ? "Passed" : "Failed";
+                    notificationService.sendNotification(
+                            r.getStudent(),
+                            manager,
+                            "[VI] Điểm bảo vệ khóa luận | [EN] Defense evaluation results: " + topicTitle,
+                            "[VI] Kết quả bảo vệ đề tài \"" + topicTitle + "\" đã được công bố. Điểm tổng kết: "
+                                    + r.getFinalScore() + " (" + statusVi
+                                    + "). Vui lòng vào mục Kết quả bảo vệ để xem chi tiết nhận xét của hội đồng.\n"
+                                    + "[EN] Defense results for topic \"" + topicTitle + "\" have been published. Final score: "
+                                    + r.getFinalScore() + " (" + statusEn
+                                    + "). Please check the Defense Results page to view detailed council evaluations."
+                    );
+                }
+            }
+        }
+
         return saved.stream().map(result -> toResponse(result, savedDetails.get(result.getId()))).toList();
     }
 
