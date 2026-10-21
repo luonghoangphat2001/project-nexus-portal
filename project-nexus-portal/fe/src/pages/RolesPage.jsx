@@ -194,7 +194,7 @@ export const RolesPage = () => {
         />
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
+          <table className="w-full text-left border-collapse text-sm min-w-[650px]">
             <thead>
               <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
                 <th className="py-3.5 px-4">{t('rolesPage.colFeature')}</th>

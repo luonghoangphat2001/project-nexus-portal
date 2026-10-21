@@ -10,6 +10,7 @@ import {
   TableCard,
   StatusBadge,
   Modal,
+  MultiSelectDropdown,
   EmptyState,
   Banner,
   buttonClass,
@@ -188,7 +189,7 @@ export function PeriodsPage() {
       {/* Clean Table Card matching Image 1 */}
       <TableCard>
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
+          <table className="w-full text-left border-collapse text-sm min-w-[700px]">
             <thead>
               <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-600 font-semibold text-xs uppercase tracking-wider">
                 <th className="py-3.5 px-4">{t('periods.periodName')}</th>
@@ -260,9 +261,10 @@ export function PeriodsPage() {
                               })
                             }
                             className={buttonClass.actionRow}
+                            title={t('common.edit')}
+                            aria-label={t('common.edit')}
                           >
-                            <Edit2 className="w-3 h-3 text-slate-500" />
-                            <span>{t('common.edit')}</span>
+                            <Edit2 className="w-3.5 h-3.5 text-slate-600" />
                           </button>
 
                           {hasRole('ROLE_ADMIN') && (
@@ -271,9 +273,10 @@ export function PeriodsPage() {
                               disabled={busy}
                               onClick={() => handleRemove(period)}
                               className={buttonClass.actionRowDanger}
+                              title={t('common.delete')}
+                              aria-label={t('common.delete')}
                             >
-                              <Trash2 className="w-3 h-3 text-rose-500" />
-                              <span>{t('common.delete')}</span>
+                              <Trash2 className="w-3.5 h-3.5 text-rose-500" />
                             </button>
                           )}
                         </div>
@@ -307,7 +310,7 @@ export function PeriodsPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 mb-1">{t('periods.academicYear')} *</label>
               <input
@@ -334,7 +337,7 @@ export function PeriodsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 mb-1">{t('periods.regStarts')} *</label>
               <input
@@ -342,7 +345,8 @@ export function PeriodsPage() {
                 required
                 value={form?.startDate || ''}
                 onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                className={inputClass}
+                onClick={(e) => { try { e.target.showPicker?.(); } catch(_) {} }}
+                className={`${inputClass} cursor-pointer`}
               />
             </div>
             <div>
@@ -352,7 +356,8 @@ export function PeriodsPage() {
                 required
                 value={form?.endDate || ''}
                 onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                className={inputClass}
+                onClick={(e) => { try { e.target.showPicker?.(); } catch(_) {} }}
+                className={`${inputClass} cursor-pointer`}
               />
             </div>
           </div>
@@ -364,7 +369,8 @@ export function PeriodsPage() {
               required
               value={form?.submissionDeadline || ''}
               onChange={(e) => setForm({ ...form, submissionDeadline: e.target.value })}
-              className={inputClass}
+              onClick={(e) => { try { e.target.showPicker?.(); } catch(_) {} }}
+              className={`${inputClass} cursor-pointer`}
             />
           </div>
 
@@ -384,97 +390,25 @@ export function PeriodsPage() {
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block font-semibold text-slate-700 text-xs uppercase tracking-wider">
-                {t('periods.targetFaculties')} *
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  const allSelected = form?.facultyIds?.length === faculties.length;
-                  setForm({ ...form, facultyIds: allSelected ? [] : faculties.map((f) => f.id) });
-                }}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium cursor-pointer transition-colors"
-              >
-                {form?.facultyIds?.length === faculties.length ? (t('common.deselectAll') || 'Bỏ chọn tất cả') : (t('common.selectAll') || 'Chọn tất cả')}
-              </button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 bg-slate-50/80 border border-slate-200 rounded-xl max-h-40 overflow-y-auto">
-              {faculties.map((f) => {
-                const checked = form?.facultyIds?.includes(f.id);
-                return (
-                  <label
-                    key={f.id}
-                    className={`flex items-center space-x-2.5 p-2 rounded-lg cursor-pointer border transition-all text-xs font-medium select-none ${
-                      checked
-                        ? 'bg-blue-50 border-blue-300 text-blue-800 shadow-xs'
-                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100/70'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => {
-                        const current = form?.facultyIds || [];
-                        const next = checked
-                          ? current.filter((id) => id !== f.id)
-                          : [...current, f.id];
-                        setForm({ ...form, facultyIds: next });
-                      }}
-                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
-                    />
-                    <span className="truncate">{f.name}</span>
-                  </label>
-                );
-              })}
-            </div>
+            <label className="block font-semibold text-slate-700 mb-1">{t('periods.targetFaculties')} *</label>
+            <MultiSelectDropdown
+              options={faculties}
+              value={form?.facultyIds || []}
+              onChange={(selected) => setForm({ ...form, facultyIds: selected })}
+              placeholder={t('periods.targetFaculties')}
+              allLabel={t('notifications.allFaculties') || 'Tất cả các khoa'}
+            />
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block font-semibold text-slate-700 text-xs uppercase tracking-wider">
-                {t('periods.targetCohorts')} *
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  const allSelected = form?.cohortIds?.length === cohorts.length;
-                  setForm({ ...form, cohortIds: allSelected ? [] : cohorts.map((c) => c.id) });
-                }}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium cursor-pointer transition-colors"
-              >
-                {form?.cohortIds?.length === cohorts.length ? (t('common.deselectAll') || 'Bỏ chọn tất cả') : (t('common.selectAll') || 'Chọn tất cả')}
-              </button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 bg-slate-50/80 border border-slate-200 rounded-xl max-h-40 overflow-y-auto">
-              {cohorts.map((c) => {
-                const checked = form?.cohortIds?.includes(c.id);
-                return (
-                  <label
-                    key={c.id}
-                    className={`flex items-center space-x-2.5 p-2 rounded-lg cursor-pointer border transition-all text-xs font-medium select-none ${
-                      checked
-                        ? 'bg-blue-50 border-blue-300 text-blue-800 shadow-xs'
-                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100/70'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => {
-                        const current = form?.cohortIds || [];
-                        const next = checked
-                          ? current.filter((id) => id !== c.id)
-                          : [...current, c.id];
-                        setForm({ ...form, cohortIds: next });
-                      }}
-                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
-                    />
-                    <span className="truncate">{c.name}</span>
-                  </label>
-                );
-              })}
-            </div>
+            <label className="block font-semibold text-slate-700 mb-1">{t('periods.targetCohorts')} *</label>
+            <MultiSelectDropdown
+              options={cohorts}
+              value={form?.cohortIds || []}
+              onChange={(selected) => setForm({ ...form, cohortIds: selected })}
+              placeholder={t('periods.targetCohorts')}
+              allLabel="Tất cả các khóa"
+            />
           </div>
 
           <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">

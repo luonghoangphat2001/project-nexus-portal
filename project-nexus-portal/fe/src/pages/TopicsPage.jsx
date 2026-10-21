@@ -472,7 +472,7 @@ export const TopicsPage = () => {
       >
         {comparisonData && (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
+            <table className="w-full border-collapse text-sm min-w-[650px]">
               <thead>
                 <tr className="border-b border-slate-200">
                   <th className="py-3 px-4 text-left font-semibold text-slate-500 w-1/4">

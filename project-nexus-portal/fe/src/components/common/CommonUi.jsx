@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { formatApiError } from '../../utils/errorHandler';
 import {
@@ -12,6 +12,8 @@ import {
   AlertCircle,
   CheckCircle,
   HelpCircle,
+  Check,
+  Search,
 } from 'lucide-react';
 
 export const inputClass =
@@ -413,19 +415,19 @@ export function Pagination({
 }
 
 /**
- * Standard Modal Dialog Component
+ * Standard Modal Dialog Component with responsive mobile scaling
  */
 export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'max-w-xl' }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <div
-        className={`bg-white w-full ${maxWidth} rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
+        className={`bg-white w-full ${maxWidth} rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto`}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="font-bold text-slate-900 text-base">{title}</h3>
+        <div className="px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="font-bold text-slate-900 text-sm sm:text-base">{title}</h3>
           <button
             type="button"
             onClick={onClose}
@@ -436,15 +438,288 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'ma
         </div>
 
         {/* Body */}
-        <div className="p-6 max-h-[75vh] overflow-y-auto space-y-4">{children}</div>
+        <div className="p-4 sm:p-6 max-h-[85vh] sm:max-h-[75vh] overflow-y-auto space-y-4">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">
+          <div className="px-4 py-3 sm:px-6 sm:py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">
             {footer}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * MultiSelectDropdown - Modern, accessible, tag-based dropdown for multi-selection
+ * Replaces cumbersome native <select multiple>
+ */
+export function MultiSelectDropdown({
+  options = [],
+  value = [],
+  onChange,
+  placeholder,
+  searchPlaceholder,
+  allLabel,
+  noneSelectedLabel,
+  disabled = false,
+  className = '',
+  maxDisplayTags = 2,
+}) {
+  const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const containerRef = useRef(null);
+
+  const resolvedPlaceholder = placeholder || t('common.select') || 'Chọn...';
+  const resolvedSearchPlaceholder = searchPlaceholder || t('common.search') || 'Tìm kiếm...';
+  const resolvedAllLabel = allLabel || t('common.all') || 'Tất cả';
+  const resolvedNoneLabel = noneSelectedLabel || t('common.none') || 'Bỏ chọn';
+
+  // Close when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  const selectedSet = new Set((value || []).map(Number));
+
+  const filteredOptions = options.filter((opt) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
+    const nameMatch = opt.name?.toLowerCase().includes(q);
+    const codeMatch = opt.code?.toLowerCase().includes(q);
+    return nameMatch || codeMatch;
+  });
+
+  const handleToggle = (id) => {
+    const numId = Number(id);
+    if (selectedSet.has(numId)) {
+      onChange((value || []).map(Number).filter((v) => v !== numId));
+    } else {
+      onChange([...(value || []).map(Number), numId]);
+    }
+  };
+
+  const handleSelectAll = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onChange(options.map((o) => Number(o.id)));
+  };
+
+  const handleDeselectAll = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onChange([]);
+  };
+
+  const handleRemoveTag = (e, id) => {
+    e.stopPropagation();
+    const numId = Number(id);
+    onChange((value || []).map(Number).filter((v) => v !== numId));
+  };
+
+  const isAllSelected = options.length > 0 && selectedSet.size === options.length;
+
+  return (
+    <div className={`relative ${className}`} ref={containerRef}>
+      {/* Trigger Box */}
+      <div
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onKeyDown={(e) => {
+          if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+          }
+        }}
+        className={`w-full min-h-[42px] px-3 py-1.5 rounded-xl border text-sm bg-white transition-all cursor-pointer flex items-center justify-between gap-2 select-none ${
+          disabled
+            ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+            : isOpen
+            ? 'border-blue-500 ring-1 ring-blue-500 shadow-xs'
+            : 'border-slate-200 hover:border-slate-300'
+        }`}
+      >
+        {/* Selected Items or Placeholder */}
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
+          {selectedSet.size === 0 ? (
+            <span className="text-slate-400 text-xs sm:text-sm truncate">{resolvedPlaceholder}</span>
+          ) : isAllSelected ? (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              {resolvedAllLabel} ({options.length})
+            </span>
+          ) : (
+            <>
+              {options
+                .filter((opt) => selectedSet.has(Number(opt.id)))
+                .slice(0, maxDisplayTags)
+                .map((opt) => (
+                  <span
+                    key={opt.id}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 max-w-[170px] truncate"
+                  >
+                    <span className="truncate">{opt.name || opt.code}</span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => handleRemoveTag(e, opt.id)}
+                      className="hover:text-blue-900 rounded cursor-pointer"
+                      title={t('common.delete') || 'Xóa'}
+                    >
+                      <X className="w-3 h-3" />
+                    </span>
+                  </span>
+                ))}
+              {selectedSet.size > maxDisplayTags && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
+                  +{selectedSet.size - maxDisplayTags}
+                </span>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Right Icons: Clear & Chevron */}
+        <div className="flex items-center space-x-1 shrink-0 text-slate-400">
+          {selectedSet.size > 0 && !disabled && (
+            <button
+              type="button"
+              onClick={handleDeselectAll}
+              className="p-1 hover:text-slate-600 rounded transition-colors"
+              title={resolvedNoneLabel}
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <ChevronDown
+            className={`w-4 h-4 transition-transform duration-200 ${
+              isOpen ? 'rotate-180 text-blue-600' : ''
+            }`}
+          />
+        </div>
+      </div>
+
+      {/* Dropdown Menu Popup */}
+      {isOpen && (
+        <div className="absolute left-0 right-0 mt-1.5 bg-white rounded-xl border border-slate-200 shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          {/* Header Action Bar */}
+          <div className="p-2 border-b border-slate-100 space-y-2 bg-slate-50/70">
+            {options.length > 4 && (
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={resolvedSearchPlaceholder}
+                  className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  autoFocus
+                />
+              </div>
+            )}
+
+            <div className="flex items-center justify-between text-xs px-1">
+              <span className="text-slate-500 font-medium">
+                {selectedSet.size}/{options.length} {t('common.selected') || 'đã chọn'}
+              </span>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={handleSelectAll}
+                  className="text-blue-600 hover:text-blue-800 font-semibold cursor-pointer"
+                >
+                  {resolvedAllLabel}
+                </button>
+                <span className="text-slate-300">|</span>
+                <button
+                  type="button"
+                  onClick={handleDeselectAll}
+                  className="text-slate-500 hover:text-slate-700 font-medium cursor-pointer"
+                >
+                  {resolvedNoneLabel}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Options List */}
+          <div className="max-h-56 overflow-y-auto divide-y divide-slate-50 p-1">
+            {filteredOptions.length === 0 ? (
+              <div className="p-4 text-center text-xs text-slate-400">
+                {t('common.noData') || 'Không tìm thấy kết quả'}
+              </div>
+            ) : (
+              filteredOptions.map((opt) => {
+                const isSelected = selectedSet.has(Number(opt.id));
+                return (
+                  <div
+                    key={opt.id}
+                    onClick={() => handleToggle(opt.id)}
+                    className={`flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                      isSelected
+                        ? 'bg-blue-50/80 text-blue-900 font-medium'
+                        : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {}} // handled by parent div onClick
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer shrink-0"
+                    />
+                    <span className="flex-1 truncate">{opt.name}</span>
+                    {opt.code && (
+                      <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 shrink-0">
+                        {opt.code}
+                      </span>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Footer Close Button for mobile ease of use */}
+          <div className="p-2 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="px-3 py-1 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
+            >
+              {t('common.done') || 'Xong'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -506,6 +781,7 @@ export default {
   MetricCard,
   Pagination,
   Modal,
+  MultiSelectDropdown,
   EmptyState,
   Banner,
   inputClass,

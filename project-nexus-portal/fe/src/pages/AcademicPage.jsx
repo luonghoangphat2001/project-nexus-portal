@@ -218,7 +218,7 @@ export function AcademicPage() {
       {/* Clean Table Card */}
       <TableCard>
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
+          <table className="w-full text-left border-collapse text-sm min-w-[650px]">
             <thead>
               <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-600 font-semibold text-xs uppercase tracking-wider">
                 <th className="py-3 px-4">{t('academic.code')}</th>
@@ -286,9 +286,10 @@ export function AcademicPage() {
                               disabled={busy}
                               onClick={() => setForm({ ...row })}
                               className={buttonClass.actionRow}
+                              title={t('common.edit')}
+                              aria-label={t('common.edit')}
                             >
-                              <Edit2 className="w-3 h-3 text-slate-500" />
-                              <span>{t('common.edit')}</span>
+                              <Edit2 className="w-3.5 h-3.5 text-slate-600" />
                             </button>
 
                             {hasRole('ROLE_ADMIN') && (
@@ -297,9 +298,10 @@ export function AcademicPage() {
                                 disabled={busy}
                                 onClick={() => handleRemove(row)}
                                 className={buttonClass.actionRowDanger}
+                                title={t('common.delete')}
+                                aria-label={t('common.delete')}
                               >
-                                <Trash2 className="w-3 h-3 text-rose-500" />
-                                <span>{t('common.delete')}</span>
+                                <Trash2 className="w-3.5 h-3.5 text-rose-500" />
                               </button>
                             )}
                           </div>
