@@ -7,9 +7,9 @@ import com.nexus.portal.service.impl.SseNotificationDelivery;
 import jakarta.servlet.DispatcherType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -23,9 +23,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class NotificationStreamSecurityTest {
     @Autowired MockMvc mvc;
-    @MockBean SseNotificationDelivery delivery;
-    @MockBean JwtTokenProvider tokens;
-    @MockBean CustomUserDetailsService users;
+    @MockitoBean SseNotificationDelivery delivery;
+    @MockitoBean JwtTokenProvider tokens;
+    @MockitoBean CustomUserDetailsService users;
 
     @Test void completedStreamRedispatchDoesNotRequireLostThreadAuthentication() throws Exception {
         SseEmitter emitter = new SseEmitter(1000L);
