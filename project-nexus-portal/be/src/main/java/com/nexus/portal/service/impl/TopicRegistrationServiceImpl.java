@@ -129,6 +129,29 @@ public class TopicRegistrationServiceImpl implements TopicRegistrationService {
             }
         }
 
+        // Notify Dean / Department Head (Trưởng khoa / Trưởng bộ môn)
+        Long deptId = topic.getDepartment() != null ? topic.getDepartment().getId() : null;
+        Long facultyId = (topic.getDepartment() != null && topic.getDepartment().getFaculty() != null)
+                ? topic.getDepartment().getFaculty().getId() : null;
+        if (deptId != null || facultyId != null) {
+            List<User> principals = userRepository.findPrincipalsByDepartmentOrFaculty(deptId, facultyId);
+            for (User principal : principals) {
+                boolean isAlreadyNotified = topic.getTopicLecturers() != null && topic.getTopicLecturers().stream()
+                        .anyMatch(tl -> tl.getLecturer() != null && tl.getLecturer().getId().equals(principal.getId()));
+                if (!isAlreadyNotified) {
+                    notificationService.sendNotification(
+                            principal,
+                            currentUser,
+                            "[VI] Đăng ký đề tài mới cần phê duyệt: " + topic.getTitle() + " | [EN] New topic registration pending review: " + topic.getTitle(),
+                            "[VI] Nhóm \"" + team.getName() + "\" do sinh viên " + currentUser.getFullName()
+                                    + " làm trưởng nhóm đã gửi đơn đăng ký đề tài \"" + topic.getTitle() + "\". Vui lòng kiểm tra và duyệt đăng ký.\n"
+                                    + "[EN] Team \"" + team.getName() + "\" led by student " + currentUser.getFullName()
+                                    + " has submitted a registration for topic \"" + topic.getTitle() + "\". Please review and approve."
+                    );
+                }
+            }
+        }
+
         return mapToResponse(saved);
     }
 

@@ -42,7 +42,9 @@ export const Sidebar = ({ isOpen = true, mobileOpen = false, onCloseMobile }) =>
       title: t('navGroups.overview'),
       icon: LayoutDashboard,
       items: [
-        { name: t('nav.dashboard'), path: '/dashboard', icon: LayoutDashboard },
+        ...(isAdmin
+          ? [{ name: t('nav.dashboard'), path: '/dashboard', icon: LayoutDashboard }]
+          : []),
       ],
     },
     {

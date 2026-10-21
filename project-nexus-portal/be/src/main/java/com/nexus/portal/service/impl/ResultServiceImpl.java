@@ -144,6 +144,27 @@ public class ResultServiceImpl implements ResultService {
                     );
                 }
             }
+
+            // Also notify advisor lecturers of the topic
+            Topic topic = assignment.getRegistration() != null ? assignment.getRegistration().getTopic() : null;
+            if (topic != null && topic.getTopicLecturers() != null) {
+                String teamName = assignment.getTeam() != null ? assignment.getTeam().getName() : "";
+                for (com.nexus.portal.model.TopicLecturer tl : topic.getTopicLecturers()) {
+                    if (tl.getLecturer() != null) {
+                        notificationService.sendNotification(
+                                tl.getLecturer(),
+                                manager,
+                                "[VI] Điểm bảo vệ đề tài hướng dẫn | [EN] Defense evaluation results for guided topic: " + topicTitle,
+                                "[VI] Hội đồng đã hoàn tất chấm điểm và công bố kết quả cho đề tài \"" + topicTitle + "\""
+                                        + (!teamName.isBlank() ? (" của nhóm \"" + teamName + "\"") : "")
+                                        + ". Vui lòng vào mục Kết quả bảo vệ để xem chi tiết bảng điểm.\n"
+                                        + "[EN] The defense council has evaluated and published results for topic \"" + topicTitle + "\""
+                                        + (!teamName.isBlank() ? (" by team \"" + teamName + "\"") : "")
+                                        + ". Please visit the Defense Results page to view the score sheet."
+                        );
+                    }
+                }
+            }
         }
 
         return saved.stream().map(result -> toResponse(result, savedDetails.get(result.getId()))).toList();
