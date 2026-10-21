@@ -1134,6 +1134,7 @@ export const en = {
     "default": "An unexpected error occurred. Please try again later.",
     "network": "Unable to connect to the server. Please check your internet connection.",
     "invalidCredentials": "Invalid username or password. Please verify your credentials.",
+    "accountLocked": "Account temporarily locked for 15 minutes due to exceeding 5 failed login attempts",
     "unauthorized": "Your session has expired or you are not logged in. Please sign in again.",
     "forbidden": "Access Denied: Your account does not have permission to perform this operation.",
     "onlyStudentsTeam": "Only students are permitted to join a team.",

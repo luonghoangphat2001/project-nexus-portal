@@ -16,6 +16,7 @@ import com.nexus.portal.security.JwtTokenProvider;
 import com.nexus.portal.security.UserPrincipal;
 import com.nexus.portal.service.AuditLogService;
 import com.nexus.portal.service.AuthService;
+import com.nexus.portal.service.LoginAttemptService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -38,23 +39,34 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final AuditLogService auditLogService;
+    private final LoginAttemptService loginAttemptService;
 
     public AuthServiceImpl(AuthenticationManager authenticationManager,
                            UserRepository userRepository,
                            RoleRepository roleRepository,
                            PasswordEncoder passwordEncoder,
                            JwtTokenProvider tokenProvider,
-                           AuditLogService auditLogService) {
+                           AuditLogService auditLogService,
+                           LoginAttemptService loginAttemptService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
         this.auditLogService = auditLogService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     @Override
     public AuthResponse login(LoginRequest loginRequest) {
+        String username = loginRequest.getUsernameOrEmail();
+
+        if (loginAttemptService.isBlocked(username)) {
+            auditLogService.log(null, username, "AUTH_LOGIN_BLOCKED", "Auth",
+                    "Login blocked: Account is temporarily locked due to exceeding 5 failed attempts", "127.0.0.1", "NexusPortal", "FAILED");
+            throw new BadRequestException("Account is temporarily locked for 15 minutes due to exceeding 5 failed login attempts!");
+        }
+
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -70,6 +82,8 @@ public class AuthServiceImpl implements AuthService {
             User user = userRepository.findById(userPrincipal.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("User", "id", userPrincipal.getId()));
 
+            loginAttemptService.loginSucceeded(username);
+
             auditLogService.log(user.getId(), user.getUsername(), "AUTH_LOGIN_SUCCESS", "Auth",
                     "User logged in successfully", "127.0.0.1", "NexusPortal", "SUCCESS");
 
@@ -80,11 +94,16 @@ public class AuthServiceImpl implements AuthService {
                     .user(mapToUserResponse(user))
                     .build();
         } catch (BadCredentialsException ex) {
-            auditLogService.log(null, loginRequest.getUsernameOrEmail(), "AUTH_LOGIN_FAILED", "Auth",
+            loginAttemptService.loginFailed(username);
+            auditLogService.log(null, username, "AUTH_LOGIN_FAILED", "Auth",
                     "Login failed: Invalid username or password", "127.0.0.1", "NexusPortal", "FAILED");
+
+            if (loginAttemptService.isBlocked(username)) {
+                throw new BadRequestException("Account is temporarily locked for 15 minutes due to exceeding 5 failed login attempts!");
+            }
             throw new BadRequestException("Invalid username or password!");
         } catch (Exception ex) {
-            auditLogService.log(null, loginRequest.getUsernameOrEmail(), "AUTH_LOGIN_ERROR", "Auth",
+            auditLogService.log(null, username, "AUTH_LOGIN_ERROR", "Auth",
                     "Login error: " + ex.getMessage(), "127.0.0.1", "NexusPortal", "FAILED");
             throw ex;
         }
