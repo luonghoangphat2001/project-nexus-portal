@@ -285,12 +285,13 @@ public class CouncilServiceImpl implements CouncilService {
                             boolean scheduled = c.getStatus() == CouncilStatus.SCHEDULED;
                             boolean eligibleCouncil = ownMember.isPresent()
                                     && access.canAssessAsCouncilMember(user, a.getRegistration());
+                            boolean resultsPublished = results.existsByAssignmentId(a.getId());
                             return new CouncilResponse.Assignment(a.getId(), access.toResponse(a.getRegistration(), user),
                                     scheduled && eligibleCouncil && ownMember.get().getRole() == CouncilMemberRole.REVIEWER,
                                     scheduled && eligibleCouncil,
                                     c.getStatus() != CouncilStatus.CANCELLED && access.isPrimaryAdvisor(user, a.getRegistration())
-                                            && !results.existsByAssignmentId(a.getId()),
-                                    ownMember.isPresent(), access.isAdvisor(user, a.getRegistration()));
+                                            && !resultsPublished,
+                                    ownMember.isPresent(), access.isAdvisor(user, a.getRegistration()), resultsPublished);
                         }).toList());
     }
 }

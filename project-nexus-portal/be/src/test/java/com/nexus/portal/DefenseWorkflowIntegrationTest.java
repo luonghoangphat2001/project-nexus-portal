@@ -387,6 +387,7 @@ class DefenseWorkflowIntegrationTest {
         CouncilResponse.Assignment view = councils.getCouncils("secretary").stream()
                 .filter(item -> item.id().equals(council.id())).findFirst().orElseThrow().assignments().get(0);
         assertThat(view.canAdvisor()).isTrue();
+        assertThat(view.resultsPublished()).isFalse();
         assertThat(view.canDefense()).isFalse();
         assertThat(view.councilLecturer()).isTrue();
         assertThat(view.thesisSupervisor()).isTrue();
@@ -408,10 +409,13 @@ class DefenseWorkflowIntegrationTest {
             AssessmentResponse advisorSheet = assessments.saveDraft(scoreRequest(assignmentId, student.getId(), AssessmentType.ADVISOR), "secretary");
             assertThat(assessments.submitAssessment(advisorSheet.id(), "secretary").status()).isEqualTo(AssessmentStatus.SUBMITTED);
         }
-        assertThat(resultService.publishAssignmentResults(assignmentId, "admin")).hasSize(2);
+        assertThat(resultService.publishPeriodResults(period.getId(), "admin")).hasSize(2);
         em.flush();
         em.clear();
         assertThat(em.createQuery("select count(d) from PublishedResultDetails d", Long.class).getSingleResult()).isEqualTo(2L);
+        CouncilResponse.Assignment publishedView = councils.getCouncils("admin").stream()
+                .filter(item -> item.id().equals(council.id())).findFirst().orElseThrow().assignments().get(0);
+        assertThat(publishedView.resultsPublished()).isTrue();
         assertThatThrownBy(() -> assessments.saveDraft(scoreRequest(assignmentId, leader.getId(), AssessmentType.DEFENSE), "chair"))
                 .isInstanceOf(BadRequestException.class);
     }
