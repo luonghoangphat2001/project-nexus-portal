@@ -45,6 +45,18 @@ class RegistrationPeriodServiceImplTest {
         var result = service.save(null, request("2026-2027", start.plusDays(5), start.plusDays(10)));
         assertEquals(9L, result.id()); assertEquals(Set.of(1L), result.facultyIds());
     }
+    @Test void returnsOnlyActivePeriods() {
+        RegistrationPeriod openPeriod = new RegistrationPeriod();
+        openPeriod.setId(1L);
+        openPeriod.setStatus(PeriodStatus.OPEN);
+        when(periods.findByStatus(PeriodStatus.OPEN)).thenReturn(List.of(openPeriod));
+
+        var active = service.getActive();
+        assertEquals(1, active.size());
+        assertEquals(1L, active.get(0).id());
+        assertEquals(PeriodStatus.OPEN, active.get(0).status());
+    }
+
     @Test void preventsDeletingPeriodWithTopics() {
         when(periods.findById(1L)).thenReturn(Optional.of(new RegistrationPeriod()));
         when(topics.existsByPeriodId(1L)).thenReturn(true);

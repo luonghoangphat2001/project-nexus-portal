@@ -25,6 +25,7 @@ import registrationService from '../services/registrationService';
 import topicService from '../services/topicService';
 import academicService from '../services/academicService';
 import userService from '../services/userService';
+import { periodService } from '../services/periodService';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
@@ -80,6 +81,7 @@ export const RegistrationsPage = () => {
   const [selectedDeptFilter, setSelectedDeptFilter] = useState('');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('');
   const [selectedPeriodFilter, setSelectedPeriodFilter] = useState('');
+  const [allPeriods, setAllPeriods] = useState([]);
 
   // Topic Create/Edit Modal State
   const [topicModalOpen, setTopicModalOpen] = useState(false);
@@ -136,6 +138,7 @@ export const RegistrationsPage = () => {
         promises.push(academicService.getAllMajors().catch(() => []));
         promises.push(userService.getScopedLecturers().then(res => res.data || res || []).catch(() => []));
         promises.push(topicService.searchTopics({ size: 100 }).then(res => res.content || []).catch(() => []));
+        promises.push(periodService.getAll().catch(() => []));
       }
 
       const results = await Promise.all(promises);
@@ -166,6 +169,8 @@ export const RegistrationsPage = () => {
         setLecturers(results[idx] || []);
         idx++;
         setAllTopics(results[idx] || []);
+        idx++;
+        setAllPeriods(results[idx] || []);
       }
     } catch (err) {
       console.error('Error loading registration data:', err);
@@ -223,12 +228,18 @@ export const RegistrationsPage = () => {
     }
   };
 
+  // Open periods only (for creating topics)
+  const openPeriods = useMemo(() => {
+    const list = activePeriods && activePeriods.length > 0 ? activePeriods : allPeriods;
+    return (list || []).filter((p) => p.status === 'OPEN');
+  }, [activePeriods, allPeriods]);
+
   // Open Create Topic Modal
   const handleOpenCreateModal = () => {
     setEditingTopic(null);
     setTopicFormError(null);
     const defaultDept = departments.length > 0 ? departments[0].id : '';
-    const defaultPeriod = activePeriods.length > 0 ? activePeriods[0].id : '';
+    const defaultPeriod = openPeriods.length > 0 ? openPeriods[0].id : '';
     const currentLecturer = lecturers.find(l => l.id === user?.id || l.email === user?.email);
     const defaultAdvisorId = currentLecturer ? currentLecturer.id : (lecturers.length > 0 ? lecturers[0].id : user?.id || '');
 
@@ -288,8 +299,36 @@ export const RegistrationsPage = () => {
       return;
     }
     if (!topicFormData.periodId) {
-      setTopicFormError('Vui lòng chọn đợt đăng ký');
+      setTopicFormError(t('registrations.selectPeriodRequired', 'Vui lòng chọn đợt đăng ký'));
       return;
+    }
+
+    const allKnownPeriods = allPeriods.length > 0 ? allPeriods : activePeriods;
+    const selectedPeriodObj = allKnownPeriods.find(
+      (p) => String(p.id) === String(topicFormData.periodId)
+    );
+
+    if (!editingTopic && selectedPeriodObj && selectedPeriodObj.status !== 'OPEN') {
+      setTopicFormError(t('registrations.periodNotOpenError', 'Chỉ có thể tạo đề tài trong đợt đăng ký đang mở (OPEN).'));
+      return;
+    }
+
+    if (
+      editingTopic &&
+      selectedPeriodObj &&
+      selectedPeriodObj.status !== 'OPEN' &&
+      String(topicFormData.periodId) !== String(editingTopic.periodId || editingTopic.period?.id)
+    ) {
+      setTopicFormError(t('registrations.periodNotOpenError', 'Chỉ có thể chuyển đề tài sang đợt đăng ký đang mở (OPEN).'));
+      return;
+    }
+
+    const selectedDeptObj = departments.find((d) => String(d.id) === String(topicFormData.departmentId));
+    if (selectedDeptObj && selectedPeriodObj && Array.isArray(selectedPeriodObj.facultyIds) && selectedPeriodObj.facultyIds.length > 0) {
+      if (selectedDeptObj.facultyId && !selectedPeriodObj.facultyIds.includes(Number(selectedDeptObj.facultyId))) {
+        setTopicFormError(t('registrations.facultyOutOfPeriodScope', 'Khoa của bộ môn đã chọn không thuộc phạm vi khoa mục tiêu của đợt đăng ký này.'));
+        return;
+      }
     }
 
     setTopicFormSubmitting(true);
@@ -634,9 +673,9 @@ export const RegistrationsPage = () => {
                 className={selectClass}
               >
                 <option value="">{t('registrations.selectPeriod', 'Tất cả đợt')}</option>
-                {activePeriods.map((p) => (
+                {(allPeriods.length > 0 ? allPeriods : activePeriods).map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name}
+                    {p.name} {p.status === 'OPEN' ? `(${t('enums.periodStatus.OPEN', 'Đang mở')})` : ''}
                   </option>
                 ))}
               </select>
@@ -1068,6 +1107,15 @@ export const RegistrationsPage = () => {
               </div>
             )}
 
+            {!editingTopic && openPeriods.length === 0 && (
+              <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs flex items-center space-x-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+                <span>
+                  {t('registrations.noOpenPeriodsAlert', 'Hiện không có đợt đăng ký nào đang mở. Trưởng khoa chỉ có thể tạo đề tài trong phạm vi các đợt đăng ký đang được mở.')}
+                </span>
+              </div>
+            )}
+
             {/* Title */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -1115,12 +1163,22 @@ export const RegistrationsPage = () => {
                   className={selectClass}
                 >
                   <option value="">-- {t('registrations.selectPeriod', 'Chọn đợt đăng ký')} --</option>
-                  {activePeriods.map((p) => (
+                  {openPeriods.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} ({p.academicYear})
+                      {p.name} ({p.academicYear}) - {t('enums.periodStatus.OPEN', 'Đang mở')}
                     </option>
                   ))}
+                  {editingTopic && !openPeriods.some((p) => String(p.id) === String(topicFormData.periodId)) && topicFormData.periodId && (
+                    <option value={topicFormData.periodId}>
+                      {editingTopic.periodName || `Đợt hiện tại (#${topicFormData.periodId})`}
+                    </option>
+                  )}
                 </select>
+                {!editingTopic && openPeriods.length === 0 && (
+                  <p className="mt-1 text-[11px] text-amber-600 font-medium">
+                    {t('registrations.noOpenPeriodsWarning', 'Hiện không có đợt đăng ký nào đang mở. Vui lòng mở đợt đăng ký trước khi tạo đề tài.')}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -1308,7 +1366,7 @@ export const RegistrationsPage = () => {
               </button>
               <button
                 type="submit"
-                disabled={topicFormSubmitting}
+                disabled={topicFormSubmitting || (!editingTopic && openPeriods.length === 0)}
                 className={buttonClass.primary}
               >
                 <Check className="w-4 h-4 mr-1" />

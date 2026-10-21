@@ -88,7 +88,7 @@ public class TopicController {
     @GetMapping("/periods/active")
     @Operation(summary = "Get active periods", description = "Retrieve list of all active registration periods")
     public ResponseEntity<ApiResponse<List<RegistrationPeriodResponse>>> getActivePeriods() {
-        List<RegistrationPeriodResponse> periods = registrationPeriodService.getAll();
+        List<RegistrationPeriodResponse> periods = registrationPeriodService.getActive();
         return ResponseEntity.ok(ApiResponse.success(periods, "Registration periods retrieved"));
     }
 

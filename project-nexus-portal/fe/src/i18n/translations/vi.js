@@ -534,7 +534,12 @@ export const vi = {
     "selectedTopicDetails": "Thông tin đề tài đang chọn",
     "registrationOpen": "Đang nhận đăng ký",
     "registrationClosed": "Đã đóng đăng ký",
-    "message": "Tin nhắn từ nhóm"
+    "message": "Tin nhắn từ nhóm",
+    "noOpenPeriodsAlert": "Hiện không có đợt đăng ký nào đang mở. Trưởng khoa chỉ có thể tạo đề tài trong phạm vi các đợt đăng ký đang được mở.",
+    "noOpenPeriodsWarning": "Hiện không có đợt đăng ký nào đang mở. Vui lòng mở đợt đăng ký trước khi tạo đề tài.",
+    "periodNotOpenError": "Chỉ có thể tạo đề tài trong đợt đăng ký đang mở (OPEN).",
+    "facultyOutOfPeriodScope": "Khoa của bộ môn đã chọn không thuộc phạm vi khoa mục tiêu của đợt đăng ký này.",
+    "selectPeriodRequired": "Vui lòng chọn đợt đăng ký"
   },
   "teams": {
     "title": "Nhóm của tôi",

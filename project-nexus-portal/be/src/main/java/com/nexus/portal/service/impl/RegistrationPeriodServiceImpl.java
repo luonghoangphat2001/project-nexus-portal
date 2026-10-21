@@ -2,6 +2,7 @@ package com.nexus.portal.service.impl;
 
 import com.nexus.portal.dto.request.RegistrationPeriodRequest;
 import com.nexus.portal.dto.response.RegistrationPeriodResponse;
+import com.nexus.portal.enums.PeriodStatus;
 import com.nexus.portal.exception.*;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.*;
@@ -32,6 +33,12 @@ public class RegistrationPeriodServiceImpl implements RegistrationPeriodService 
     @Transactional(readOnly = true)
     public List<RegistrationPeriodResponse> getAll() {
         return periods.findAll().stream().map(this::response).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RegistrationPeriodResponse> getActive() {
+        return periods.findByStatus(PeriodStatus.OPEN).stream().map(this::response).toList();
     }
 
     public RegistrationPeriodResponse save(Long id, RegistrationPeriodRequest request) {

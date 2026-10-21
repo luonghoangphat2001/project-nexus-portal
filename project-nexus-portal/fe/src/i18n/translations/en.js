@@ -534,7 +534,12 @@ export const en = {
     "selectedTopicDetails": "Selected topic details",
     "registrationOpen": "Registration open",
     "registrationClosed": "Registration closed",
-    "message": "Team message"
+    "message": "Team message",
+    "noOpenPeriodsAlert": "There are currently no open registration periods (OPEN). Deans can only create topics within the scope of open registration periods.",
+    "noOpenPeriodsWarning": "No registration periods are currently open. Please open a period before creating topics.",
+    "periodNotOpenError": "Topics can only be created within an open registration period (OPEN).",
+    "facultyOutOfPeriodScope": "The faculty of the selected department is not within the target faculties of this registration period.",
+    "selectPeriodRequired": "Please select a registration period"
   },
   "teams": {
     "title": "My Team",

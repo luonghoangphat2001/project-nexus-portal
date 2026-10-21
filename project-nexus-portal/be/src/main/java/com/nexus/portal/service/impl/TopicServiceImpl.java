@@ -3,6 +3,7 @@ package com.nexus.portal.service.impl;
 import com.nexus.portal.dto.request.TopicCreateRequest;
 import com.nexus.portal.dto.response.*;
 import com.nexus.portal.enums.AdvisorRole;
+import com.nexus.portal.enums.PeriodStatus;
 import com.nexus.portal.enums.RegistrationStatus;
 import com.nexus.portal.enums.RoleName;
 import com.nexus.portal.enums.TopicStatus;
@@ -63,6 +64,15 @@ public class TopicServiceImpl implements TopicService {
         RegistrationPeriod period = registrationPeriodRepository.findById(request.getPeriodId())
                 .orElseThrow(() -> new ResourceNotFoundException("RegistrationPeriod", "id", request.getPeriodId()));
 
+        if (period.getStatus() != PeriodStatus.OPEN) {
+            throw new BadRequestException("Registration period is not open (status: " + period.getStatus() + "). Topics can only be created within an open registration period.");
+        }
+
+        if (!period.getTargetFaculties().isEmpty() && department.getFaculty() != null &&
+                period.getTargetFaculties().stream().noneMatch(f -> f.getId().equals(department.getFaculty().getId()))) {
+            throw new BadRequestException("The department does not belong to a faculty targeted by this registration period.");
+        }
+
         Set<Major> majors = new HashSet<>();
         if (request.getMajorIds() != null && !request.getMajorIds().isEmpty()) {
             majors.addAll(majorRepository.findAllById(request.getMajorIds()));
@@ -116,6 +126,15 @@ public class TopicServiceImpl implements TopicService {
 
         RegistrationPeriod period = registrationPeriodRepository.findById(request.getPeriodId())
                 .orElseThrow(() -> new ResourceNotFoundException("RegistrationPeriod", "id", request.getPeriodId()));
+
+        if (period.getStatus() != PeriodStatus.OPEN && (topic.getPeriod() == null || !period.getId().equals(topic.getPeriod().getId()))) {
+            throw new BadRequestException("Registration period is not open (status: " + period.getStatus() + "). Topics can only be assigned to an open registration period.");
+        }
+
+        if (!period.getTargetFaculties().isEmpty() && department.getFaculty() != null &&
+                period.getTargetFaculties().stream().noneMatch(f -> f.getId().equals(department.getFaculty().getId()))) {
+            throw new BadRequestException("The department does not belong to a faculty targeted by this registration period.");
+        }
 
         Set<Major> majors = new HashSet<>();
         if (request.getMajorIds() != null && !request.getMajorIds().isEmpty()) {

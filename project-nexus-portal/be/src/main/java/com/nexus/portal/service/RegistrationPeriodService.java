@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface RegistrationPeriodService {
     List<RegistrationPeriodResponse> getAll();
+    List<RegistrationPeriodResponse> getActive();
     RegistrationPeriodResponse save(Long id, RegistrationPeriodRequest request);
     void delete(Long id);
 }
