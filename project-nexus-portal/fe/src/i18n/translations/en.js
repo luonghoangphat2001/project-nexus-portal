@@ -822,6 +822,7 @@ export const en = {
     "confirmSubmitLock": "Are you sure you want to submit and lock this score? It cannot be edited after submission.",
     "saveDraftSuccess": "Draft saved successfully!",
     "submittedNotice": "Score has been officially submitted and locked",
+    "studentAssessmentLocked": "This student already has an assessment submitted and locked by {evaluator}. The scoring form is hidden.",
     "noAssignedTeams": "No teams assigned to this council",
     "noAssessments": "No assessments for this team yet"
   },
