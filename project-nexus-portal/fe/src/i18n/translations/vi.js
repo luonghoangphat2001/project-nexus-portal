@@ -1034,6 +1034,40 @@ export const vi = {
       "councils": "Thành lập hội đồng & Phân công bảo vệ",
       "teams": "Tạo nhóm sinh viên & Ghép đội ngũ",
       "matchmaking": "Đăng tin tìm đồng đội & Ứng tuyển nhóm"
+    },
+    "perms": {
+      "admin": {
+        "userManagement": "Toàn quyền quản lý tài khoản người dùng và phân công vai trò",
+        "academicData": "Quản trị dữ liệu học vụ (Khoa, Bộ môn, Chuyên ngành, Khóa sinh viên)",
+        "runtimeConfig": "Cấu hình vận hành hệ thống và giám sát hiệu năng máy chủ",
+        "auditLogs": "Kiểm tra và xuất nhật ký kiểm toán an ninh (Audit Logs)",
+        "accountLock": "Khóa / mở khóa tài khoản người dùng và thực hiện đặt lại mật khẩu"
+      },
+      "principal": {
+        "topicsReview": "Xem xét và phê duyệt đề tài khóa luận cấp khoa/bộ môn",
+        "periodsManage": "Lập kế hoạch và quản lý các đợt đăng ký đề tài",
+        "progressMonitor": "Theo dõi tiến độ thực hiện khóa luận của các nhóm sinh viên trong khoa",
+        "instructorsList": "Truy cập danh sách giảng viên và cán bộ học vụ khoa",
+        "academicReports": "Tạo báo cáo tổng hợp và thống kê học vụ"
+      },
+      "teacher": {
+        "proposeTopics": "Đề xuất và cập nhật các đề tài nghiên cứu cùng yêu cầu thực hiện",
+        "coAdvisors": "Phân công đồng hướng dẫn cho các đề tài phụ trách",
+        "approveApplications": "Phê duyệt hoặc từ chối đơn đăng ký đề tài của các nhóm sinh viên",
+        "milestonesGuidance": "Theo dõi các mốc nộp báo cáo và hướng dẫn các nhóm khóa luận"
+      },
+      "council": {
+        "inspectDeliverables": "Truy cập và kiểm tra tài liệu, báo cáo khóa luận được phân công",
+        "evaluateDefense": "Đánh giá buổi bảo vệ và tính hợp lệ của đề tài",
+        "submitScores": "Nhập và gửi điểm đánh giá phản biện chính thức theo các tiêu chí"
+      },
+      "user": {
+        "browseTopics": "Xem, tìm kiếm, lọc và so sánh tối đa 3 đề tài khóa luận",
+        "manageTeams": "Tạo và quản lý nhóm sinh viên (tối đa 3 thành viên)",
+        "invitations": "Gửi lời mời tham gia nhóm và yêu cầu gia nhập nhóm",
+        "applyPeriods": "Đăng ký đề tài khóa luận trong các đợt đăng ký đang mở",
+        "matchmaking": "Đăng tin và tìm kiếm đồng đội trên bảng ghép nhóm (Matchmaking)"
+      }
     }
   },
   "systemAdmin": {

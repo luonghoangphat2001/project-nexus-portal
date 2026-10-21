@@ -1034,6 +1034,40 @@ export const en = {
       "councils": "Setup Councils & Assign Defense Teams",
       "teams": "Create Student Teams & Recruitment",
       "matchmaking": "Post Teammate Search & Apply"
+    },
+    "perms": {
+      "admin": {
+        "userManagement": "Full management of user accounts and role assignments",
+        "academicData": "Academic master data administration (Faculties, Departments, Majors, Cohorts)",
+        "runtimeConfig": "System runtime configuration and server performance monitoring",
+        "auditLogs": "Inspect and export security audit trail logs",
+        "accountLock": "Lock/unlock user accounts and perform password resets"
+      },
+      "principal": {
+        "topicsReview": "Review and approve departmental capstone topics",
+        "periodsManage": "Schedule and manage topic registration periods",
+        "progressMonitor": "Monitor capstone student team progress within department",
+        "instructorsList": "Access departmental faculty instructor lists",
+        "academicReports": "Generate academic summary and statistical reports"
+      },
+      "teacher": {
+        "proposeTopics": "Propose and update research topics and requirements",
+        "coAdvisors": "Assign secondary co-advisors to supervised topics",
+        "approveApplications": "Approve or decline student team topic applications",
+        "milestonesGuidance": "Monitor milestone deliverables and guide capstone teams"
+      },
+      "council": {
+        "inspectDeliverables": "Access and inspect assigned capstone project deliverables",
+        "evaluateDefense": "Evaluate defense presentations and project validity",
+        "submitScores": "Submit official defense review scores and assessment criteria"
+      },
+      "user": {
+        "browseTopics": "Browse, filter, and compare up to 3 capstone topics",
+        "manageTeams": "Form and manage student teams (1 to 3 members)",
+        "invitations": "Send team invitations and join requests",
+        "applyPeriods": "Apply for capstone topics during active registration periods",
+        "matchmaking": "Publish and discover teammate requests on matchmaking board"
+      }
     }
   },
   "systemAdmin": {
