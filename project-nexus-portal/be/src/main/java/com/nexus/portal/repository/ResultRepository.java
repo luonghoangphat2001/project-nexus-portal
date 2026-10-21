@@ -7,10 +7,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Collection;
+import java.util.Set;
 import java.util.Set;
 
 public interface ResultRepository extends JpaRepository<Result, Long> {
     boolean existsByAssignmentId(Long assignmentId);
+    @Query("select distinct result.assignment.id from Result result where result.assignment.id in :assignmentIds")
+    Set<Long> findPublishedAssignmentIdsByAssignmentIdIn(@Param("assignmentIds") Collection<Long> assignmentIds);
     List<Result> findByAssignmentIdOrderByStudentIdAsc(Long assignmentId);
     List<Result> findByStudentIdAndPublishedAtIsNotNullOrderByPublishedAtDesc(Long studentId);
 

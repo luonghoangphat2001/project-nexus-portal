@@ -170,16 +170,18 @@ export function ResultsPage() {
     }
   };
 
-  const publish = () => selectedId
-    && runPublish('results.confirmPublish', () => resultsService.publishAssignmentResults(selectedId));
+  const publish = () => activeAssignment
+    && runPublish('results.confirmPublish', () => resultsService.publishAssignmentResults(activeAssignment.id));
 
-  const periodId = activeAssignment?.registration?.periodId;
-  const hasUnpublishedInPeriod = useMemo(() => {
-    if (!periodId) return false;
-    return completedAssignments.some(
-      (a) => a.registration?.periodId === periodId && !a.resultsPublished
-    );
-  }, [completedAssignments, periodId]);
+  const periodId = activeCouncil?.periodId;
+  const pendingPeriodAssignments = useMemo(
+    () => completedAssignments.filter(
+      (assignment) => String(assignment.registration?.periodId) === String(periodId)
+        && !assignment.resultsPublished,
+    ),
+    [completedAssignments, periodId],
+  );
+  const hasUnpublishedInPeriod = pendingPeriodAssignments.length > 0;
 
   const publishPeriod = () => periodId
     && runPublish('results.confirmPublishPeriod', () => resultsService.publishPeriodResults(periodId));
@@ -421,7 +423,14 @@ export function ResultsPage() {
                         className={selectClass}
                         disabled={busy}
                         value={selectedCouncilId}
-                        onChange={(e) => setSelectedCouncilId(e.target.value)}
+                        onChange={(e) => {
+                          const nextCouncilId = e.target.value;
+                          setSelectedCouncilId(nextCouncilId);
+                          const nextAssignment = completedAssignments.find(
+                            (assignment) => String(assignment.council.id) === nextCouncilId,
+                          );
+                          setSelectedId(nextAssignment ? String(nextAssignment.id) : '');
+                        }}
                       >
                         {completedCouncils.map((c) => (
                           <option key={c.id} value={c.id}>
@@ -575,15 +584,17 @@ export function ResultsPage() {
                   >
                     {!hasUnpublishedInPeriod && periodId
                       ? t('results.periodPublished')
-                      : t('results.publishPeriodBtn')}
+                      : `${t('results.publishPeriodBtn')}${pendingPeriodAssignments.length > 0 ? ` (${pendingPeriodAssignments.length})` : ''}`}
                   </button>
                   <button
                     type="button"
-                    disabled={busy || grades.every((grade) => grade.published)}
+                    disabled={busy || activeAssignment?.resultsPublished || grades.every((grade) => grade.published)}
                     onClick={publish}
                     className={buttonClass('primary')}
                   >
-                    {grades.every((grade) => grade.published) ? t('results.publishedBtn') : t('results.publishBtn')}
+                    {activeAssignment?.resultsPublished || grades.every((grade) => grade.published)
+                      ? t('results.publishedBtn')
+                      : t('results.publishBtn')}
                   </button>
                 </div>
               )}

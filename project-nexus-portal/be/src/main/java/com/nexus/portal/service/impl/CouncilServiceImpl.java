@@ -22,6 +22,7 @@ public class CouncilServiceImpl implements CouncilService {
     private final DefenseCouncilRepository councils;
     private final DefenseAssignmentRepository assignments;
     private final AssessmentRepository assessments;
+    private final ResultRepository results;
     private final DepartmentRepository departments;
     private final RegistrationPeriodRepository periods;
     private final UserRepository users;
@@ -29,12 +30,13 @@ public class CouncilServiceImpl implements CouncilService {
     private final Clock clock;
 
     public CouncilServiceImpl(DefenseCouncilRepository councils, DefenseAssignmentRepository assignments,
-                              AssessmentRepository assessments, DepartmentRepository departments,
+                              AssessmentRepository assessments, ResultRepository results, DepartmentRepository departments,
                               RegistrationPeriodRepository periods, UserRepository users,
                               DefenseAccessPolicy access, Clock clock) {
         this.councils = councils;
         this.assignments = assignments;
         this.assessments = assessments;
+        this.results = results;
         this.departments = departments;
         this.periods = periods;
         this.users = users;
@@ -272,13 +274,20 @@ public class CouncilServiceImpl implements CouncilService {
         boolean manager = access.canManage(user, c.getDepartment());
         Optional<DefenseCouncilMember> ownMember = c.getMembers().stream()
                 .filter(m -> m.getLecturer().getId().equals(user.getId())).findFirst();
+        List<DefenseAssignment> visibleAssignments = assignments.findByCouncilId(c.getId()).stream()
+                .filter(a -> manager || ownMember.isPresent() || access.canRead(user, a.getRegistration()))
+                .toList();
+        Set<Long> publishedAssignmentIds = visibleAssignments.isEmpty()
+                ? Set.of()
+                : results.findPublishedAssignmentIdsByAssignmentIdIn(
+                        visibleAssignments.stream().map(DefenseAssignment::getId).toList());
         return new CouncilResponse(c.getId(), c.getName(), c.getDepartment().getId(), c.getDepartment().getName(),
                 c.getPeriod().getId(), c.getPeriod().getName(), c.getRoom(), c.getStartsAt(), c.getEndsAt(), c.getStatus(), manager,
                 c.getMembers().stream().map(m -> new CouncilResponse.Member(m.getLecturer().getId(), m.getLecturer().getFullName(), m.getRole())).toList(),
-                assignments.findByCouncilId(c.getId()).stream()
-                        .filter(a -> manager || ownMember.isPresent() || access.canRead(user, a.getRegistration()))
+                visibleAssignments.stream()
                         .map(a -> new CouncilResponse.Assignment(a.getId(), access.toResponse(a.getRegistration(), user),
                                 c.getStatus() == CouncilStatus.SCHEDULED && ownMember.filter(m -> m.getRole() == CouncilMemberRole.REVIEWER).isPresent(),
-                                c.getStatus() == CouncilStatus.SCHEDULED && ownMember.isPresent())).toList());
+                                c.getStatus() == CouncilStatus.SCHEDULED && ownMember.isPresent(),
+                                publishedAssignmentIds.contains(a.getId()))).toList());
     }
 }

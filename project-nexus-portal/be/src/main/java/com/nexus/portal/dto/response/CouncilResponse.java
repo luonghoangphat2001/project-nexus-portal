@@ -8,5 +8,5 @@ public record CouncilResponse(Long id, String name, Long departmentId, String de
         List<Member> members, List<Assignment> assignments) {
     public record Member(Long lecturerId, String fullName, CouncilMemberRole role) {}
     public record Assignment(Long id, DefenseRegistrationResponse registration,
-            boolean canReview, boolean canDefense) {}
+            boolean canReview, boolean canDefense, boolean resultsPublished) {}
 }

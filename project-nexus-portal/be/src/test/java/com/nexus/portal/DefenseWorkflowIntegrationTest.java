@@ -240,6 +240,31 @@ class DefenseWorkflowIntegrationTest {
     }
 
     @Test
+    void councilResponseReflectsWhetherAssignmentResultsWerePublished() {
+        CouncilResponse council = allocateCouncil();
+        Long assignmentId = council.assignments().get(0).id();
+        assertThat(council.assignments().get(0).resultsPublished()).isFalse();
+
+        DefenseAssignment assignment = em.find(DefenseAssignment.class, assignmentId);
+        Result result = new Result();
+        result.setAssignment(assignment);
+        result.setStudent(leader);
+        result.setReviewScore(new BigDecimal("8.00"));
+        result.setDefenseScore(new BigDecimal("8.00"));
+        result.setFinalScore(new BigDecimal("8.00"));
+        result.setPassed(true);
+        result.setPublishedBy(admin);
+        result.setPublishedAt(now());
+        persist(result);
+        em.flush();
+        em.clear();
+
+        CouncilResponse refreshed = councils.getCouncils("admin").stream()
+                .filter(item -> item.id().equals(council.id())).findFirst().orElseThrow();
+        assertThat(refreshed.assignments().get(0).resultsPublished()).isTrue();
+    }
+
+    @Test
     void overlappingMemberSchedulesAreRejectedEvenInDifferentRooms() {
         councils.createCouncil(councilRequest("A", "A101", now().plusDays(1), defaultMembers()), "admin");
         assertThatThrownBy(() -> councils.createCouncil(councilRequest("B", "A102", now().plusDays(1).plusMinutes(30), defaultMembers()), "admin"))
