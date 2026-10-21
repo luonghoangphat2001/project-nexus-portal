@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Download, RefreshCw, BarChart2, PieChart as PieChartIcon, TrendingUp, CheckCircle, XCircle, Award, Users, BookOpen, Clock, Building2, CheckCircle2 } from 'lucide-react';
+import { Download, RefreshCw, BarChart2, PieChart as PieChartIcon, TrendingUp, CheckCircle, XCircle, Award, Users, BookOpen, Clock, Building2, CheckCircle2, GraduationCap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import councilService from '../services/councilService';
 import resultsService from '../services/resultsService';
@@ -160,7 +160,11 @@ export function ResultsPage() {
       setNotice(t('results.publishSuccess'));
       setRefresh((n) => n + 1);
     } catch (e) {
-      setError(e.message || t('common.error'));
+      if (e.message && e.message.includes('There are no completed councils waiting')) {
+        setError(t('results.noPendingPeriodPublish'));
+      } else {
+        setError(e.message || t('common.error'));
+      }
     } finally {
       setBusy(false);
     }
@@ -170,6 +174,13 @@ export function ResultsPage() {
     && runPublish('results.confirmPublish', () => resultsService.publishAssignmentResults(selectedId));
 
   const periodId = activeAssignment?.registration?.periodId;
+  const hasUnpublishedInPeriod = useMemo(() => {
+    if (!periodId) return false;
+    return completedAssignments.some(
+      (a) => a.registration?.periodId === periodId && !a.resultsPublished
+    );
+  }, [completedAssignments, periodId]);
+
   const publishPeriod = () => periodId
     && runPublish('results.confirmPublishPeriod', () => resultsService.publishPeriodResults(periodId));
 
@@ -187,7 +198,11 @@ export function ResultsPage() {
       link.remove();
       URL.revokeObjectURL(url);
     } catch (e) {
-      setError(e.message || t('common.error'));
+      if (e.message && e.message.includes('There are no completed councils waiting')) {
+        setError(t('results.noPendingPeriodPublish'));
+      } else {
+        setError(e.message || t('common.error'));
+      }
     } finally {
       setBusy(false);
     }
@@ -446,35 +461,59 @@ export function ResultsPage() {
 
                 {/* Dải thông tin bổ trợ Hội đồng & Đề tài đang chọn */}
                 {activeCouncil && activeAssignment && (
-                  <div className="pt-3 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="inline-flex items-center gap-1 font-medium text-slate-700 bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-2xs">
-                        <Building2 className="w-3.5 h-3.5 text-slate-500" />
-                        <span>{t('results.roomLabel')}: {activeCouncil.room || t('results.defaultRoom')}</span>
-                      </span>
-                      <span className="inline-flex items-center gap-1 font-medium text-slate-700 bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-2xs">
-                        <Clock className="w-3.5 h-3.5 text-slate-500" />
-                        <span>{formatDate(activeCouncil.startsAt)}</span>
-                      </span>
-                      {activeAssignment.registration?.periodName && (
-                        <span className="text-slate-500 font-medium">
-                          {activeAssignment.registration.periodName}
+                  <div className="pt-3 border-t border-slate-200/70 space-y-2 text-xs text-slate-600">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="inline-flex items-center gap-1 font-medium text-slate-700 bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-2xs">
+                          <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                          <span>{t('results.roomLabel')}: {activeCouncil.room || t('results.defaultRoom')}</span>
                         </span>
-                      )}
+                        <span className="inline-flex items-center gap-1 font-medium text-slate-700 bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-2xs">
+                          <Clock className="w-3.5 h-3.5 text-slate-500" />
+                          <span>{formatDate(activeCouncil.startsAt)}</span>
+                        </span>
+                        {activeAssignment.registration?.periodName && (
+                          <span className="text-slate-500 font-medium">
+                            {activeAssignment.registration.periodName}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-500">{t('results.publishStatus', 'Trạng thái công bố')}:</span>
+                        {activeAssignment.resultsPublished ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>{t('results.publishedNotice', 'Đã công bố chính thức')}</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>{t('results.pendingPublish', 'Chờ công bố điểm')}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-500">{t('results.publishStatus', 'Trạng thái công bố')}:</span>
-                      {activeAssignment.resultsPublished ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>{t('results.publishedNotice', 'Đã công bố chính thức')}</span>
+                    {/* Giảng viên hướng dẫn & Sinh viên thực hiện */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1 text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200/80">
+                      <div className="flex items-center gap-1.5">
+                        <GraduationCap className="w-4 h-4 text-indigo-600 shrink-0" />
+                        <span className="text-slate-500 font-normal">{t('topics.instructor', 'GVHD')}:</span>
+                        <span className="font-semibold text-slate-800">
+                          {activeAssignment.registration?.advisors?.length > 0
+                            ? activeAssignment.registration.advisors.map((adv) => adv.fullName).join(', ')
+                            : t('topics.deptAssigned', 'Bộ môn phân công')}
                         </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>{t('results.pendingPublish', 'Chờ công bố điểm')}</span>
-                        </span>
+                      </div>
+                      {activeAssignment.registration?.students?.length > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <Users className="w-4 h-4 text-slate-500 shrink-0" />
+                          <span className="text-slate-500 font-normal">{t('results.studentCol', 'Sinh viên')}:</span>
+                          <span className="font-medium text-slate-800">
+                            {activeAssignment.registration.students.map((s) => `${s.fullName} (${s.studentCode || s.id})`).join(', ')}
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -525,11 +564,18 @@ export function ResultsPage() {
                 <div className="pt-2 flex justify-end gap-3">
                   <button
                     type="button"
-                    disabled={busy || !periodId}
+                    disabled={busy || !periodId || !hasUnpublishedInPeriod}
                     onClick={publishPeriod}
                     className={buttonClass('secondary')}
+                    title={
+                      !hasUnpublishedInPeriod
+                        ? t('results.noPendingPeriodPublish')
+                        : ''
+                    }
                   >
-                    {t('results.publishPeriodBtn')}
+                    {!hasUnpublishedInPeriod && periodId
+                      ? t('results.periodPublished')
+                      : t('results.publishPeriodBtn')}
                   </button>
                   <button
                     type="button"

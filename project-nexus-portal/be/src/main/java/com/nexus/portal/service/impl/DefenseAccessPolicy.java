@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 /** Object-level permissions shared by modules 11–13; never trust client role flags. */
@@ -20,16 +21,18 @@ public class DefenseAccessPolicy {
     private final TeamMemberRepository members;
     private final DefenseAssignmentRepository assignments;
     private final AssessmentRepository assessments;
+    private final TopicLecturerRepository advisors;
     private final Clock clock;
 
     public DefenseAccessPolicy(UserRepository users, TopicRegistrationRepository registrations,
                                TeamMemberRepository members, DefenseAssignmentRepository assignments,
-                               AssessmentRepository assessments, Clock clock) {
+                               AssessmentRepository assessments, TopicLecturerRepository advisors, Clock clock) {
         this.users = users;
         this.registrations = registrations;
         this.members = members;
         this.assignments = assignments;
         this.assessments = assessments;
+        this.advisors = advisors;
         this.clock = clock;
     }
 
@@ -107,11 +110,19 @@ public class DefenseAccessPolicy {
 
     public DefenseRegistrationResponse toResponse(TopicRegistration r, User user) {
         Topic topic = r.getTopic();
+        List<DefenseRegistrationResponse.Advisor> advisorList = advisors.findByTopicId(topic.getId()).stream()
+                .map(tl -> new DefenseRegistrationResponse.Advisor(
+                        tl.getLecturer().getId(),
+                        tl.getLecturer().getFullName(),
+                        tl.getLecturer().getEmail(),
+                        tl.getAdvisorRole() != null ? tl.getAdvisorRole().name() : null))
+                .toList();
         return new DefenseRegistrationResponse(r.getId(), topic.getId(), topic.getTitle(),
                 r.getTeam().getId(), r.getTeam().getName(), topic.getDepartment().getId(),
                 topic.getDepartment().getName(), topic.getPeriod().getId(), topic.getPeriod().getName(),
                 topic.getPeriod().getSubmissionDeadline(), canSubmit(user, r), canManage(user, topic.getDepartment()),
                 members.findByTeamId(r.getTeam().getId()).stream().map(m -> new DefenseRegistrationResponse.Student(
-                        m.getUser().getId(), m.getUser().getFullName(), m.getUser().getStudentCode())).toList());
+                        m.getUser().getId(), m.getUser().getFullName(), m.getUser().getStudentCode())).toList(),
+                advisorList);
     }
 }

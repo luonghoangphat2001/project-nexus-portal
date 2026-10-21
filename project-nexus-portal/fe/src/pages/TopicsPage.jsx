@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Plus,
@@ -32,7 +33,8 @@ import {
 export const TopicsPage = () => {
   const { user, hasRole } = useAuth();
   const { t } = useTranslation();
-  const isLecturerOrAdmin = hasRole('ROLE_ADMIN') || hasRole('ROLE_TEACHER');
+  const navigate = useNavigate();
+  const isLecturerOrAdmin = hasRole('ROLE_ADMIN') || hasRole('ROLE_TEACHER') || hasRole('ROLE_PRINCIPAL');
   const isStudent = hasRole('ROLE_USER') && !hasRole('ROLE_TEACHER') && !hasRole('ROLE_PRINCIPAL') && !hasRole('ROLE_ADMIN');
 
   // Topics list state
@@ -60,12 +62,41 @@ export const TopicsPage = () => {
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [registrationMessage, setRegistrationMessage] = useState('');
   const [registerSuccess, setRegisterSuccess] = useState(null);
+  const [myPendingTopicIds, setMyPendingTopicIds] = useState(new Set());
+  const [hasApprovedTopic, setHasApprovedTopic] = useState(false);
+  const [approvedTopicId, setApprovedTopicId] = useState(null);
+
+  const loadStudentRegistrations = async () => {
+    if (!isStudent) return;
+    try {
+      const regs = await registrationService.getMyTeamRegistrations();
+      const approved = (regs || []).find((r) => r.status === 'APPROVED');
+      if (approved) {
+        setHasApprovedTopic(true);
+        setApprovedTopicId(approved.topicId);
+      } else {
+        setHasApprovedTopic(false);
+        setApprovedTopicId(null);
+      }
+      const pendingIds = new Set(
+        (regs || []).filter((r) => r.status === 'PENDING').map((r) => r.topicId)
+      );
+      setMyPendingTopicIds(pendingIds);
+    } catch {
+      setHasApprovedTopic(false);
+      setApprovedTopicId(null);
+      setMyPendingTopicIds(new Set());
+    }
+  };
 
   // Load departments and initial topics
   useEffect(() => {
     loadAcademicData();
     fetchTopics(0);
-  }, []);
+    if (isStudent) {
+      loadStudentRegistrations();
+    }
+  }, [isStudent]);
 
   const loadAcademicData = async () => {
     try {
@@ -80,14 +111,24 @@ export const TopicsPage = () => {
     }
   };
 
-  const fetchTopics = async (customPage = page) => {
+  // Memoize majors based on selected department
+  const filteredMajors = useMemo(() => {
+    if (!selectedDept) return majors;
+    return majors.filter((m) => String(m.departmentId) === String(selectedDept));
+  }, [majors, selectedDept]);
+
+  const fetchTopics = async (customPage = page, customFilters = {}) => {
     setLoading(true);
     setError(null);
     try {
+      const q = customFilters.query !== undefined ? customFilters.query : searchQuery;
+      const dept = customFilters.departmentId !== undefined ? customFilters.departmentId : selectedDept;
+      const maj = customFilters.majorId !== undefined ? customFilters.majorId : selectedMajor;
+
       const params = {
-        query: searchQuery || undefined,
-        departmentId: selectedDept || undefined,
-        majorId: selectedMajor || undefined,
+        query: q || undefined,
+        departmentId: dept || undefined,
+        majorId: maj || undefined,
         page: customPage,
         size: 9,
       };
@@ -101,8 +142,36 @@ export const TopicsPage = () => {
     }
   };
 
+  const handleDepartmentChange = (deptId) => {
+    setSelectedDept(deptId);
+    let newMajorId = selectedMajor;
+    if (deptId && selectedMajor) {
+      const currentMajor = majors.find((m) => String(m.id) === String(selectedMajor));
+      if (currentMajor && String(currentMajor.departmentId) !== String(deptId)) {
+        newMajorId = '';
+        setSelectedMajor('');
+      }
+    }
+    setPage(0);
+    fetchTopics(0, { departmentId: deptId, majorId: newMajorId });
+  };
+
+  const handleMajorChange = (majorId) => {
+    setSelectedMajor(majorId);
+    let newDeptId = selectedDept;
+    if (majorId && !selectedDept) {
+      const selectedMajorObj = majors.find((m) => String(m.id) === String(majorId));
+      if (selectedMajorObj && selectedMajorObj.departmentId) {
+        newDeptId = String(selectedMajorObj.departmentId);
+        setSelectedDept(newDeptId);
+      }
+    }
+    setPage(0);
+    fetchTopics(0, { departmentId: newDeptId, majorId: majorId });
+  };
+
   const handleSearchSubmit = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setPage(0);
     fetchTopics(0);
   };
@@ -142,6 +211,7 @@ export const TopicsPage = () => {
         topicId: selectedTopic.id,
         message: registrationMessage,
       });
+      setMyPendingTopicIds((prev) => new Set([...prev, selectedTopic.id]));
       setRegisterSuccess(t('topics.registeredSuccess'));
       setTimeout(() => {
         setRegisterModalOpen(false);
@@ -152,6 +222,17 @@ export const TopicsPage = () => {
       alert(err.message || 'Registration failed');
     }
   };
+
+  // Filter topics for students: PENDING_APPROVAL topics are only visible to students waiting for approval on that topic
+  const displayedTopics = useMemo(() => {
+    if (!isStudent) return topics;
+    return topics.filter((t) => {
+      if (t.status === 'PENDING_APPROVAL') {
+        return myPendingTopicIds.has(t.id);
+      }
+      return true;
+    });
+  }, [topics, isStudent, myPendingTopicIds]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -177,11 +258,15 @@ export const TopicsPage = () => {
             {isLecturerOrAdmin && (
               <button
                 type="button"
-                onClick={() => setCreateModalOpen(true)}
+                onClick={() => navigate('/registrations')}
                 className={buttonClass.primary}
               >
                 <Plus className="w-4 h-4" />
-                <span>{t('topics.proposeTopic')}</span>
+                <span>
+                  {hasRole('ROLE_PRINCIPAL') || hasRole('ROLE_ADMIN')
+                    ? t('nav.topicManagement', 'Quản lý đề tài')
+                    : t('topics.proposeTopic', 'Đề xuất đề tài')}
+                </span>
               </button>
             )}
           </div>
@@ -194,7 +279,8 @@ export const TopicsPage = () => {
           setSearchQuery('');
           setSelectedDept('');
           setSelectedMajor('');
-          fetchTopics(0);
+          setPage(0);
+          fetchTopics(0, { query: '', departmentId: '', majorId: '' });
         }}
         onSearch={() => {
           setPage(0);
@@ -214,10 +300,10 @@ export const TopicsPage = () => {
           </div>
         </FilterField>
 
-        <FilterField label={t('topics.allDepartments') || 'Department'}>
+        <FilterField label={t('topics.department') || 'Department'}>
           <select
             value={selectedDept}
-            onChange={(e) => setSelectedDept(e.target.value)}
+            onChange={(e) => handleDepartmentChange(e.target.value)}
             className={selectClass}
           >
             <option value="">{t('topics.allDepartments')}</option>
@@ -229,14 +315,14 @@ export const TopicsPage = () => {
           </select>
         </FilterField>
 
-        <FilterField label={t('topics.allMajors') || 'Major'}>
+        <FilterField label={t('topics.major') || 'Major'}>
           <select
             value={selectedMajor}
-            onChange={(e) => setSelectedMajor(e.target.value)}
+            onChange={(e) => handleMajorChange(e.target.value)}
             className={selectClass}
           >
             <option value="">{t('topics.allMajors')}</option>
-            {majors.map((m) => (
+            {filteredMajors.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.name} ({m.code})
               </option>
@@ -250,11 +336,11 @@ export const TopicsPage = () => {
         <div className="py-16 text-center text-slate-400 font-medium">{t('common.loading')}</div>
       ) : error ? (
         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-sm">{error}</div>
-      ) : topics.length === 0 ? (
+      ) : displayedTopics.length === 0 ? (
         <EmptyState message={t('topics.noTopicsFound')} icon={BookOpen} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {topics.map((topic) => {
+          {displayedTopics.map((topic) => {
             const isSelectedForCompare = compareList.some((t) => t.id === topic.id);
 
             return (
@@ -282,9 +368,10 @@ export const TopicsPage = () => {
                       {topic.majors.map((m) => (
                         <span
                           key={m.id}
-                          className="text-[11px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md font-mono"
+                          className="text-[11px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md font-medium"
+                          title={m.code}
                         >
-                          {m.code || m.name}
+                          {m.name || m.code}
                         </span>
                       ))}
                     </div>
@@ -303,12 +390,37 @@ export const TopicsPage = () => {
                       <div className="truncate">
                         <span className="font-medium text-slate-700">
                           {topic.advisors && topic.advisors.length > 0
-                            ? topic.advisors.map((a) => a.lecturerName).join(', ')
+                            ? topic.advisors.map((a) => a.fullName || a.lecturerName).filter(Boolean).join(', ')
                             : t('topics.deptAssigned')}
                         </span>
                       </div>
                     </div>
                   </div>
+
+                  {/* Assigned Team & Students when status is ASSIGNED or team is present */}
+                  {topic.assignedTeam && (
+                    <div className="mt-3 pt-2.5 border-t border-slate-100 bg-slate-50/70 p-2.5 rounded-xl text-xs space-y-1">
+                      <div className="flex items-center justify-between text-emerald-800 font-semibold">
+                        <span className="flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>{topic.assignedTeam.name}</span>
+                        </span>
+                        {topic.assignedTeam.members && (
+                          <span className="text-[10px] font-mono font-normal text-slate-500">
+                            {topic.assignedTeam.members.length} {t('teams.membersCount', 'thành viên')}
+                          </span>
+                        )}
+                      </div>
+                      {topic.assignedTeam.members && topic.assignedTeam.members.length > 0 && (
+                        <div className="text-[11px] text-slate-600 leading-snug">
+                          <span className="text-slate-400">{t('topics.assignedStudents', 'Sinh viên')}: </span>
+                          <span className="font-medium text-slate-700">
+                            {topic.assignedTeam.members.map((m) => m.fullName || m.name).join(', ')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Meta stats */}
                   <div className="flex items-center space-x-4 mt-2 text-[11px] text-slate-400">
@@ -346,16 +458,29 @@ export const TopicsPage = () => {
                       onClick={() => setSelectedTopic(topic)}
                       className={buttonClass.secondary}
                     >
-                      {t('common.details')}
+                      {t('topics.viewDetails')}
                     </button>
-                    {isStudent && topic.status === 'OPEN' && (
+                    {isStudent && myPendingTopicIds.has(topic.id) ? (
+                      <span className="text-xs px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+                        {t('enums.registrationStatus.PENDING', 'Chờ duyệt')}
+                      </span>
+                    ) : (
                       <button
                         type="button"
+                        disabled={!isStudent || topic.status !== 'OPEN'}
                         onClick={() => {
+                          if (!isStudent || topic.status !== 'OPEN') return;
                           setSelectedTopic(topic);
                           setRegisterModalOpen(true);
                         }}
                         className={buttonClass.primary}
+                        title={
+                          !isStudent
+                            ? t('topics.studentOnlyRegistration')
+                            : topic.status !== 'OPEN'
+                            ? t('topics.registrationClosed')
+                            : ''
+                        }
                       >
                         {t('topics.register')}
                       </button>
@@ -382,7 +507,7 @@ export const TopicsPage = () => {
       <Modal
         isOpen={!!selectedTopic && !registerModalOpen}
         onClose={() => setSelectedTopic(null)}
-        title={selectedTopic?.title || t('common.details')}
+        title={selectedTopic?.title || t('topics.viewDetails')}
         maxWidth="max-w-2xl"
         footer={
           <div className="flex items-center justify-end space-x-2.5">
@@ -393,11 +518,26 @@ export const TopicsPage = () => {
             >
               {t('common.close')}
             </button>
-            {isStudent && selectedTopic?.status === 'OPEN' && (
+            {isStudent && myPendingTopicIds.has(selectedTopic?.id) ? (
+              <span className="text-xs px-3 py-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+                {t('enums.registrationStatus.PENDING', 'Đang chờ duyệt')}
+              </span>
+            ) : (
               <button
                 type="button"
-                onClick={() => setRegisterModalOpen(true)}
+                disabled={!isStudent || selectedTopic?.status !== 'OPEN'}
+                onClick={() => {
+                  if (!isStudent || selectedTopic?.status !== 'OPEN') return;
+                  setRegisterModalOpen(true);
+                }}
                 className={buttonClass.primary}
+                title={
+                  !isStudent
+                    ? t('topics.studentOnlyRegistration')
+                    : selectedTopic?.status !== 'OPEN'
+                    ? t('topics.registrationClosed')
+                    : ''
+                }
               >
                 {t('topics.registerTopic')}
               </button>
@@ -449,9 +589,9 @@ export const TopicsPage = () => {
                       key={idx}
                       className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs"
                     >
-                      <div className="font-semibold text-slate-800">{adv.lecturerName}</div>
+                      <div className="font-semibold text-slate-800">{adv.fullName || adv.lecturerName}</div>
                       <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-mono text-[10px]">
-                        {adv.advisorRole === 'PRIMARY' ? t('defense.chair') : t('defense.reviewer')}
+                        {t(`enums.advisorRole.${adv.role || adv.advisorRole}`, (adv.role || adv.advisorRole) === 'PRIMARY' ? 'Hướng dẫn chính' : 'Đồng hướng dẫn')}
                       </span>
                     </div>
                   ))}
@@ -462,6 +602,46 @@ export const TopicsPage = () => {
                 </p>
               )}
             </div>
+
+            {/* Assigned Team & Students section */}
+            {selectedTopic.assignedTeam && (
+              <div>
+                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  {t('topics.assignedTeam', 'Nhóm sinh viên thực hiện')}
+                </h4>
+                <div className="mt-2 p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold text-emerald-800">
+                    <span className="flex items-center gap-1.5">
+                      <Users className="w-4 h-4 text-emerald-600" />
+                      <span>{selectedTopic.assignedTeam.name}</span>
+                    </span>
+                    {selectedTopic.assignedTeam.leaderName && (
+                      <span className="text-[11px] font-normal text-slate-500">
+                        {t('teams.leader', 'Nhóm trưởng')}: <strong className="font-medium text-slate-700">{selectedTopic.assignedTeam.leaderName}</strong>
+                      </span>
+                    )}
+                  </div>
+
+                  {selectedTopic.assignedTeam.members && selectedTopic.assignedTeam.members.length > 0 && (
+                    <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                      {selectedTopic.assignedTeam.members.map((m) => (
+                        <div key={m.id || m.userId} className="flex items-center justify-between text-xs">
+                          <div>
+                            <span className="font-medium text-slate-800">{m.fullName}</span>
+                            {m.studentCode && (
+                              <span className="text-slate-400 text-[11px] font-mono ml-1.5">({m.studentCode})</span>
+                            )}
+                          </div>
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600">
+                            {m.roleInTeam === 'LEADER' ? t('teams.leader', 'Trưởng nhóm') : t('teams.member', 'Thành viên')}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Targeted Majors */}
             <div>
@@ -525,7 +705,26 @@ export const TopicsPage = () => {
                   <td className="py-3 px-4 font-medium text-slate-500">{t('topics.instructor')}</td>
                   {comparisonData.map((tItem) => (
                     <td key={tItem.id} className="py-3 px-4 text-slate-700">
-                      {tItem.advisors?.map((a) => a.lecturerName).join(', ') || 'N/A'}
+                      {tItem.advisors?.map((a) => a.fullName || a.lecturerName).filter(Boolean).join(', ') || 'N/A'}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-medium text-slate-500">{t('topics.assignedTeam', 'Nhóm thực hiện')}</td>
+                  {comparisonData.map((tItem) => (
+                    <td key={tItem.id} className="py-3 px-4 text-slate-700 text-xs">
+                      {tItem.assignedTeam ? (
+                        <div>
+                          <span className="font-semibold text-emerald-800">{tItem.assignedTeam.name}</span>
+                          {tItem.assignedTeam.members && (
+                            <div className="text-slate-500 text-[11px] mt-0.5">
+                              {tItem.assignedTeam.members.map((m) => m.fullName).join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        '—'
+                      )}
                     </td>
                   ))}
                 </tr>

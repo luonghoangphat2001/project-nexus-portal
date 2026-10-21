@@ -60,3 +60,5 @@ export const userService = {
     a.remove();
   },
 };
+
+export default userService;

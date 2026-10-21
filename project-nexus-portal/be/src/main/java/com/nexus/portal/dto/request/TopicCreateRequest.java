@@ -42,6 +42,9 @@ public class TopicCreateRequest {
     @Schema(description = "Estimated project duration", example = "15 weeks", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String duration = "15 weeks";
 
+    @Schema(description = "Optional Primary Advisor Lecturer User ID", example = "4", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    private Long primaryAdvisorId;
+
     @Schema(description = "Optional Co-Advisor Lecturer User ID", example = "5", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Long coAdvisorId;
 
@@ -137,6 +140,14 @@ public class TopicCreateRequest {
 
     public void setDuration(String duration) {
         this.duration = duration;
+    }
+
+    public Long getPrimaryAdvisorId() {
+        return primaryAdvisorId;
+    }
+
+    public void setPrimaryAdvisorId(Long primaryAdvisorId) {
+        this.primaryAdvisorId = primaryAdvisorId;
     }
 
     public Long getCoAdvisorId() {

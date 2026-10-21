@@ -224,7 +224,7 @@ export function StatusBadge({ value, type = 'status', className = '' }) {
   }
   // Primary / Info / Admin
   else if (
-    ['CAPSTONE', 'RESEARCH', 'THESIS', 'ROLE_ADMIN', 'ROLE_PRINCIPAL', 'ROLE_TEACHER', 'PRIMARY'].includes(
+    ['CAPSTONE', 'RESEARCH', 'THESIS', 'ROLE_ADMIN', 'ROLE_PRINCIPAL', 'ROLE_TEACHER', 'PRIMARY', 'ASSIGNED'].includes(
       upper
     )
   ) {

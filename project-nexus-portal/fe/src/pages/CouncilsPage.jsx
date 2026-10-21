@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Plus, RefreshCw } from 'lucide-react';
+import { CalendarDays, GraduationCap, Plus, RefreshCw, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import councilService from '../services/councilService';
 import reportService from '../services/reportService';
@@ -210,9 +210,18 @@ export function CouncilsPage() {
                         <p className="text-sm font-medium text-slate-800">
                           {a.registration.teamName} · {a.registration.topicTitle}
                         </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {a.registration.students.map((s) => `${s.fullName} (${s.studentCode || s.id})`).join(', ')}
-                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                          {a.registration.advisors && a.registration.advisors.length > 0 && (
+                            <span className="flex items-center gap-1 font-medium text-slate-700">
+                              <GraduationCap className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                              <span>{t('topics.instructor', 'GVHD')}: {a.registration.advisors.map((adv) => adv.fullName).join(', ')}</span>
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>{a.registration.students.map((s) => `${s.fullName} (${s.studentCode || s.id})`).join(', ')}</span>
+                          </span>
+                        </div>
                       </div>
 
                       <div className="flex flex-wrap gap-3 text-sm">

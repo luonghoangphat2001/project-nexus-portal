@@ -111,7 +111,7 @@ public class TopicController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN') or hasRole('PRINCIPAL')")
     @Operation(summary = "Create a topic", description = "Create a new topic with 1-2 advisors and targeted majors")
     public ResponseEntity<ApiResponse<TopicResponse>> createTopic(
             @Valid @RequestBody TopicCreateRequest request,
@@ -123,7 +123,7 @@ public class TopicController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN') or hasRole('PRINCIPAL')")
     @Operation(summary = "Update topic", description = "Update an existing topic proposal")
     public ResponseEntity<ApiResponse<TopicResponse>> updateTopic(
             @Parameter(description = "Topic ID", required = true) @PathVariable Long id,
@@ -135,7 +135,7 @@ public class TopicController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN') or hasRole('PRINCIPAL')")
     @Operation(summary = "Delete topic", description = "Delete a topic proposal")
     public ResponseEntity<ApiResponse<Void>> deleteTopic(
             @Parameter(description = "Topic ID", required = true) @PathVariable Long id,

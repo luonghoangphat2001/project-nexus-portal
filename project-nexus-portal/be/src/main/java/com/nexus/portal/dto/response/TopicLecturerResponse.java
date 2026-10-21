@@ -32,6 +32,10 @@ public class TopicLecturerResponse {
         return fullName;
     }
 
+    public String getLecturerName() {
+        return fullName;
+    }
+
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
@@ -53,6 +57,10 @@ public class TopicLecturerResponse {
     }
 
     public AdvisorRole getRole() {
+        return role;
+    }
+
+    public AdvisorRole getAdvisorRole() {
         return role;
     }
 

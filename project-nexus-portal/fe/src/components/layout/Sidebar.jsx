@@ -30,11 +30,11 @@ export const Sidebar = ({ isOpen = true, mobileOpen = false, onCloseMobile }) =>
   const { t } = useTranslation();
   const location = useLocation();
 
-  const isStudent = hasRole('ROLE_USER');
   const isAdmin = hasRole('ROLE_ADMIN');
   const isPrincipal = hasRole('ROLE_PRINCIPAL');
   const isTeacher = hasRole('ROLE_TEACHER');
   const isCouncil = hasRole('ROLE_COUNCIL');
+  const isStudent = hasRole('ROLE_USER') && !isAdmin && !isPrincipal && !isTeacher;
 
   const navGroups = [
     {
@@ -60,7 +60,15 @@ export const Sidebar = ({ isOpen = true, mobileOpen = false, onCloseMobile }) =>
       icon: BookOpen,
       items: [
         { name: t('nav.topics'), path: '/topics', icon: BookOpen },
-        { name: t('nav.registrations'), path: '/registrations', icon: ClipboardCheck },
+        {
+          name: isAdmin || isPrincipal
+            ? t('nav.topicManagement', 'Quản lý đề tài')
+            : isTeacher
+            ? t('nav.registrationsReview', 'Xét duyệt & Hướng dẫn')
+            : t('nav.registrations', 'Đăng ký đề tài'),
+          path: '/registrations',
+          icon: ClipboardCheck,
+        },
         ...(isStudent
           ? [
               { name: t('nav.teams'), path: '/teams', icon: Users2 },

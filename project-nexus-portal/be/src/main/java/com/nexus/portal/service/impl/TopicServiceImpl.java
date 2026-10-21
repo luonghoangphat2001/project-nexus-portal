@@ -53,8 +53,9 @@ public class TopicServiceImpl implements TopicService {
     @Override
     @Transactional
     public TopicResponse createTopic(TopicCreateRequest request, Long lecturerId) {
-        User primaryLecturer = userRepository.findById(lecturerId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", lecturerId));
+        Long primaryAdvisorId = request.getPrimaryAdvisorId() != null ? request.getPrimaryAdvisorId() : lecturerId;
+        User primaryLecturer = userRepository.findById(primaryAdvisorId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", primaryAdvisorId));
 
         Department department = departmentRepository.findById(request.getDepartmentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Department", "id", request.getDepartmentId()));
@@ -90,7 +91,7 @@ public class TopicServiceImpl implements TopicService {
 
         // Optional Co-Advisor (max 2 advisors rule)
         if (request.getCoAdvisorId() != null) {
-            if (request.getCoAdvisorId().equals(lecturerId)) {
+            if (request.getCoAdvisorId().equals(primaryAdvisorId)) {
                 throw new BadRequestException("Co-advisor cannot be the same as the primary advisor");
             }
             User coAdvisor = userRepository.findById(request.getCoAdvisorId())
@@ -131,6 +132,27 @@ public class TopicServiceImpl implements TopicService {
         topic.setMaxStudents(request.getMaxStudents());
         topic.setDuration(request.getDuration());
         topic.setMajors(majors);
+
+        // Manage Primary Advisor update if specified
+        if (request.getPrimaryAdvisorId() != null) {
+            User primaryLecturer = userRepository.findById(request.getPrimaryAdvisorId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Primary Advisor User", "id", request.getPrimaryAdvisorId()));
+            List<TopicLecturer> currentAdvisors = topicLecturerRepository.findByTopicId(topicId);
+            Optional<TopicLecturer> primOpt = currentAdvisors.stream()
+                    .filter(a -> a.getAdvisorRole() == AdvisorRole.PRIMARY)
+                    .findFirst();
+            if (primOpt.isPresent()) {
+                TopicLecturer existingPrim = primOpt.get();
+                if (!existingPrim.getLecturer().getId().equals(request.getPrimaryAdvisorId())) {
+                    topicLecturerRepository.delete(existingPrim);
+                    TopicLecturer newPrim = new TopicLecturer(topic, primaryLecturer, AdvisorRole.PRIMARY);
+                    topicLecturerRepository.save(newPrim);
+                }
+            } else {
+                TopicLecturer newPrim = new TopicLecturer(topic, primaryLecturer, AdvisorRole.PRIMARY);
+                topicLecturerRepository.save(newPrim);
+            }
+        }
 
         // Manage Co-Advisor update
         List<TopicLecturer> existingAdvisors = topicLecturerRepository.findByTopicId(topicId);
@@ -176,6 +198,12 @@ public class TopicServiceImpl implements TopicService {
             throw new BadRequestException("Cannot delete topic with an approved registration");
         }
 
+        // Clean up pending or rejected registrations if any to prevent foreign key errors
+        List<TopicRegistration> registrations = topicRegistrationRepository.findByTopicId(topicId);
+        if (!registrations.isEmpty()) {
+            topicRegistrationRepository.deleteAll(registrations);
+        }
+
         topicRepository.delete(topic);
     }
 
@@ -218,7 +246,7 @@ public class TopicServiceImpl implements TopicService {
                     .map(Department::getId)
                     .collect(Collectors.toSet());
             if (deptIds.isEmpty()) {
-                return Collections.emptyList();
+                return topicRepository.findAll().stream().map(this::mapToResponse).collect(Collectors.toList());
             }
             return topicRepository.findByDepartmentIdIn(deptIds).stream()
                     .map(this::mapToResponse)
@@ -267,6 +295,9 @@ public class TopicServiceImpl implements TopicService {
     public TopicResponse getTopicById(Long topicId) {
         Topic topic = topicRepository.findById(topicId)
                 .orElseThrow(() -> new ResourceNotFoundException("Topic", "id", topicId));
+        if (topic.getStatus() == TopicStatus.PENDING_APPROVAL && !canViewPendingTopic(topic)) {
+            throw new ResourceNotFoundException("Topic", "id", topicId);
+        }
         return mapToResponse(topic);
     }
 
@@ -275,7 +306,11 @@ public class TopicServiceImpl implements TopicService {
     public Page<TopicResponse> searchTopics(String keyword, Long departmentId, Long majorId,
                                            Long lecturerId, TopicStatus status, Long periodId, Pageable pageable) {
         Page<Topic> page = topicRepository.searchTopics(keyword, departmentId, majorId, lecturerId, status, periodId, pageable);
-        return page.map(this::mapToResponse);
+        List<TopicResponse> filtered = page.getContent().stream()
+                .filter(t -> t.getStatus() != TopicStatus.PENDING_APPROVAL || canViewPendingTopic(t))
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+        return new org.springframework.data.domain.PageImpl<>(filtered, pageable, page.getTotalElements() - (page.getContent().size() - filtered.size()));
     }
 
     @Override
@@ -284,12 +319,62 @@ public class TopicServiceImpl implements TopicService {
         if (topicIds == null || topicIds.isEmpty()) {
             throw new BadRequestException("Please provide at least 2 topic IDs to compare");
         }
-        List<Topic> topics = topicRepository.findAllById(topicIds);
+        List<Topic> topics = topicRepository.findAllById(topicIds).stream()
+                .filter(t -> t.getStatus() != TopicStatus.PENDING_APPROVAL || canViewPendingTopic(t))
+                .collect(Collectors.toList());
         List<TopicResponse> responses = topics.stream().map(this::mapToResponse).collect(Collectors.toList());
         return new TopicCompareResponse(responses);
     }
 
+    private boolean canViewPendingTopic(Topic topic) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return false;
+        }
+        Optional<User> userOpt = userRepository.findByUsername(auth.getName());
+        if (userOpt.isEmpty()) {
+            userOpt = userRepository.findByEmail(auth.getName());
+        }
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+        User user = userOpt.get();
+        boolean isPrivileged = user.getRoles().stream().anyMatch(r ->
+                r.getName() == RoleName.ROLE_ADMIN ||
+                r.getName() == RoleName.ROLE_PRINCIPAL ||
+                r.getName() == RoleName.ROLE_TEACHER);
+        if (isPrivileged) {
+            return true;
+        }
+
+        List<TeamMember> memberships = teamMemberRepository.findByUserId(user.getId());
+        for (TeamMember tm : memberships) {
+            boolean hasPendingReg = topicRegistrationRepository
+                    .findByTopicIdAndTeamId(topic.getId(), tm.getTeam().getId())
+                    .filter(r -> r.getStatus() == RegistrationStatus.PENDING)
+                    .isPresent();
+            if (hasPendingReg) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void validateLecturerOwnership(Topic topic, Long lecturerId) {
+        User user = userRepository.findById(lecturerId).orElse(null);
+        if (user != null) {
+            boolean isAdmin = user.getRoles().stream().anyMatch(r -> r.getName() == RoleName.ROLE_ADMIN);
+            if (isAdmin) return;
+            boolean isPrincipal = user.getRoles().stream().anyMatch(r -> r.getName() == RoleName.ROLE_PRINCIPAL);
+            if (isPrincipal) {
+                if (user.getDepartments() == null || user.getDepartments().isEmpty()) {
+                    return;
+                }
+                boolean inDept = user.getDepartments().stream()
+                        .anyMatch(d -> d.getId().equals(topic.getDepartment().getId()));
+                if (inDept) return;
+            }
+        }
         List<TopicLecturer> advisors = topicLecturerRepository.findByTopicId(topic.getId());
         boolean isAdvisor = advisors.stream().anyMatch(a -> a.getLecturer().getId().equals(lecturerId));
         if (!isAdvisor) {
