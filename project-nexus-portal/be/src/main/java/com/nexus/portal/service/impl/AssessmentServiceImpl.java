@@ -26,12 +26,14 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final ReportDocumentRepository documents;
     private final DefenseAccessPolicy access;
     private final AuditLogService audit;
+    private final ResultRepository results;
     private final Clock clock;
 
     public AssessmentServiceImpl(AssessmentRepository assessments, DefenseAssignmentRepository assignments,
                                  DefenseCouncilRepository councils, TeamMemberRepository members,
                                  ReportDocumentRepository documents, DefenseAccessPolicy access,
-                                 AuditLogService audit, Clock clock) {
+                                 AuditLogService audit, ResultRepository results, Clock clock) {
+        this.results = results;
         this.assessments = assessments;
         this.assignments = assignments;
         this.councils = councils;
@@ -47,7 +49,8 @@ public class AssessmentServiceImpl implements AssessmentService {
         User user = access.getUser(identifier);
         DefenseAssignment assignment = getAssignment(assignmentId);
         boolean manager = access.canManage(user, assignment.getCouncil().getDepartment());
-        if (!manager && !access.isCouncilMember(user, assignment.getCouncil())) {
+        boolean advisor = access.isAdvisor(user, assignment.getRegistration());
+        if (!manager && !advisor && !access.isCouncilMember(user, assignment.getCouncil())) {
             throw new AccessDeniedException("Only council members and authorized managers can view assessments before scores are published");
         }
         return assessments.findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(assignmentId).stream()
@@ -112,7 +115,9 @@ public class AssessmentServiceImpl implements AssessmentService {
         Assessment score = getLockedAssessment(id);
         requireOwner(user, score);
         if (score.getStatus() != AssessmentStatus.DRAFT) throw new BadRequestException("Only draft assessments can be deleted");
-        if (score.getAssignment().getCouncil().getStatus() == CouncilStatus.COMPLETED) throw new BadRequestException("The council has been completed");
+        boolean advisorSheetStillOpen = score.getType() == AssessmentType.ADVISOR
+                && !results.existsByAssignmentId(score.getAssignment().getId());
+        if (score.getAssignment().getCouncil().getStatus() == CouncilStatus.COMPLETED && !advisorSheetStillOpen) throw new BadRequestException("The council has been completed");
         assessments.delete(score);
     }
 
@@ -132,12 +137,25 @@ public class AssessmentServiceImpl implements AssessmentService {
     }
 
     private void requireEvaluator(User user, DefenseAssignment assignment, AssessmentType type) {
-        if (assignment.getCouncil().getStatus() != CouncilStatus.SCHEDULED) throw new BadRequestException("The council has been completed or cancelled");
+        CouncilStatus status = assignment.getCouncil().getStatus();
+        if (type == AssessmentType.ADVISOR) {
+            // The GVHD sheet does not block council completion, so it stays open until scores are published.
+            if (status == CouncilStatus.CANCELLED || results.existsByAssignmentId(assignment.getId())) {
+                throw new BadRequestException("The council was cancelled or results have already been published");
+            }
+            if (!access.isPrimaryAdvisor(user, assignment.getRegistration())) {
+                throw new AccessDeniedException("Only the primary thesis advisor (GVHD) can submit an advisor assessment");
+            }
+            return;
+        }
+        if (status != CouncilStatus.SCHEDULED) throw new BadRequestException("The council has been completed or cancelled");
+        if (!access.canAssessAsCouncilMember(user, assignment.getRegistration())) {
+            throw new AccessDeniedException("A thesis advisor cannot grade their own project as a council member");
+        }
         DefenseCouncilMember member = assignment.getCouncil().getMembers().stream()
                 .filter(m -> m.getLecturer().getId().equals(user.getId())).findFirst()
                 .orElseThrow(() -> new AccessDeniedException("You are not assigned to this council"));
-        if (type == AssessmentType.REVIEW && (member.getRole() != CouncilMemberRole.REVIEWER
-                || access.isAdvisor(user, assignment.getRegistration()))) {
+        if (type == AssessmentType.REVIEW && member.getRole() != CouncilMemberRole.REVIEWER) {
             throw new AccessDeniedException("Only the assigned reviewer can create review assessments");
         }
     }
@@ -159,6 +177,8 @@ public class AssessmentServiceImpl implements AssessmentService {
                 s.getStudent().getId(), s.getStudent().getFullName(), s.getType(), s.getStatus(), s.getContentScore(),
                 s.getImplementationScore(), s.getPresentationScore(), s.getStrengths(), s.getWeaknesses(), s.getQuestions(),
                 s.getComment(), s.getSubmittedAt(), s.getUpdatedAt(), s.getStatus() == AssessmentStatus.DRAFT
-                && s.getEvaluator().getId().equals(user.getId()) && s.getAssignment().getCouncil().getStatus() == CouncilStatus.SCHEDULED);
+                && s.getEvaluator().getId().equals(user.getId())
+                && (s.getAssignment().getCouncil().getStatus() == CouncilStatus.SCHEDULED
+                || (s.getType() == AssessmentType.ADVISOR && s.getAssignment().getCouncil().getStatus() == CouncilStatus.COMPLETED)));
     }
 }

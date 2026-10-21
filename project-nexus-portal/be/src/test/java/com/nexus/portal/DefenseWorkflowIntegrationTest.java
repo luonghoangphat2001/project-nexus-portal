@@ -46,6 +46,7 @@ class DefenseWorkflowIntegrationTest {
     private final ReportService reports;
     private final CouncilService councils;
     private final AssessmentService assessments;
+    private final ResultService resultService;
     private final MockMvc mvc;
     private final ObjectMapper json;
     private final MutableClock clock;
@@ -57,8 +58,10 @@ class DefenseWorkflowIntegrationTest {
     private User leader, member, outsider, chair, secretary, reviewer, admin, principal;
 
     DefenseWorkflowIntegrationTest(EntityManager em, ReportService reports, CouncilService councils,
-                                   AssessmentService assessments, MockMvc mvc, ObjectMapper json, MutableClock clock, JwtTokenProvider tokens) {
+                                   AssessmentService assessments, ResultService resultService, MockMvc mvc,
+                                   ObjectMapper json, MutableClock clock, JwtTokenProvider tokens) {
         this.em = em; this.reports = reports; this.councils = councils; this.assessments = assessments;
+        this.resultService = resultService;
         this.mvc = mvc; this.json = json; this.clock = clock;
         this.tokens = tokens;
     }
@@ -354,7 +357,7 @@ class DefenseWorkflowIntegrationTest {
     }
 
     @Test
-    void completingCouncilRequiresEveryStudentAndEvaluatorToSubmitAllRequiredSheets() {
+    void completingCouncilRequiresEveryStudentAndEvaluatorToSubmitReviewAndDefenseSheets() {
         CouncilResponse council = allocateCouncil();
         Long assignmentId = council.assignments().get(0).id();
         reports.uploadDocument(registration.getId(), upload(), "leader");
@@ -369,8 +372,48 @@ class DefenseWorkflowIntegrationTest {
             AssessmentResponse review = assessments.saveDraft(scoreRequest(assignmentId, student.getId(), AssessmentType.REVIEW), "reviewer");
             assessments.submitAssessment(review.id(), "reviewer");
         }
+        // The GVHD advisor sheet is not a council sheet: it does not block completion.
         assertThat(councils.changeStatus(council.id(), new CouncilStatusRequest(CouncilStatus.COMPLETED), "admin").status()).isEqualTo(CouncilStatus.COMPLETED);
         assertThat(assessments.getAssessments(assignmentId, "admin")).hasSize(8);
+    }
+
+    @Test
+    void supervisorWhoIsAlsoCouncilLecturerOnlyGradesAdvisorSheet() {
+        TopicLecturer supervisor = new TopicLecturer(topic, secretary, AdvisorRole.PRIMARY);
+        persist(supervisor);
+        topic.getTopicLecturers().add(supervisor);
+        CouncilResponse council = allocateCouncil();
+        Long assignmentId = council.assignments().get(0).id();
+        CouncilResponse.Assignment view = councils.getCouncils("secretary").stream()
+                .filter(item -> item.id().equals(council.id())).findFirst().orElseThrow().assignments().get(0);
+        assertThat(view.canAdvisor()).isTrue();
+        assertThat(view.canDefense()).isFalse();
+        assertThat(view.councilLecturer()).isTrue();
+        assertThat(view.thesisSupervisor()).isTrue();
+        reports.uploadDocument(registration.getId(), upload(), "leader");
+        assertThatThrownBy(() -> assessments.saveDraft(scoreRequest(assignmentId, leader.getId(), AssessmentType.DEFENSE), "secretary"))
+                .isInstanceOf(AccessDeniedException.class);
+        clock.set(council.endsAt().plusMinutes(1));
+        for (User student : List.of(leader, member)) {
+            for (User evaluator : List.of(chair, reviewer)) {
+                AssessmentResponse draft = assessments.saveDraft(scoreRequest(assignmentId, student.getId(), AssessmentType.DEFENSE), evaluator.getUsername());
+                assessments.submitAssessment(draft.id(), evaluator.getUsername());
+            }
+            AssessmentResponse review = assessments.saveDraft(scoreRequest(assignmentId, student.getId(), AssessmentType.REVIEW), "reviewer");
+            assessments.submitAssessment(review.id(), "reviewer");
+        }
+        assertThat(councils.changeStatus(council.id(), new CouncilStatusRequest(CouncilStatus.COMPLETED), "admin").status()).isEqualTo(CouncilStatus.COMPLETED);
+        // The council completed without the GVHD sheet; the primary GVHD can still submit it afterwards.
+        for (User student : List.of(leader, member)) {
+            AssessmentResponse advisorSheet = assessments.saveDraft(scoreRequest(assignmentId, student.getId(), AssessmentType.ADVISOR), "secretary");
+            assertThat(assessments.submitAssessment(advisorSheet.id(), "secretary").status()).isEqualTo(AssessmentStatus.SUBMITTED);
+        }
+        assertThat(resultService.publishAssignmentResults(assignmentId, "admin")).hasSize(2);
+        em.flush();
+        em.clear();
+        assertThat(em.createQuery("select count(d) from PublishedResultDetails d", Long.class).getSingleResult()).isEqualTo(2L);
+        assertThatThrownBy(() -> assessments.saveDraft(scoreRequest(assignmentId, leader.getId(), AssessmentType.DEFENSE), "chair"))
+                .isInstanceOf(BadRequestException.class);
     }
 
     @Test

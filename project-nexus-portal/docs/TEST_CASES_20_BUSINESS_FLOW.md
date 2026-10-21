@@ -391,13 +391,17 @@
 - **Mục tiêu**: Kiểm tra hệ thống tự động tổng hợp tất cả phiếu chấm, áp dụng công thức trọng số chính xác, làm tròn 2 chữ số thập phân và xét Đậu/Rớt.
 - **Actor**: `principal` / `password123`
 - **Tiền điều kiện**:
-  - Điểm GVHD = `8.00`, điểm phản biện (REVIEW) = `8.50`, điểm TB hội đồng (DEFENSE) = `9.00`.
-  - Hội đồng chuyển trạng thái `COMPLETED`.
+  - Hội đồng đã kết thúc lịch bảo vệ; các phiếu REVIEW và DEFENSE từ giảng viên hội đồng đủ điều kiện đã được nộp.
+  - GVHD chính chưa nộp phiếu ADVISOR; GVHD không được dùng vai trò thành viên hội đồng để chấm REVIEW/DEFENSE cho chính nhóm mình.
 - **Các bước thực hiện**:
-  1. Đăng nhập `principal`, vào trang Kết quả `/results`.
-  2. Chọn nhóm bảo vệ của `Team Nexus Alpha`.
-  3. Xem bảng tính điểm preview do hệ thống tự sinh qua API `/api/results/assignments/{id}`.
+  1. Đăng nhập `principal`, hoàn tất hội đồng sau khi các phiếu REVIEW/DEFENSE hợp lệ đã được nộp.
+  2. Xác nhận hội đồng có thể chuyển sang `COMPLETED` dù GVHD chưa nộp ADVISOR.
+  3. Gọi API `/api/results/assignments/{id}` trước khi GVHD nộp ADVISOR.
+  4. Đăng nhập bằng GVHD chính, nộp phiếu ADVISOR cho từng sinh viên sau khi hội đồng đã COMPLETED.
+  5. Đăng nhập lại `principal` và xem bảng tính điểm preview tại `/results`.
 - **Kết quả mong đợi**:
+  - Bước 3: HTTP `400 Bad Request` vì thiếu ADVISOR; không trả về điểm một phần.
+  - Bước 4: ADVISOR được chấp nhận khi kết quả chưa công bố; chỉ GVHD chính được nộp phiếu này.
   - Điểm tổng kết tính đúng công thức:
     $$\text{Final Score} = (0.20 \times 8.00) + (0.30 \times 8.50) + (0.50 \times 9.00) = 1.60 + 2.55 + 4.50 = 8.65$$
   - Điểm $\ge 5.00 \rightarrow$ Trạng thái tự động phân loại: `PASSED = true` (ĐẬU).
@@ -438,4 +442,3 @@
 - **Kết quả mong đợi**:
   - Phía sinh viên: API `/api/results/me` chỉ trả về đúng dữ liệu của `student`, không trả về thông tin sinh viên khác.
   - Phía trưởng khoa: Trình duyệt tải về file `.xlsx` gồm: Đợt, Bộ môn, Đề tài, Nhóm, MSSV, Sinh viên, GVHD, điểm thành phần, điểm tổng kết, Đạt/Không đạt và nhận xét.
-

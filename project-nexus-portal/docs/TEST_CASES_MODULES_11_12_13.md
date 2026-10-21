@@ -3,17 +3,18 @@
 ## Test Environment
 
 - Frontend: `http://localhost:3000` — Vite production preview.
-- Backend: `http://localhost:8080/api` — Spring Boot, Java 17.
+- Backend: `http://localhost:8080/api` — Spring Boot, Java 25 LTS.
 - Database: MySQL 8 thật trên localhost; bộ integration test dùng H2 riêng.
 - Ngày kiểm thử: 05/10/2026, múi giờ `Asia/Ho_Chi_Minh`.
 - Dữ liệu: tài khoản, nhóm, đề tài, hội đồng có tiền tố `QA`, tách khỏi dữ liệu mẫu. Điểm thử chỉ là dữ liệu giả.
 - Điều kiện đầu vào: đợt 1 đang mở, hạn nộp chưa kết thúc; nhóm QA đã có đăng ký `APPROVED`; ba giảng viên đang hoạt động thuộc cùng bộ môn, reviewer không hướng dẫn đề tài.
-- Script tạo fixture qua API thật, không sửa đồng hồ và không ghi SQL để vượt quy tắc nghiệp vụ. Hội đồng QA có một sinh viên, cần một phiếu Review và ba phiếu Defense Assessment để hoàn tất.
+- Script tạo fixture qua API thật, không sửa đồng hồ và không ghi SQL để vượt quy tắc nghiệp vụ. Hội đồng QA có một sinh viên, cần một phiếu Review và một phiếu Defense cho mỗi thành viên hội đồng đủ điều kiện; ADVISOR không bắt buộc để hoàn tất hội đồng.
 
 ## Execution Summary
 
 - **API trên localhost/MySQL: 52/52 PASS**, run `20261005_150751`, kết thúc lúc 15:11 ngày 05/10/2026. [Kết quả từng case và trạng thái cuối](./test-results/MODULES_11_12_13_20261005.json).
-- **Integration regression: 24/24 PASS**, 0 failures/errors/skipped; Java 17, H2 MySQL mode. Bao gồm test hồi quy lỗi tạo đề tài có hai giảng viên hướng dẫn.
+- **Integration regression lịch sử: 24/24 PASS**, 0 failures/errors/skipped; Java 17, H2 MySQL mode. Bao gồm test hồi quy lỗi tạo đề tài có hai giảng viên hướng dẫn.
+- **Xác minh branch hiện tại (21/10/2026):** `mvn clean test` 78/78 PASS trên Java 25; bộ 20 business E2E 20/20 PASS trên H2 MySQL mode.
 - **Browser: 12/12 PASS.** Sau khi người dùng bật `Allow access to file URLs`, đã chạy lại UI-02 và UI-03 bằng fixture mới: nộp hai file qua UI, hiển thị version 1–2, tải cả hai qua UI và đối chiếu SHA-256 trùng file gốc. Lịch sử giữ nguyên sau reload. [Kết quả UI từng case](./test-results/MODULES_11_12_13_UI_20261005.json), [bằng chứng upload/download](./test-results/MODULE_11_UI_UPLOAD_20261005.json).
 - Frontend vẫn phục vụ HTTP 200 tại `/reports`, `/councils`, `/assessments`; backend đang chạy bản đã sửa BUG-01 trên cổng 8080.
 - Xác minh sau vòng API: registration **2**, council **1**, assignment **2**; bảy tài liệu, các version Report **1–4** đều còn; bốn phiếu **Submitted**, council **Completed**.
@@ -64,9 +65,9 @@ Kết quả API mỗi lượt tiếp theo được lưu tại `be/target/localho
 | M12-13 | Assignment Lock | Gỡ nhóm đã có draft. | HTTP 400. | PASS |
 | M12-14 | Cancellation Restriction | Hủy hội đồng đã có phiếu Submitted. | HTTP 400. | PASS |
 | M12-15 | Completion Time Gate | Hoàn tất trước End. | HTTP 400. | PASS |
-| M12-16 | Council Completion | Sau End, đã đủ một Review và ba Defense Assessment. | HTTP 200, Completed. | PASS |
+| M12-16 | Council Completion | Sau End, đủ Review và Defense Assessment từ các thành viên hội đồng đủ điều kiện; GVHD chưa nộp ADVISOR. | HTTP 200, Completed; thiếu ADVISOR không chặn hoàn tất. | PASS |
 | M12-17 | Terminal Status | Chuyển Completed về Scheduled. | HTTP 400. | PASS |
-| M12-18 | Required Assessment Coverage | Sau End nhưng thiếu phiếu Defense của reviewer. | HTTP 400, vẫn Scheduled. | PASS |
+| M12-18 | Required Assessment Coverage | Sau End nhưng thiếu phiếu Defense của một thành viên hội đồng đủ điều kiện. | HTTP 400, vẫn Scheduled. | PASS |
 
 ## Reviews & Grading
 
@@ -92,6 +93,12 @@ Kết quả API mỗi lượt tiếp theo được lưu tại `be/target/localho
 | M13-16 | Chair Defense Submission | Chair gửi Defense sau Start. | HTTP 200, Submitted. | PASS |
 | M13-17 | Secretary Defense Submission | Secretary lưu/gửi Defense sau Start. | HTTP 200, Submitted. | PASS |
 | M13-18 | Reviewer Defense Submission | Reviewer lưu/gửi Defense cuối cùng. | HTTP 200, đủ bốn phiếu cho một sinh viên. | PASS |
+
+### Quy tắc phân biệt vai trò cần kiểm thử
+
+- GVHD (PRIMARY hoặc CO_ADVISOR) không được chấm REVIEW/DEFENSE cho nhóm mình hướng dẫn, kể cả khi đồng thời là thành viên hội đồng.
+- Chỉ GVHD chính được nộp ADVISOR. Phiếu ADVISOR không chặn chuyển hội đồng sang COMPLETED; GVHD chính có thể nộp sau đó cho đến khi kết quả được công bố hoặc hội đồng bị hủy.
+- Việc tính điểm yêu cầu đúng một ADVISOR cho mỗi sinh viên và một DEFENSE từ mỗi thành viên hội đồng đủ điều kiện; nếu không có giảng viên hội đồng đủ điều kiện để chấm DEFENSE thì từ chối tính điểm.
 
 ## Browser Test Round
 

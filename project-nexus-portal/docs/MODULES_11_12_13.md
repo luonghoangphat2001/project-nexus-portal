@@ -111,3 +111,12 @@ npm run build
 ```
 
 Bộ kiểm thử tích hợp kiểm tra upload/download, phiên bản, deadline, tệp lỗi/quá lớn, quyền theo nhóm/bộ môn, lịch giao nhau/tiếp giáp, phản biện trùng hướng dẫn, phân công duy nhất, nháp riêng tư, khóa phiếu/tài liệu, hoàn tất đủ phiếu, validation HTTP, JWT thật và thao tác đồng thời. H2 không thay thế kiểm thử vận hành trên MySQL 8.
+
+
+## Phân biệt vai trò: GVHD và giảng viên hội đồng
+
+- **GVHD (giảng viên hướng dẫn)**: quan hệ theo đề tài (TopicLecturer: PRIMARY hoặc CO_ADVISOR). Chỉ GVHD chính nhập phiếu `ADVISOR` (20%).
+- **Giảng viên hội đồng**: vai trò theo hội đồng (CHAIR/SECRETARY/REVIEWER), nhập phiếu `DEFENSE` (50%) và `REVIEW` (30%, chỉ REVIEWER).
+- Một giảng viên có thể giữ cả hai vai trò, nhưng được xét theo từng nhóm: GVHD của nhóm nào thì **không** chấm REVIEW/DEFENSE cho nhóm đó.
+- Phiếu `ADVISOR` không chặn việc kết thúc hội đồng; GVHD chính vẫn nộp được sau khi hội đồng hoàn tất, cho tới khi điểm được công bố hoặc hội đồng bị huỷ. Bắt buộc có đúng một phiếu `ADVISOR` mỗi sinh viên khi tính và công bố điểm (Module 14).
+- Phiếu `DEFENSE` chỉ yêu cầu từ các thành viên hội đồng không phải GVHD của nhóm; điểm bảo vệ là trung bình các phiếu hợp lệ đó.

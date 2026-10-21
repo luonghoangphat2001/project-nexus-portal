@@ -1,7 +1,7 @@
 # ==========================================
-# Stage 1: Build Stage using Maven & Java 17
+# Stage 1: Build Stage using Maven & Java 25
 # ==========================================
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+FROM maven:3.9.11-eclipse-temurin-25 AS build
 WORKDIR /app
 
 # Copy pom.xml and pre-fetch dependencies for layer caching
@@ -13,9 +13,9 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # ==========================================
-# Stage 2: Runtime Stage using Lightweight JRE 17
+# Stage 2: Runtime Stage using Lightweight JRE 25
 # ==========================================
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:25-jre-noble
 WORKDIR /app
 
 # Create a non-root system user for security

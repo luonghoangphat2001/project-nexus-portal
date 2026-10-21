@@ -52,7 +52,6 @@ public class PublishedResultDetails {
 
     public static PublishedResultDetails from(Result result, CalculatedScore score) {
         PublishedResultDetails details = new PublishedResultDetails();
-        details.id = result.getId();
         details.result = result;
         details.advisorName = score.advisor().evaluatorName();
         details.advisorContentScore = score.advisor().contentScore();

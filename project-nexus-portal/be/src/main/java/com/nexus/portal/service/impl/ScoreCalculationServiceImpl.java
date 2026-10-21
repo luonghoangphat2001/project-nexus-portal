@@ -77,9 +77,15 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
                 .findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(assignment.getId()).stream()
                 .filter(assessment -> assessment.getStatus() == AssessmentStatus.SUBMITTED)
                 .toList();
-        int expectedDefenseAssessments = assignment.getCouncil().getMembers().size();
+        // Council lecturers who also supervise this team are excluded from review/defense grading.
+        java.util.Set<Long> eligibleEvaluatorIds = assignment.getCouncil().getMembers().stream()
+                .map(DefenseCouncilMember::getLecturer)
+                .filter(lecturer -> access.canAssessAsCouncilMember(lecturer, assignment.getRegistration()))
+                .map(User::getId)
+                .collect(java.util.stream.Collectors.toSet());
+        int expectedDefenseAssessments = eligibleEvaluatorIds.size();
         if (expectedDefenseAssessments == 0) {
-            throw new BadRequestException("The council has no members");
+            throw new BadRequestException("The council has no eligible defense assessors");
         }
 
         List<TeamMember> students = members.findByTeamId(assignment.getRegistration().getTeam().getId());
@@ -100,6 +106,7 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
                     .toList();
             List<Assessment> defenses = studentAssessments.stream()
                     .filter(assessment -> assessment.getType() == AssessmentType.DEFENSE)
+                    .filter(assessment -> eligibleEvaluatorIds.contains(assessment.getEvaluator().getId()))
                     .toList();
             if (advisorAssessments.size() != 1 || reviews.size() != 1
                     || defenses.size() != expectedDefenseAssessments) {

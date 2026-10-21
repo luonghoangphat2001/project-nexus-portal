@@ -160,9 +160,12 @@ async function main() {
     if (res.status !== 201) throw new Error(`Expected 201, got ${res.status}: ${JSON.stringify(res.data)}`);
     periodId = res.data.data.id;
 
-    // Clean and align Team 2 to this new period for end-to-end flow without destroying master seed data
-    const dbPass = process.env.DB_PASSWORD || 'Nexus@Secure2026#Db';
-    execSync(`docker exec nexus_mysql_db mysql -uroot -p"${dbPass}" nexus_db -e "
+    // Clean and align Team 2 to this new period for end-to-end flow without destroying master seed data.
+    // Set SKIP_DOCKER_CLEANUP=1 when running against a fresh database that does not need this cleanup.
+    if (!process.env.SKIP_DOCKER_CLEANUP) {
+      const { execSync } = require('child_process');
+      const dbPass = process.env.DB_PASSWORD || 'Nexus@Secure2026#Db';
+      execSync(`docker exec nexus_mysql_db mysql -uroot -p"${dbPass}" nexus_db -e "
       SET FOREIGN_KEY_CHECKS = 0;
       DELETE pr FROM nexus_db.published_results pr JOIN nexus_db.defense_assignments da ON pr.assignment_id = da.id JOIN nexus_db.topic_registrations tr ON da.registration_id = tr.id WHERE tr.team_id = 2;
       DELETE a FROM nexus_db.assessments a JOIN nexus_db.defense_assignments da ON a.assignment_id = da.id JOIN nexus_db.topic_registrations tr ON da.registration_id = tr.id WHERE tr.team_id = 2;
@@ -178,7 +181,8 @@ async function main() {
       UPDATE nexus_db.teams SET period_id = ${periodId}, status = 'READY', name = 'Team Nexus Alpha (3 Students)' WHERE id = 2;
       INSERT IGNORE INTO nexus_db.user_departments (user_id, department_id) VALUES (4, 1);
       SET FOREIGN_KEY_CHECKS = 1;
-    "`);
+      "`);
+    }
 
     return `Registration period created successfully ID: ${periodId}, status: ${res.data.data.status}`;
   });
@@ -559,12 +563,18 @@ async function main() {
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
 
-    // Submit DEFENSE assessments from all 3 members (principal, teacher, council) for all 3 students
+    // The teacher is the GVHD (thesis advisor) of this team, so they cannot grade DEFENSE as a council member.
+    // Only council lecturers who do not supervise the team (principal, council) submit DEFENSE assessments.
     const evaluators = [
       { token: authPrincipal.token, score: 8.5 },
-      { token: authTeacher.token, score: 8.0 },
       { token: authCouncil.token, score: 8.5 },
     ];
+
+    const blocked = await apiRequest('POST', '/assessments', {
+      assignmentId, studentId: students[0], type: 'DEFENSE',
+      contentScore: 8, implementationScore: 8, presentationScore: 8, comment: 'Advisor must not grade own team.',
+    }, authTeacher.token);
+    if (blocked.status !== 403) throw new Error(`Expected 403 when the GVHD grades DEFENSE for own team, got ${blocked.status}`);
 
     for (const ev of evaluators) {
       for (const sId of students) {
@@ -588,6 +598,22 @@ async function main() {
     const completeRes = await apiRequest('PATCH', `/councils/${councilId}/status`, { status: 'COMPLETED' }, authPrincipal.token);
     if (!completeRes.ok) throw new Error(`Complete council failed: ${JSON.stringify(completeRes.data)}`);
 
+    // Scores cannot be calculated until the primary GVHD submits the ADVISOR assessment of every student
+    const early = await apiRequest('GET', `/results/assignments/${assignmentId}`, null, authPrincipal.token);
+    if (early.status !== 400) throw new Error(`Expected 400 before the advisor assessments, got ${early.status}`);
+
+    // The GVHD may still submit ADVISOR assessments after the council is completed
+    for (const sId of students) {
+      const adv = await apiRequest('POST', '/assessments', {
+        assignmentId, studentId: sId, type: 'ADVISOR',
+        contentScore: 9.0, implementationScore: 9.0, presentationScore: 9.0,
+        comment: 'Consistent progress throughout the thesis period.',
+      }, authTeacher.token);
+      if (!adv.ok) throw new Error(`Draft advisor assessment failed: ${JSON.stringify(adv.data)}`);
+      const sub = await apiRequest('POST', `/assessments/${adv.data.data.id}/submit`, null, authTeacher.token);
+      if (!sub.ok) throw new Error(`Submit advisor assessment failed: ${JSON.stringify(sub.data)}`);
+    }
+
     // Calculate scores
     const calcRes = await apiRequest('GET', `/results/assignments/${assignmentId}`, null, authPrincipal.token);
     if (!calcRes.ok) throw new Error(`Score calculation failed: ${JSON.stringify(calcRes.data)}`);
@@ -595,7 +621,7 @@ async function main() {
     const s1 = calcRes.data.data.find((g) => g.studentId === authStudent.user.id);
     if (!s1) throw new Error(`Missing calculated grade for student 1`);
 
-    return `Council COMPLETED. Calculated scores: Review = ${s1.reviewScore}, Defense = ${s1.defenseScore}, Final Score = ${s1.finalScore}, Result = ${s1.passed ? 'PASSED' : 'FAILED'}`;
+    return `Council COMPLETED. Calculated scores: Advisor = ${s1.advisorScore}, Review = ${s1.reviewScore}, Defense = ${s1.defenseScore}, Final Score = ${s1.finalScore}, Result = ${s1.passed ? 'PASSED' : 'FAILED'}`;
   });
 
   // ----------------------------------------------------------------------------

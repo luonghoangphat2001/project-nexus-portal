@@ -12,7 +12,7 @@ This document lists the automated JUnit tests for Modules 14–16 under `be/src/
 
 | ID | Scenario | Expected result |
 | --- | --- | --- |
-| G-01 | Assessment score averages three criteria; defense score averages every `DEFENSE` assessment | Correct values |
+| G-01 | Assessment score averages three criteria; defense score averages `DEFENSE` assessments from council members who do not supervise the team | Correct values |
 | G-02 | Final score uses 20% advisor, 30% reviewer, 50% council weights (8.00/8.50/9.00 gives 8.65) | Correct rounding |
 | G-03 | Passing threshold is 5.00 | `5.00` passes |
 | G-04 | Preview scores for a completed assignment | Returns the score list |
@@ -20,6 +20,9 @@ This document lists the automated JUnit tests for Modules 14–16 under `be/src/
 | G-06 | An `ADVISOR`, `REVIEW` or `DEFENSE` assessment is missing | Rejects the request without partial results |
 | G-07 | Council is not completed | Rejects the request |
 | G-08 | Manager is outside the assigned department | Denies access |
+| G-09 | The primary GVHD submits `ADVISOR` after council completion but before publication | Accepts the assessment |
+| G-10 | A co-advisor submits `ADVISOR`, or a thesis supervisor submits `REVIEW`/`DEFENSE` for their team | Denies the assessment |
+| G-11 | No council member is eligible to submit `DEFENSE` for the team | Rejects score calculation |
 
 ## Result Publication (Module 15): `ResultPublicationServiceImplTest`
 

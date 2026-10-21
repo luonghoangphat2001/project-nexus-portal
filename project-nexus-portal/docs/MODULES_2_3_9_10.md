@@ -1,6 +1,6 @@
 # Capstone management modules
 
-These modules use the existing Java 17 / Spring Boot backend and React frontend. All added source code, validation messages and UI labels are in English. Academic years, semesters, faculties and cohorts follow the project's existing capstone data model. Demo data is for coursework and does not represent official university rules.
+These modules use the existing Java 25 / Spring Boot backend and React frontend. All added source code, validation messages and UI labels are in English. Academic years, semesters, faculties and cohorts follow the project's existing capstone data model. Demo data is for coursework and does not represent official university rules.
 
 ## Pages
 

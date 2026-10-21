@@ -76,7 +76,9 @@ class ScoreCalculationServiceImplTest {
         council = new DefenseCouncil();
         council.setId(8L);
         council.setStatus(CouncilStatus.COMPLETED);
-        council.setMembers(List.of(new DefenseCouncilMember()));
+        DefenseCouncilMember councilMember = new DefenseCouncilMember();
+        councilMember.setLecturer(manager);
+        council.setMembers(List.of(councilMember));
         assignment = new DefenseAssignment();
         assignment.setId(9L);
         assignment.setCouncil(council);
@@ -131,6 +133,31 @@ class ScoreCalculationServiceImplTest {
     }
 
     @Test
+    void excludesSupervisorCouncilMemberFromDefenseAssessments() {
+        User advisor = new User();
+        advisor.setId(10L);
+        User eligible = new User();
+        eligible.setId(11L);
+        DefenseCouncilMember advisorMember = new DefenseCouncilMember();
+        advisorMember.setLecturer(advisor);
+        DefenseCouncilMember eligibleMember = new DefenseCouncilMember();
+        eligibleMember.setLecturer(eligible);
+        council.setMembers(List.of(advisorMember, eligibleMember));
+
+        Assessment defense = assessment(AssessmentType.DEFENSE, "7.00", "7.50", "8.00");
+        defense.setEvaluator(eligible);
+        Assessment staleAdvisorDefense = assessment(AssessmentType.DEFENSE, "1.00", "1.00", "1.00");
+        staleAdvisorDefense.setEvaluator(advisor);
+        givenCalculationDependencies(List.of(submitted.get(0), submitted.get(1), staleAdvisorDefense, defense));
+        when(access.canAssessAsCouncilMember(advisor, assignment.getRegistration())).thenReturn(false);
+        when(access.canAssessAsCouncilMember(eligible, assignment.getRegistration())).thenReturn(true);
+
+        List<CalculatedScore> result = service.calculateScores(assignment);
+
+        assertEquals(new BigDecimal("7.50"), result.get(0).defense().score());
+    }
+
+    @Test
     void refusesToCalculateBeforeCouncilCompletion() {
         council.setStatus(CouncilStatus.SCHEDULED);
 
@@ -164,6 +191,7 @@ class ScoreCalculationServiceImplTest {
         when(assessments.findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(9L))
                 .thenReturn(assessmentsForAssignment);
         when(members.findByTeamId(5L)).thenReturn(List.of(TeamMember.builder().user(student).build()));
+        lenient().when(access.canAssessAsCouncilMember(any(User.class), eq(assignment.getRegistration()))).thenReturn(true);
     }
 
     private void givenManagerAccess() {

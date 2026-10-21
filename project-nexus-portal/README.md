@@ -1,7 +1,7 @@
 # Project Nexus Portal
 
 Enterprise Monorepo Portal System:
-- **Backend (`be`)**: Java 17, Spring Boot 3.3.x, Spring Security 6 (Stateless JWT), Spring Data JPA, MySQL 8, Jakarta EE, Clean Architecture & SOLID. Có sẵn `.env` và `docker-compose.yml` riêng.
+- **Backend (`be`)**: Java 25 (LTS), Spring Boot 3.5.x, Spring Security 6 (Stateless JWT), Spring Data JPA, MySQL 8, Jakarta EE, Clean Architecture & SOLID. Có sẵn `.env` và `docker-compose.yml` riêng.
 - **Frontend (`fe`)**: ReactJS (Vite), Tailwind CSS, Lucide Icons, Admin Dashboard Layout (Sidebar, Header, Outlet), Axios Client (Interceptor). Có sẵn `.env` và `docker-compose.yml` riêng.
 - **Tài liệu kiến trúc & Hướng dẫn Java Models**: [ARCHITECTURE.md](./ARCHITECTURE.md)
 
@@ -80,4 +80,3 @@ Hệ thống CI/CD được tích hợp sẵn qua GitHub Actions (`.github/workf
 - **Continuous Deployment (CD)**: Tự động kết nối SSH đến VPS và khởi động hệ thống với Docker Compose (`docker-compose.prod.yml`).
 - Chi tiết cấu hình SSH Key, GitHub Secrets và môi trường VPS xem tại:
   👉 [Hướng dẫn CI/CD và Triển khai VPS](./docs/CI_CD_DEPLOYMENT_GUIDE.md)
-

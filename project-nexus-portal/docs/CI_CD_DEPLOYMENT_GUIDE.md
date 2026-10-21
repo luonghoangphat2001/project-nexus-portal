@@ -13,7 +13,7 @@ flowchart TD
     subgraph GitHub_Actions["GitHub Actions Workflow (.github/workflows/deploy.yml)"]
         direction TB
         subgraph CI["1. Giai đoạn CI (Chạy song song)"]
-            BE_CI["Backend CI\n- Setup Java 17\n- Maven clean test"]
+            BE_CI["Backend CI\n- Setup Java 25 (LTS)\n- Maven clean test"]
             FE_CI["Frontend CI\n- Setup Node 20\n- npm ci && npm run build"]
         end
         
@@ -181,4 +181,3 @@ docker compose -f docker-compose.prod.yml logs -f frontend_app
    - Chạy `npm install` ở máy local rồi commit file `package-lock.json` nếu có thay đổi dependency mới.
 4. **Lỗi Backend không kết nối được MySQL trên VPS**:
    - MySQL cần khoảng 15-20 giây để khởi động trong lần đầu tiên. Container `backend_api` đã được cấu hình chờ `mysql_db` chuyển sang trạng thái `healthy` trước khi khởi động.
-

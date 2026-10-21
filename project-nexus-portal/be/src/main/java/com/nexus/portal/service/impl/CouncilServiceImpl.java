@@ -26,12 +26,14 @@ public class CouncilServiceImpl implements CouncilService {
     private final RegistrationPeriodRepository periods;
     private final UserRepository users;
     private final DefenseAccessPolicy access;
+    private final ResultRepository results;
     private final Clock clock;
 
     public CouncilServiceImpl(DefenseCouncilRepository councils, DefenseAssignmentRepository assignments,
                               AssessmentRepository assessments, DepartmentRepository departments,
                               RegistrationPeriodRepository periods, UserRepository users,
-                              DefenseAccessPolicy access, Clock clock) {
+                              DefenseAccessPolicy access, ResultRepository results, Clock clock) {
+        this.results = results;
         this.councils = councils;
         this.assignments = assignments;
         this.assessments = assessments;
@@ -241,7 +243,9 @@ public class CouncilServiceImpl implements CouncilService {
             for (DefenseAssignment a : allocated) {
                 List<Assessment> scores = assessments.findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(a.getId());
                 for (DefenseRegistrationResponse.Student student : access.toResponse(a.getRegistration(), user).students()) {
+                    // The ADVISOR sheet belongs to the GVHD, not the council; it is enforced when scores are calculated.
                     for (DefenseCouncilMember member : council.getMembers()) {
+                        if (!access.canAssessAsCouncilMember(member.getLecturer(), a.getRegistration())) continue;
                         if (!hasSubmitted(scores, student.id(), member.getLecturer().getId(), AssessmentType.DEFENSE)
                                 || (member.getRole() == CouncilMemberRole.REVIEWER
                                 && !hasSubmitted(scores, student.id(), member.getLecturer().getId(), AssessmentType.REVIEW))) {
@@ -277,8 +281,16 @@ public class CouncilServiceImpl implements CouncilService {
                 c.getMembers().stream().map(m -> new CouncilResponse.Member(m.getLecturer().getId(), m.getLecturer().getFullName(), m.getRole())).toList(),
                 assignments.findByCouncilId(c.getId()).stream()
                         .filter(a -> manager || ownMember.isPresent() || access.canRead(user, a.getRegistration()))
-                        .map(a -> new CouncilResponse.Assignment(a.getId(), access.toResponse(a.getRegistration(), user),
-                                c.getStatus() == CouncilStatus.SCHEDULED && ownMember.filter(m -> m.getRole() == CouncilMemberRole.REVIEWER).isPresent(),
-                                c.getStatus() == CouncilStatus.SCHEDULED && ownMember.isPresent())).toList());
+                        .map(a -> {
+                            boolean scheduled = c.getStatus() == CouncilStatus.SCHEDULED;
+                            boolean eligibleCouncil = ownMember.isPresent()
+                                    && access.canAssessAsCouncilMember(user, a.getRegistration());
+                            return new CouncilResponse.Assignment(a.getId(), access.toResponse(a.getRegistration(), user),
+                                    scheduled && eligibleCouncil && ownMember.get().getRole() == CouncilMemberRole.REVIEWER,
+                                    scheduled && eligibleCouncil,
+                                    c.getStatus() != CouncilStatus.CANCELLED && access.isPrimaryAdvisor(user, a.getRegistration())
+                                            && !results.existsByAssignmentId(a.getId()),
+                                    ownMember.isPresent(), access.isAdvisor(user, a.getRegistration()));
+                        }).toList());
     }
 }

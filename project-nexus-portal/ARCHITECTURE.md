@@ -11,7 +11,7 @@ project-nexus-portal/
 ├── ARCHITECTURE.md              # Kim chỉ nam kiến trúc, phong cách code & hướng dẫn models
 ├── README.md                    # Hướng dẫn cài đặt, cấu hình môi trường & chạy hệ thống
 │
-├── be/                          # BACKEND: Java 17 + Spring Boot 3.3.x
+├── be/                          # BACKEND: Java 25 (LTS) + Spring Boot 3.5.x
 │   ├── .env                     # File biến môi trường riêng cho Backend (DB, Port, JWT, CORS)
 │   ├── .env.example             # File mẫu biến môi trường cho Backend
 │   ├── Dockerfile               # Multi-stage build (Maven build -> Temurin JRE runtime)
@@ -124,7 +124,7 @@ Tất cả các bảng cơ sở dữ liệu được định nghĩa dưới dạ
 
 ## 4. Quy chuẩn phong cách Code (Coding Style & Conventions)
 
-### 4.1 Quy chuẩn Backend (Java 17 / Spring Boot 3)
+### 4.1 Quy chuẩn Backend (Java 25 LTS / Spring Boot 3.5)
 - **Quy tắc đặt tên (Naming Conventions)**:
   - Package: `com.nexus.portal.<layer>` (viết thường toàn bộ).
   - Class / Interface: `PascalCase` (ví dụ: `UserController`, `AuthService`, `UserPrincipal`).

@@ -62,9 +62,22 @@ public class DefenseAccessPolicy {
         if (!canManage(user, department)) throw new AccessDeniedException("Only administrators or the responsible department head can manage council assignments");
     }
 
+    /** Thesis supervisor (GVHD) of the topic: primary or co-advisor. Distinct from a council role. */
     public boolean isAdvisor(User user, TopicRegistration registration) {
         return registration.getTopic().getTopicLecturers().stream()
                 .anyMatch(l -> Objects.equals(l.getLecturer().getId(), user.getId()));
+    }
+
+    /** Only the primary GVHD submits the separate ADVISOR assessment (20% advisor score). */
+    public boolean isPrimaryAdvisor(User user, TopicRegistration registration) {
+        return registration.getTopic().getTopicLecturers().stream()
+                .anyMatch(l -> Objects.equals(l.getLecturer().getId(), user.getId())
+                        && l.getAdvisorRole() == AdvisorRole.PRIMARY);
+    }
+
+    /** A council lecturer may only grade REVIEW/DEFENSE for teams they do not supervise. */
+    public boolean canAssessAsCouncilMember(User user, TopicRegistration registration) {
+        return !isAdvisor(user, registration);
     }
 
     public boolean isTeamMember(User user, TopicRegistration registration) {
