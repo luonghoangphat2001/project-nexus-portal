@@ -148,7 +148,9 @@ public class ResultServiceImpl implements ResultService {
             // Also notify advisor lecturers of the topic
             Topic topic = assignment.getRegistration() != null ? assignment.getRegistration().getTopic() : null;
             if (topic != null && topic.getTopicLecturers() != null) {
-                String teamName = assignment.getTeam() != null ? assignment.getTeam().getName() : "";
+                String teamName = (assignment.getRegistration() != null && assignment.getRegistration().getTeam() != null)
+                        ? assignment.getRegistration().getTeam().getName()
+                        : "";
                 for (com.nexus.portal.model.TopicLecturer tl : topic.getTopicLecturers()) {
                     if (tl.getLecturer() != null) {
                         notificationService.sendNotification(
