@@ -423,7 +423,6 @@ export function ReportsPage() {
                             <Paperclip className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                             <span className="truncate font-sans font-medium">{d.fileName}</span>
                           </div>
-                          <div className="text-slate-400 text-[11px] pl-5">{(d.fileSize / 1024 / 1024).toFixed(2)} MB</div>
                         </td>
 
                         <td className="py-3.5 px-4">

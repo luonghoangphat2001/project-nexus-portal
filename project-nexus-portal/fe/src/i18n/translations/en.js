@@ -802,6 +802,8 @@ export const en = {
     "evaluationsList": "Evaluation Scoresheets",
     "evaluationsSub": "Detailed scores from council members",
     "yourAssessment": "Your Scoresheet",
+    "existingDraft": "A draft exists for this student. Its scores and comments are loaded into the form below.",
+    "draftScores": "Saved scores — Content: {content}/10 · Implementation: {implementation}/10 · Presentation: {presentation}/10",
     "reviewAssessment": "Review Assessment",
     "defenseAssessment": "Defense Assessment",
     "assessmentType": "Assessment Type",
@@ -1248,6 +1250,8 @@ export const en = {
     "noMatching": "No notifications match the current filters."
   },
   "errors": {
+    "defenseTimeInvalid": "The defense must start in the future and end after it starts. Please adjust the schedule.",
+    "defenseNotStarted": "The defense has not started. You can save a draft and submit it after the defense begins.",
     "default": "An unexpected error occurred. Please try again later.",
     "network": "Unable to connect to the server. Please check your internet connection.",
     "invalidCredentials": "Invalid username or password. Please verify your credentials.",

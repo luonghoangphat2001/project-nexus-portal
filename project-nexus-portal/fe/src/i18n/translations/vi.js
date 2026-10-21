@@ -802,6 +802,8 @@ export const vi = {
     "evaluationsList": "Danh sách phiếu chấm điểm",
     "evaluationsSub": "Chi tiết điểm số từ các thành viên hội đồng",
     "yourAssessment": "Phiếu chấm của bạn",
+    "existingDraft": "Đã có bản nháp cho sinh viên này. Điểm và nhận xét đã được điền lại vào phiếu bên dưới.",
+    "draftScores": "Điểm đã lưu — Nội dung: {content}/10 · Thực hiện: {implementation}/10 · Trình bày: {presentation}/10",
     "reviewAssessment": "Đánh giá phản biện",
     "defenseAssessment": "Đánh giá bảo vệ",
     "assessmentType": "Hình thức đánh giá",
@@ -1248,6 +1250,8 @@ export const vi = {
     "noMatching": "Không có thông báo nào phù hợp với bộ lọc."
   },
   "errors": {
+    "defenseTimeInvalid": "Thời gian bắt đầu bảo vệ phải ở tương lai và thời gian kết thúc phải sau thời gian bắt đầu. Vui lòng chỉnh lại lịch.",
+    "defenseNotStarted": "Buổi bảo vệ chưa bắt đầu. Bạn có thể lưu nháp và gửi phiếu chấm sau khi buổi bảo vệ bắt đầu.",
     "default": "Đã xảy ra lỗi không xác định. Vui lòng thử lại sau.",
     "network": "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng.",
     "invalidCredentials": "Tên đăng nhập hoặc mật khẩu không chính xác.",
