@@ -802,7 +802,7 @@ export const vi = {
     "evaluationsList": "Danh sách phiếu chấm điểm",
     "evaluationsSub": "Chi tiết điểm số từ các thành viên hội đồng",
     "yourAssessment": "Phiếu chấm của bạn",
-    "existingDraft": "Đã có bản nháp cho sinh viên này. Điểm và nhận xét đã được điền lại vào phiếu bên dưới.",
+    "existingDraft": "Hiện sinh viên đang có bản nháp.",
     "draftScores": "Điểm đã lưu — Nội dung: {content}/10 · Thực hiện: {implementation}/10 · Trình bày: {presentation}/10",
     "reviewAssessment": "Đánh giá phản biện",
     "defenseAssessment": "Đánh giá bảo vệ",
@@ -822,7 +822,7 @@ export const vi = {
     "confirmSubmitLock": "Bạn có chắc muốn nộp và khóa điểm số này không? Sau khi nộp sẽ không thể chỉnh sửa.",
     "saveDraftSuccess": "Lưu bản nháp thành công!",
     "submittedNotice": "Điểm đã được nộp và khóa chính thức",
-    "studentAssessmentLocked": "Sinh viên này đã có phiếu đánh giá được {evaluator} nộp và khóa. Khung chấm điểm đã được ẩn.",
+    "studentAssessmentLocked": "Sinh viên này đã có phiếu đánh giá được {evaluator} nộp và khóa.",
     "noAssignedTeams": "Không có nhóm nào được phân công cho hội đồng này",
     "noAssessments": "Chưa có phiếu chấm điểm nào cho nhóm này"
   },
