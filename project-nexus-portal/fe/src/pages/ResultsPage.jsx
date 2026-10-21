@@ -267,7 +267,7 @@ export function ResultsPage() {
               count={myGrades.length}
             />
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
+              <table className="w-full text-left text-sm border-collapse min-w-[700px]">
                 <thead>
                   <tr className="bg-slate-50/70 border-b border-slate-200 font-semibold text-slate-600">
                     <th className="py-3.5 px-4">{t('results.periodCol')}</th>
@@ -459,7 +459,7 @@ export function ResultsPage() {
                 <div className="p-8 text-center text-sm text-slate-500">{t('results.noStudentResults')}</div>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-slate-200">
-                  <table className="w-full text-left text-sm border-collapse">
+                  <table className="w-full text-left text-sm border-collapse min-w-[700px]">
                     <thead>
                       <tr className="bg-slate-50/70 border-b border-slate-200 font-semibold text-slate-600">
                         <th className="py-3 px-4">{t('results.studentCol')}</th>
@@ -772,7 +772,7 @@ export function ResultsPage() {
           <div className="p-12 text-center text-sm text-slate-500">{t('results.noReportData')}</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="w-full text-left text-sm border-collapse min-w-[750px]">
               <thead>
                 <tr className="bg-slate-50/70 border-b border-slate-200 font-semibold text-slate-600">
                   <th className="py-3.5 px-4">{t('results.periodCol')}</th>

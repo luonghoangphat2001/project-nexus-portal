@@ -405,7 +405,7 @@ export const UsersPage = () => {
         />
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="bg-slate-50/70 border-b border-slate-100 text-sm font-semibold text-slate-600">
                 <th className="py-3.5 px-4">{t('users.colUser')}</th>
@@ -634,7 +634,7 @@ export const UsersPage = () => {
               <label className="block text-sm font-semibold text-slate-700 mb-1">{t('users.facultyLabel')}</label>
               <select
                 value={newUser.facultyId}
-                onChange={(e) => setNewUser({ ...newUser, facultyId: e.target.value })}
+                onChange={(e) => setNewUser({ ...newUser, facultyId: e.target.value, departmentId: '', majorId: '' })}
                 className={selectClass}
               >
                 <option value="">-- {t('common.none')} --</option>
@@ -648,13 +648,15 @@ export const UsersPage = () => {
               <label className="block text-sm font-semibold text-slate-700 mb-1">{t('users.departmentLabel')}</label>
               <select
                 value={newUser.departmentId}
-                onChange={(e) => setNewUser({ ...newUser, departmentId: e.target.value })}
+                onChange={(e) => setNewUser({ ...newUser, departmentId: e.target.value, majorId: '' })}
                 className={selectClass}
               >
                 <option value="">-- {t('common.none')} --</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>{d.name} ({d.code})</option>
-                ))}
+                {departments
+                  .filter((d) => !newUser.facultyId || d.facultyId === Number(newUser.facultyId))
+                  .map((d) => (
+                    <option key={d.id} value={d.id}>{d.name} ({d.code})</option>
+                  ))}
               </select>
             </div>
 
@@ -666,9 +668,11 @@ export const UsersPage = () => {
                 className={selectClass}
               >
                 <option value="">-- {t('common.none')} --</option>
-                {majors.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
-                ))}
+                {majors
+                  .filter((m) => !newUser.departmentId || m.departmentId === Number(newUser.departmentId))
+                  .map((m) => (
+                    <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
+                  ))}
               </select>
             </div>
 

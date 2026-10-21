@@ -45,7 +45,9 @@ export const vi = {
     "next": "Sau",
     "pageOf": "Trang {current} / {total}",
     "add": "Thêm mới",
-    "notUpdated": "Chưa cập nhật"
+    "notUpdated": "Chưa cập nhật",
+    "done": "Xong",
+    "selected": "đã chọn"
   },
   "enums": {
     "status": {

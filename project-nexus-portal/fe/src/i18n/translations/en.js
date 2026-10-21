@@ -45,7 +45,9 @@ export const en = {
     "next": "Next",
     "pageOf": "Page {current} of {total}",
     "add": "Add New",
-    "notUpdated": "Not updated"
+    "notUpdated": "Not updated",
+    "done": "Done",
+    "selected": "selected"
   },
   "enums": {
     "status": {

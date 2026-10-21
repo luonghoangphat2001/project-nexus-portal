@@ -10,6 +10,7 @@ import {
   TableCard,
   StatusBadge,
   Modal,
+  MultiSelectDropdown,
   EmptyState,
   Banner,
   buttonClass,
@@ -188,7 +189,7 @@ export function PeriodsPage() {
       {/* Clean Table Card matching Image 1 */}
       <TableCard>
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
+          <table className="w-full text-left border-collapse text-sm min-w-[700px]">
             <thead>
               <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-600 font-semibold text-xs uppercase tracking-wider">
                 <th className="py-3.5 px-4">{t('periods.periodName')}</th>
@@ -260,9 +261,10 @@ export function PeriodsPage() {
                               })
                             }
                             className={buttonClass.actionRow}
+                            title={t('common.edit')}
+                            aria-label={t('common.edit')}
                           >
-                            <Edit2 className="w-3 h-3 text-slate-500" />
-                            <span>{t('common.edit')}</span>
+                            <Edit2 className="w-3.5 h-3.5 text-slate-600" />
                           </button>
 
                           {hasRole('ROLE_ADMIN') && (
@@ -271,9 +273,10 @@ export function PeriodsPage() {
                               disabled={busy}
                               onClick={() => handleRemove(period)}
                               className={buttonClass.actionRowDanger}
+                              title={t('common.delete')}
+                              aria-label={t('common.delete')}
                             >
-                              <Trash2 className="w-3 h-3 text-rose-500" />
-                              <span>{t('common.delete')}</span>
+                              <Trash2 className="w-3.5 h-3.5 text-rose-500" />
                             </button>
                           )}
                         </div>
@@ -307,7 +310,7 @@ export function PeriodsPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 mb-1">{t('periods.academicYear')} *</label>
               <input
@@ -334,7 +337,7 @@ export function PeriodsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 mb-1">{t('periods.regStarts')} *</label>
               <input
@@ -342,7 +345,8 @@ export function PeriodsPage() {
                 required
                 value={form?.startDate || ''}
                 onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                className={inputClass}
+                onClick={(e) => { try { e.target.showPicker?.(); } catch(_) {} }}
+                className={`${inputClass} cursor-pointer`}
               />
             </div>
             <div>
@@ -352,7 +356,8 @@ export function PeriodsPage() {
                 required
                 value={form?.endDate || ''}
                 onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                className={inputClass}
+                onClick={(e) => { try { e.target.showPicker?.(); } catch(_) {} }}
+                className={`${inputClass} cursor-pointer`}
               />
             </div>
           </div>
@@ -364,7 +369,8 @@ export function PeriodsPage() {
               required
               value={form?.submissionDeadline || ''}
               onChange={(e) => setForm({ ...form, submissionDeadline: e.target.value })}
-              className={inputClass}
+              onClick={(e) => { try { e.target.showPicker?.(); } catch(_) {} }}
+              className={`${inputClass} cursor-pointer`}
             />
           </div>
 
@@ -385,37 +391,24 @@ export function PeriodsPage() {
 
           <div>
             <label className="block font-semibold text-slate-700 mb-1">{t('periods.targetFaculties')} *</label>
-            <select
-              multiple
-              className={`${selectClass} h-24`}
+            <MultiSelectDropdown
+              options={faculties}
               value={form?.facultyIds || []}
-              onChange={(e) => {
-                const selected = Array.from(e.target.selectedOptions, (option) => Number(option.value));
-                setForm({ ...form, facultyIds: selected });
-              }}
-            >
-              {faculties.map((f) => (
-                <option key={f.id} value={f.id}>{f.name}</option>
-              ))}
-            </select>
-            <span className="text-xs text-slate-400 mt-0.5 block">Hold Ctrl / Cmd to select multiple</span>
+              onChange={(selected) => setForm({ ...form, facultyIds: selected })}
+              placeholder={t('periods.targetFaculties')}
+              allLabel={t('notifications.allFaculties') || 'Tất cả các khoa'}
+            />
           </div>
 
           <div>
             <label className="block font-semibold text-slate-700 mb-1">{t('periods.targetCohorts')} *</label>
-            <select
-              multiple
-              className={`${selectClass} h-24`}
+            <MultiSelectDropdown
+              options={cohorts}
               value={form?.cohortIds || []}
-              onChange={(e) => {
-                const selected = Array.from(e.target.selectedOptions, (option) => Number(option.value));
-                setForm({ ...form, cohortIds: selected });
-              }}
-            >
-              {cohorts.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              onChange={(selected) => setForm({ ...form, cohortIds: selected })}
+              placeholder={t('periods.targetCohorts')}
+              allLabel="Tất cả các khóa"
+            />
           </div>
 
           <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">

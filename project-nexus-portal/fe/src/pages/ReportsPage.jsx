@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Download, Upload, FileText, RefreshCw, CalendarClock, GraduationCap } from 'lucide-react';
+import { Download, Upload, FileText, RefreshCw, CalendarClock, GraduationCap, Paperclip } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import reportService from '../services/reportService';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -326,53 +326,81 @@ export function ReportsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-sm">
+                <table className="w-full text-left border-collapse text-sm min-w-[850px]">
                   <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-600 font-semibold text-sm">
-                      <th className="py-3.5 px-4">{t('reports.docTitle')}</th>
-                      <th className="py-3.5 px-4">{t('reports.docType')}</th>
-                      <th className="py-3.5 px-4">{t('reports.fileLabel')}</th>
-                      <th className="py-3.5 px-4">Người nộp</th>
-                      <th className="py-3.5 px-4">Thời gian</th>
-                      <th className="py-3.5 px-4 text-right">Thao tác</th>
+                    <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-500 font-semibold text-xs uppercase tracking-wider">
+                      <th className="py-3 px-4 min-w-[240px]">{t('reports.docTitle')}</th>
+                      <th className="py-3 px-4 min-w-[130px]">{t('reports.docType')}</th>
+                      <th className="py-3 px-4 min-w-[220px]">{t('reports.fileLabel')}</th>
+                      <th className="py-3 px-4 min-w-[150px]">{t('common.user') || 'Người nộp'}</th>
+                      <th className="py-3 px-4 min-w-[140px]">{t('common.time') || 'Thời gian'}</th>
+                      <th className="py-3 px-4 text-right min-w-[100px]">{t('common.actions') || 'Thao tác'}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
                     {documents.map((d) => (
                       <tr key={d.id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="py-3.5 px-4 font-semibold text-slate-900">
-                          <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-blue-600 shrink-0" />
-                            <span>{d.title}</span>
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold">
-                              v{d.version}
-                            </span>
+                          <div className="flex items-center gap-2 max-w-[280px]">
+                            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                              <FileText className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-semibold text-slate-900 truncate" title={d.title}>
+                                  {d.title}
+                                </span>
+                                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-50 text-blue-700 font-bold shrink-0 border border-blue-100">
+                                  v{d.version}
+                                </span>
+                              </div>
+                              {d.note && (
+                                <p className="text-xs text-slate-400 font-normal italic truncate max-w-[240px]" title={d.note}>
+                                  "{d.note}"
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          {d.note && (
-                            <p className="mt-1 text-xs text-slate-500 italic">"{d.note}"</p>
-                          )}
                         </td>
+
                         <td className="py-3.5 px-4">
                           <StatusBadge value={d.type} type="docType" />
                         </td>
-                        <td className="py-3.5 px-4 font-mono text-xs text-slate-600">
-                          <div>{d.fileName}</div>
-                          <div className="text-slate-400">{(d.fileSize / 1024 / 1024).toFixed(2)} MB</div>
+
+                        <td className="py-3.5 px-4 font-mono text-xs">
+                          <div className="flex items-center gap-1.5 text-slate-700 max-w-[220px]" title={d.fileName}>
+                            <Paperclip className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="truncate font-sans font-medium">{d.fileName}</span>
+                          </div>
+                          <div className="text-slate-400 text-[11px] pl-5">{(d.fileSize / 1024 / 1024).toFixed(2)} MB</div>
                         </td>
-                        <td className="py-3.5 px-4 text-slate-700">
-                          {d.submittedByName}
+
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-bold text-[11px] flex items-center justify-center shrink-0">
+                              {d.submittedByName?.charAt(0) || 'U'}
+                            </div>
+                            <span className="text-xs font-medium text-slate-700 truncate max-w-[130px]" title={d.submittedByName}>
+                              {d.submittedByName || '—'}
+                            </span>
+                          </div>
                         </td>
-                        <td className="py-3.5 px-4 text-slate-500 text-xs">
+
+                        <td className="py-3.5 px-4 text-slate-500 font-mono text-xs">
                           {formatDate(d.submittedAt)}
                         </td>
+
                         <td className="py-3.5 px-4 text-right">
                           <button
+                            type="button"
                             disabled={busy}
                             onClick={() => download(d.id)}
-                            className={buttonClass('secondary')}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 transition-colors cursor-pointer border border-blue-100"
+                            title={t('reports.download')}
+                            aria-label={t('reports.download')}
                           >
-                            <Download className="w-3.5 h-3.5 text-blue-600" />
-                            <span>{t('reports.download')}</span>
+                            <Download className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">{t('reports.download')}</span>
                           </button>
                         </td>
                       </tr>

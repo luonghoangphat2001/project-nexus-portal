@@ -29,8 +29,8 @@ export function CouncilForm({ council, options, busy, onSave, onCancel }) {
         <Field label="Registration Period"><select required className={inputClass} value={form.periodId} onChange={(e) => update('periodId', e.target.value)}>
           {options.periods.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select></Field>
-        <Field label="Start Time (Vietnam, UTC+7)"><input type="datetime-local" required className={inputClass} value={form.startsAt} onChange={(e) => update('startsAt', e.target.value)} /></Field>
-        <Field label="End Time (Vietnam, UTC+7)"><input type="datetime-local" required min={form.startsAt} className={inputClass} value={form.endsAt} onChange={(e) => update('endsAt', e.target.value)} /></Field>
+        <Field label="Start Time (Vietnam, UTC+7)"><input type="datetime-local" required className={`${inputClass} cursor-pointer`} value={form.startsAt} onChange={(e) => update('startsAt', e.target.value)} onClick={(e) => { try { e.target.showPicker?.(); } catch(_) {} }} /></Field>
+        <Field label="End Time (Vietnam, UTC+7)"><input type="datetime-local" required min={form.startsAt} className={`${inputClass} cursor-pointer`} value={form.endsAt} onChange={(e) => update('endsAt', e.target.value)} onClick={(e) => { try { e.target.showPicker?.(); } catch(_) {} }} /></Field>
       </div>
       <p className="text-xs text-slate-500">Choose at least 3 different lecturers, including exactly one chair, secretary and reviewer. Reviewers cannot assess projects they advise.</p>
       <div className="space-y-3">{form.members.map((m, index) => <div key={index} className="grid items-end gap-3 sm:grid-cols-[1fr_180px_auto]">
