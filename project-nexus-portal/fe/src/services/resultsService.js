@@ -7,7 +7,8 @@ const resultsService = {
   getMyPublishedResults: async () => (await api.get('/results/me')).data,
   getFilterOptions: async () => (await api.get('/results/reports/options')).data,
   getStatistics: async (params) => (await api.get('/results/reports', { params })).data,
-  exportDetailedReportExcel: async (params) => (await api.get('/results/reports.xlsx', { params, responseType: 'blob' })).data,
+  // The api response interceptor already unwraps response.data, so a blob request resolves to the Blob itself.
+  exportDetailedReportExcel: async (params) => api.get('/results/reports.xlsx', { params, responseType: 'blob' }),
 };
 
 export default resultsService;
