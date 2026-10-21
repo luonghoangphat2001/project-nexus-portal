@@ -384,38 +384,97 @@ export function PeriodsPage() {
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">{t('periods.targetFaculties')} *</label>
-            <select
-              multiple
-              className={`${selectClass} h-24`}
-              value={form?.facultyIds || []}
-              onChange={(e) => {
-                const selected = Array.from(e.target.selectedOptions, (option) => Number(option.value));
-                setForm({ ...form, facultyIds: selected });
-              }}
-            >
-              {faculties.map((f) => (
-                <option key={f.id} value={f.id}>{f.name}</option>
-              ))}
-            </select>
-            <span className="text-xs text-slate-400 mt-0.5 block">Hold Ctrl / Cmd to select multiple</span>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block font-semibold text-slate-700 text-xs uppercase tracking-wider">
+                {t('periods.targetFaculties')} *
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const allSelected = form?.facultyIds?.length === faculties.length;
+                  setForm({ ...form, facultyIds: allSelected ? [] : faculties.map((f) => f.id) });
+                }}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium cursor-pointer transition-colors"
+              >
+                {form?.facultyIds?.length === faculties.length ? (t('common.deselectAll') || 'Bỏ chọn tất cả') : (t('common.selectAll') || 'Chọn tất cả')}
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 bg-slate-50/80 border border-slate-200 rounded-xl max-h-40 overflow-y-auto">
+              {faculties.map((f) => {
+                const checked = form?.facultyIds?.includes(f.id);
+                return (
+                  <label
+                    key={f.id}
+                    className={`flex items-center space-x-2.5 p-2 rounded-lg cursor-pointer border transition-all text-xs font-medium select-none ${
+                      checked
+                        ? 'bg-blue-50 border-blue-300 text-blue-800 shadow-xs'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100/70'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const current = form?.facultyIds || [];
+                        const next = checked
+                          ? current.filter((id) => id !== f.id)
+                          : [...current, f.id];
+                        setForm({ ...form, facultyIds: next });
+                      }}
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span className="truncate">{f.name}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">{t('periods.targetCohorts')} *</label>
-            <select
-              multiple
-              className={`${selectClass} h-24`}
-              value={form?.cohortIds || []}
-              onChange={(e) => {
-                const selected = Array.from(e.target.selectedOptions, (option) => Number(option.value));
-                setForm({ ...form, cohortIds: selected });
-              }}
-            >
-              {cohorts.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block font-semibold text-slate-700 text-xs uppercase tracking-wider">
+                {t('periods.targetCohorts')} *
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const allSelected = form?.cohortIds?.length === cohorts.length;
+                  setForm({ ...form, cohortIds: allSelected ? [] : cohorts.map((c) => c.id) });
+                }}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium cursor-pointer transition-colors"
+              >
+                {form?.cohortIds?.length === cohorts.length ? (t('common.deselectAll') || 'Bỏ chọn tất cả') : (t('common.selectAll') || 'Chọn tất cả')}
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 bg-slate-50/80 border border-slate-200 rounded-xl max-h-40 overflow-y-auto">
+              {cohorts.map((c) => {
+                const checked = form?.cohortIds?.includes(c.id);
+                return (
+                  <label
+                    key={c.id}
+                    className={`flex items-center space-x-2.5 p-2 rounded-lg cursor-pointer border transition-all text-xs font-medium select-none ${
+                      checked
+                        ? 'bg-blue-50 border-blue-300 text-blue-800 shadow-xs'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100/70'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const current = form?.cohortIds || [];
+                        const next = checked
+                          ? current.filter((id) => id !== c.id)
+                          : [...current, c.id];
+                        setForm({ ...form, cohortIds: next });
+                      }}
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span className="truncate">{c.name}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
