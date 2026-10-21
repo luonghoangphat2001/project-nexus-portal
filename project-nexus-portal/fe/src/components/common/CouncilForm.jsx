@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Field, inputClass, labels } from './DefenseUi';
 
-export function CouncilForm({ council, options, busy, onSave, onCancel }) {
+export function CouncilForm({ council, options, busy, onSave, onCancel, onChange }) {
   const [form, setForm] = useState(() => ({
     name: council?.name || '', departmentId: String(council?.departmentId || options.departments[0]?.id || ''),
     periodId: String(council?.periodId || options.periods[0]?.id || ''), room: council?.room || '',
@@ -10,10 +10,10 @@ export function CouncilForm({ council, options, busy, onSave, onCancel }) {
       : ['CHAIR', 'SECRETARY', 'REVIEWER'].map((role) => ({ lecturerId: '', role })),
   }));
   const lecturers = options.lecturers.filter((l) => l.departmentIds.includes(Number(form.departmentId)));
-  const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
+  const update = (field, value) => { onChange?.(); setForm((f) => ({ ...f, [field]: value })); };
   const updateMember = (index, field, value) => update('members', form.members.map((m, i) => i === index ? { ...m, [field]: value } : m));
 
-  return <form className="space-y-4" onSubmit={(e) => {
+  return <form className="space-y-4" onChange={onChange} onSubmit={(e) => {
     e.preventDefault();
     onSave({ ...form, departmentId: Number(form.departmentId), periodId: Number(form.periodId),
       members: form.members.map((m) => ({ ...m, lecturerId: Number(m.lecturerId) })) });

@@ -114,6 +114,14 @@ const ERROR_KEY_RULES = [
 
   // General Data & Network
   {
+    pattern: /the defense must start in the future and end after its start time/i,
+    key: 'errors.defenseTimeInvalid',
+  },
+  {
+    pattern: /the defense has not started yet; only draft assessments can be saved/i,
+    key: 'errors.defenseNotStarted',
+  },
+  {
     pattern: /duplicate value or is referenced by other records|duplicate key|already exists/i,
     key: 'errors.conflict',
   },

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Button, Field, inputClass } from './DefenseUi';
 
-export function AssessmentForm({ score, busy, onSave }) {
+export function AssessmentForm({ score, busy, onSave, onChange }) {
   const [form, setForm] = useState({ contentScore: score?.contentScore ?? '', implementationScore: score?.implementationScore ?? '',
     presentationScore: score?.presentationScore ?? '', strengths: score?.strengths || '', weaknesses: score?.weaknesses || '',
     questions: score?.questions || '', comment: score?.comment || '' });
-  return <form onSubmit={(e) => { e.preventDefault(); onSave({ ...form,
+  return <form onChange={onChange} onSubmit={(e) => { e.preventDefault(); onSave({ ...form,
     contentScore: Number(form.contentScore), implementationScore: Number(form.implementationScore), presentationScore: Number(form.presentationScore) });
   }} className="space-y-4">
     <fieldset disabled={busy} className="space-y-4">

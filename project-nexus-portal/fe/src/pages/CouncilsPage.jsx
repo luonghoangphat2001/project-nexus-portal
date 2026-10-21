@@ -8,10 +8,11 @@ import { CouncilForm } from '../components/common/CouncilForm';
 import { useTranslation } from '../i18n/LanguageContext';
 import { Banner, Button, Empty, Panel, formatDate, inputClass } from '../components/common/DefenseUi';
 import { PageHeader, StatusBadge, buttonClass } from '../components/common/CommonUi';
+import { formatApiError } from '../utils/errorHandler';
 
 export function CouncilsPage() {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const manager = user?.roles?.some((r) => ['ROLE_ADMIN', 'ROLE_PRINCIPAL'].includes(r));
   const [councils, setCouncils] = useState([]);
   const [registrations, setRegistrations] = useState([]);
@@ -41,7 +42,7 @@ export function CouncilsPage() {
         }
       })
       .catch((e) => {
-        if (active) setError(e.message || t('common.error'));
+        if (active) setError(formatApiError(e, language));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -60,7 +61,7 @@ export function CouncilsPage() {
       setNotice(message);
       setRefresh((n) => n + 1);
     } catch (e) {
-      setError(e.message || t('common.error'));
+      setError(formatApiError(e, language));
     } finally {
       setBusy(false);
     }
@@ -108,6 +109,7 @@ export function CouncilsPage() {
             council={editor.council}
             options={options}
             busy={busy}
+            onChange={() => setError('')}
             onCancel={() => setEditor(null)}
             onSave={(data) =>
               action(

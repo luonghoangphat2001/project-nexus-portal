@@ -6,6 +6,7 @@ import councilService from '../services/councilService';
 import assessmentService from '../services/assessmentService';
 import { AssessmentForm } from '../components/common/AssessmentForm';
 import { useTranslation } from '../i18n/LanguageContext';
+import { formatApiError } from '../utils/errorHandler';
 import {
   PageHeader,
   FilterCard,
@@ -36,7 +37,7 @@ function formatDate(date) {
 
 export function AssessmentsPage() {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [params] = useSearchParams();
   const requestedId = params.get('assignmentId');
   const [councils, setCouncils] = useState([]);
@@ -69,7 +70,7 @@ export function AssessmentsPage() {
     [councilAssignments, selectedId]
   );
 
-  const ownScore = scores.find((s) => String(s.studentId) === studentId && s.type === type && s.evaluatorId === user?.id);
+  const ownScore = scores.find((s) => String(s.studentId) === studentId && s.type === type && String(s.evaluatorId) === String(user?.id));
   const canEvaluate = selected && (type === 'REVIEW' ? selected.canReview : selected.canDefense);
 
   useEffect(() => {
@@ -96,7 +97,7 @@ export function AssessmentsPage() {
         }
       })
       .catch((e) => {
-        if (active) setError(e.message || t('common.error'));
+        if (active) setError(formatApiError(e, language));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -130,7 +131,7 @@ export function AssessmentsPage() {
         }
       })
       .catch((e) => {
-        if (active) setError(e.message || t('common.error'));
+        if (active) setError(formatApiError(e, language));
       })
       .finally(() => {
         if (active) setScoreLoading(false);
@@ -141,7 +142,8 @@ export function AssessmentsPage() {
   useEffect(() => {
     const current = councils.flatMap((c) => c.assignments).find((a) => String(a.id) === selectedId);
     setStudentId((id) => current?.registration.students.some((s) => String(s.id) === id) ? id : String(current?.registration.students[0]?.id || ''));
-    if (!current?.canReview) setType('DEFENSE');
+    if (current?.canReview && !current?.canDefense) setType('REVIEW');
+    else if (!current?.canReview) setType('DEFENSE');
   }, [selectedId, councils]);
 
   const action = async (execute, message) => {
@@ -153,7 +155,7 @@ export function AssessmentsPage() {
       setNotice(message);
       setRefresh((n) => n + 1);
     } catch (e) {
-      setError(e.message || t('common.error'));
+      setError(formatApiError(e, language));
     } finally {
       setBusy(false);
     }
@@ -285,8 +287,8 @@ export function AssessmentsPage() {
             <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-5">
               <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">{t('assessments.yourAssessment')}</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Nhập điểm số và nhận xét đánh giá chi tiết cho sinh viên</p>
+                  <h2 className="text-base font-bold text-slate-900">{ownScore?.status === 'SUBMITTED' ? t('assessments.submittedNotice') : t('assessments.yourAssessment')}</h2>
+                  {ownScore?.status !== 'SUBMITTED' && <p className="text-xs text-slate-500 mt-0.5">Nhập điểm số và nhận xét đánh giá chi tiết cho sinh viên</p>}
                 </div>
                 {ownScore?.status === 'SUBMITTED' && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -305,7 +307,7 @@ export function AssessmentsPage() {
                     className={selectClass}
                     disabled={busy}
                     value={studentId}
-                    onChange={(e) => setStudentId(e.target.value)}
+                    onChange={(e) => { setStudentId(e.target.value); setError(''); }}
                   >
                     {selected.registration.students.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -323,7 +325,7 @@ export function AssessmentsPage() {
                     className={selectClass}
                     disabled={busy}
                     value={type}
-                    onChange={(e) => setType(e.target.value)}
+                    onChange={(e) => { setType(e.target.value); setError(''); }}
                   >
                     {selected.canDefense && <option value="DEFENSE">{t('assessments.defenseAssessment')}</option>}
                     {selected.canReview && <option value="REVIEW">{t('assessments.reviewAssessment')}</option>}
@@ -331,11 +333,18 @@ export function AssessmentsPage() {
                 </div>
               </div>
 
+              {ownScore?.status === 'DRAFT' && (
+                <div role="status" className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+                  <p className="font-semibold">{t('assessments.existingDraft')}</p>
+                  <p className="mt-1">{t('assessments.draftScores', { content: ownScore.contentScore, implementation: ownScore.implementationScore, presentation: ownScore.presentationScore })}</p>
+                </div>
+              )}
               {ownScore?.status !== 'SUBMITTED' && canEvaluate && studentId && (
                 <AssessmentForm
                   key={`${selectedId}-${studentId}-${type}-${ownScore?.updatedAt || 'new'}`}
                   score={ownScore}
                   busy={busy}
+                  onChange={() => setError('')}
                   onSave={(data) =>
                     action(
                       () =>
