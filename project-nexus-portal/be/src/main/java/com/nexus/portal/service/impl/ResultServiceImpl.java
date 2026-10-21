@@ -20,6 +20,7 @@ import com.nexus.portal.service.ResultService;
 import com.nexus.portal.service.NotificationService;
 import com.nexus.portal.service.ScoreCalculationService;
 import com.nexus.portal.service.ScoreCalculationService.ScoreRangeClassifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -48,6 +49,7 @@ public class ResultServiceImpl implements ResultService {
     private final TopicRepository topics;
     private final NotificationService notificationService;
 
+    @Autowired
     public ResultServiceImpl(DefenseAssignmentRepository assignments, DefenseCouncilRepository councils,
                               ResultRepository results, PublishedResultDetailsRepository resultDetails,
                               ScoreCalculationService scoreCalculation,
