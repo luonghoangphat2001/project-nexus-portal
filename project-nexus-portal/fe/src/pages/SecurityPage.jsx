@@ -305,7 +305,7 @@ export const SecurityPage = () => {
           </div>
           <div>
             <span className="text-slate-400 block mb-0.5">Địa chỉ gửi:</span>
-            <span className="font-mono font-semibold text-slate-700">{emailStatus?.sender || 'noreply@nexus.edu.vn'}</span>
+            <span className="font-mono font-semibold text-slate-700">{emailStatus?.sender || 'lhphat.work@gmail.com'}</span>
           </div>
           <div>
             <span className="text-slate-400 block mb-0.5">Trạng thái phát thông báo:</span>

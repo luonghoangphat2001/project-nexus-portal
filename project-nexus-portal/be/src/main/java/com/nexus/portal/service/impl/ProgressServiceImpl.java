@@ -7,7 +7,7 @@ import com.nexus.portal.exception.*;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.*;
 import com.nexus.portal.security.UserPrincipal;
-import com.nexus.portal.service.NotificationService;
+import com.nexus.portal.service.AuditLogService;
 import com.nexus.portal.service.ProgressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,8 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -27,7 +29,8 @@ public class ProgressServiceImpl implements ProgressService {
     private final TopicLecturerRepository advisors;
     private final ProgressTaskRepository tasks;
     private final UserRepository users;
-    private NotificationService notificationService;
+    private AuditLogService audit;
+    private AuditLogRepository auditLogRepository;
 
     public ProgressServiceImpl(TeamRepository teams, TeamMemberRepository members, TopicRegistrationRepository registrations,
             TopicLecturerRepository advisors, ProgressTaskRepository tasks, UserRepository users) {
@@ -40,19 +43,15 @@ public class ProgressServiceImpl implements ProgressService {
     }
 
     @Autowired
-    public void setNotificationService(NotificationService notificationService) {
-        this.notificationService = notificationService;
+    public void setAuditLogService(AuditLogService audit) {
+        this.audit = audit;
     }
 
-    private List<User> getTeamAdvisors(Long teamId) {
-        return registrations.findByTeamId(teamId).stream()
-                .filter(r -> r.getStatus() == RegistrationStatus.APPROVED)
-                .flatMap(r -> advisors.findByTopicId(r.getTopic().getId()).stream())
-                .map(TopicLecturer::getLecturer)
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
+    @Autowired
+    public void setAuditLogRepository(AuditLogRepository auditLogRepository) {
+        this.auditLogRepository = auditLogRepository;
     }
+
     @Transactional(readOnly = true)
     public List<ProgressTeamResponse> getTeams(UserPrincipal actor) {
         return teams.findAll().stream().filter(team -> canAccess(team, actor)).map(team ->
@@ -83,21 +82,10 @@ public class ProgressServiceImpl implements ProgressService {
         task.setAssignee(users.findById(request.assigneeId()).orElseThrow(() -> new ResourceNotFoundException("Assignee not found")));
         ProgressTask saved = tasks.save(task);
 
-        if (notificationService != null) {
-            User currentStudent = users.findById(actor.getId()).orElse(null);
-            String studentName = currentStudent != null ? currentStudent.getFullName() : "Thành viên nhóm";
-            List<User> advisorsList = getTeamAdvisors(teamId);
-            for (User advisor : advisorsList) {
-                notificationService.sendNotification(
-                        advisor,
-                        currentStudent,
-                        "[VI] Nhiệm vụ tiến độ mới: " + task.getTitle() + " | [EN] New progress task: " + task.getTitle(),
-                        "[VI] " + studentName + " thuộc nhóm \"" + team.getName() + "\" đã cập nhật kế hoạch/nhiệm vụ tiến độ: \""
-                                + task.getTitle() + "\" (Hạn chót: " + task.getDueDate() + ").\n"
-                                + "[EN] " + studentName + " from team \"" + team.getName() + "\" updated progress plan/task: \""
-                                + task.getTitle() + "\" (Due date: " + task.getDueDate() + ")."
-                );
-            }
+        if (audit != null) {
+            audit.log(actor.getId(), actor.getUsername(), id == null ? "CREATE_TASK" : "UPDATE_TASK",
+                    "tasks/" + saved.getId(), "User " + actor.getUsername() + " saved task \"" + saved.getTitle() + "\" for team " + team.getName(),
+                    null, null, "SUCCESS");
         }
 
         return response(saved);
@@ -109,21 +97,10 @@ public class ProgressServiceImpl implements ProgressService {
         task.setStatus(request.status());
         ProgressTask saved = tasks.save(task);
 
-        if (notificationService != null) {
-            User currentStudent = users.findById(actor.getId()).orElse(null);
-            String studentName = currentStudent != null ? currentStudent.getFullName() : "Sinh viên";
-            List<User> advisorsList = getTeamAdvisors(task.getTeam().getId());
-            for (User advisor : advisorsList) {
-                notificationService.sendNotification(
-                        advisor,
-                        currentStudent,
-                        "[VI] Cập nhật tiến độ nhiệm vụ: " + task.getTitle() + " | [EN] Task progress updated: " + task.getTitle(),
-                        "[VI] Sinh viên " + studentName + " (Nhóm \"" + task.getTeam().getName() + "\") đã cập nhật trạng thái nhiệm vụ \""
-                                + task.getTitle() + "\" sang " + request.status() + ".\n"
-                                + "[EN] Student " + studentName + " (Team \"" + task.getTeam().getName() + "\") updated task \""
-                                + task.getTitle() + "\" status to " + request.status() + "."
-                );
-            }
+        if (audit != null) {
+            audit.log(actor.getId(), actor.getUsername(), "CHANGE_TASK_STATUS",
+                    "tasks/" + id, "User " + actor.getUsername() + " changed task \"" + task.getTitle() + "\" status to " + request.status(),
+                    null, null, "SUCCESS");
         }
 
         return response(saved);
@@ -132,7 +109,15 @@ public class ProgressServiceImpl implements ProgressService {
         ProgressTask task = findTask(id);
         require(isStaff(actor) || isAdvisor(task.getTeam(), actor));
         task.setFeedback(request.feedback().trim());
-        return response(tasks.save(task));
+        ProgressTask saved = tasks.save(task);
+
+        if (audit != null) {
+            audit.log(actor.getId(), actor.getUsername(), "REVIEW_TASK",
+                    "tasks/" + id, "Advisor " + actor.getUsername() + " reviewed task \"" + task.getTitle() + "\"",
+                    null, null, "SUCCESS");
+        }
+
+        return response(saved);
     }
     public void delete(Long id, UserPrincipal actor) {
         ProgressTask task = findTask(id);
@@ -162,8 +147,15 @@ public class ProgressServiceImpl implements ProgressService {
     private Team findTeam(Long id) { return teams.findById(id).orElseThrow(() -> new ResourceNotFoundException("Team not found")); }
     private ProgressTask findTask(Long id) { return tasks.findById(id).orElseThrow(() -> new ResourceNotFoundException("Progress task not found")); }
     private ProgressTaskResponse response(ProgressTask task) {
+        List<ProgressTaskResponse.TaskLogItem> logs = List.of();
+        if (auditLogRepository != null && task.getId() != null) {
+            logs = auditLogRepository.findByResourceOrderByCreatedAtDesc("tasks/" + task.getId()).stream()
+                    .map(l -> new ProgressTaskResponse.TaskLogItem(l.getUsername(), l.getAction(), l.getDetails(), l.getCreatedAt()))
+                    .toList();
+        }
         return new ProgressTaskResponse(task.getId(), task.getTeam().getId(), task.getTitle(), task.getDescription(), task.getDueDate(),
                 task.getAssignee().getId(), task.getAssignee().getFullName(), task.getStatus(), task.getFeedback(),
-                task.getStatus() != ProgressStatus.DONE && task.getDueDate().isBefore(LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"))));
+                task.getStatus() != ProgressStatus.DONE && task.getDueDate().isBefore(LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"))),
+                logs);
     }
 }

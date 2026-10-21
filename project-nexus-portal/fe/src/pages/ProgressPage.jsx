@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, CheckCircle2, Clock, AlertTriangle, MessageSquare, Edit2, Trash2, Users, BarChart3, GripVertical } from 'lucide-react';
+import { Plus, CheckCircle2, Clock, AlertTriangle, MessageSquare, Edit2, Trash2, Users, BarChart3, GripVertical, History, ChevronDown, ChevronUp } from 'lucide-react';
 import { progressService } from '../services/progressService';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -16,6 +16,52 @@ import {
   selectClass
 } from '../components/common/CommonUi';
 
+function formatDateTime(date) {
+  if (!date) return '';
+  try {
+    const raw = String(date).trim();
+    const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
+    const hasTz = /Z$|[+-]\d{2}(:\d{2})?$/.test(normalized);
+    const dateObj = new Date(hasTz ? normalized : `${normalized}+07:00`);
+    if (isNaN(dateObj.getTime())) return raw;
+    return new Intl.DateTimeFormat('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(dateObj);
+  } catch {
+    return String(date);
+  }
+}
+
+function formatLogAction(log, t) {
+  if (!log) return '';
+  const { action, details } = log;
+  if (action === 'CHANGE_TASK_STATUS') {
+    const match = details?.match(/status to (\w+)/);
+    if (match) {
+      const st = match[1];
+      const statusLabel = t(`enums.status.${st}`, st.replace('_', ' '));
+      return `${t('progress.logChangedStatus', 'Đổi trạng thái sang')} ${statusLabel}`;
+    }
+    return t('progress.statusUpdated', 'Cập nhật trạng thái');
+  }
+  if (action === 'CREATE_TASK') {
+    return t('progress.logCreated', 'Tạo công việc');
+  }
+  if (action === 'UPDATE_TASK') {
+    return t('progress.logUpdated', 'Cập nhật thông tin');
+  }
+  if (action === 'REVIEW_TASK') {
+    return t('progress.logReviewed', 'GVHD nhận xét');
+  }
+  return details || action;
+}
+
 export function ProgressPage() {
   const { user } = useAuth();
   const { t, language } = useTranslation();
@@ -28,6 +74,7 @@ export function ProgressPage() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [expandedLogs, setExpandedLogs] = useState({});
 
   // Drag and drop state
   const [draggedTaskId, setDraggedTaskId] = useState(null);
@@ -158,6 +205,13 @@ export function ProgressPage() {
   const handleDragEnd = () => {
     setDraggedTaskId(null);
     setDragOverCol(null);
+  };
+
+  const toggleLogs = (taskId) => {
+    setExpandedLogs(prev => ({
+      ...prev,
+      [taskId]: !prev[taskId],
+    }));
   };
 
   const completed = tasks.filter(task => task.status === 'DONE').length;
@@ -529,6 +583,77 @@ export function ProgressPage() {
                                 <span>{t('progress.advisorFeedback')}:</span>
                               </div>
                               <p className="whitespace-pre-wrap leading-relaxed">{task.feedback}</p>
+                            </div>
+                          )}
+
+                          {/* Task Audit Log / History */}
+                          {task.logs && task.logs.length > 0 && (
+                            <div
+                              className="pt-2 border-t border-slate-100 text-xs cursor-default"
+                              onMouseDown={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex items-center justify-between gap-1.5 text-slate-500">
+                                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                  <History className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                  <span className="truncate text-[11px]">
+                                    <strong className="font-semibold text-slate-700">{task.logs[0].username}</strong>: {formatLogAction(task.logs[0], t)}
+                                  </span>
+                                </div>
+                                {task.logs.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleLogs(task.id);
+                                    }}
+                                    className="inline-flex items-center gap-0.5 text-[11px] font-medium text-blue-600 hover:text-blue-700 hover:underline shrink-0 ml-1 cursor-pointer"
+                                    title={t('progress.logHistory', 'Lịch sử cập nhật')}
+                                  >
+                                    <span>{expandedLogs[task.id] ? t('common.collapse', 'Thu gọn') : `+${task.logs.length - 1}`}</span>
+                                    {expandedLogs[task.id] ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Timestamp of the latest log when collapsed */}
+                              {!expandedLogs[task.id] && (
+                                <div className="text-[10px] text-slate-400 pl-5 pt-0.5 font-mono">
+                                  {formatDateTime(task.logs[0].createdAt)}
+                                </div>
+                              )}
+
+                              {/* Collapsible dropdown for all logs */}
+                              {expandedLogs[task.id] && (
+                                <div className="mt-2.5 pt-2 border-t border-dashed border-slate-200 space-y-2 max-h-48 overflow-y-auto pr-1">
+                                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
+                                    <History className="w-3 h-3" />
+                                    <span>{t('progress.logHistory', 'Lịch sử cập nhật')} ({task.logs.length})</span>
+                                  </div>
+                                  {task.logs.map((log, idx) => (
+                                    <div
+                                      key={idx}
+                                      className={`p-2 rounded-lg text-[11px] border leading-relaxed ${
+                                        idx === 0
+                                          ? 'bg-blue-50/60 border-blue-100 text-slate-700'
+                                          : 'bg-slate-50 border-slate-100 text-slate-600'
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                                        <span className="font-semibold text-slate-800 flex items-center gap-1">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
+                                          {log.username}
+                                        </span>
+                                        <span className="text-slate-400 font-mono text-[10px]">
+                                          {formatDateTime(log.createdAt)}
+                                        </span>
+                                      </div>
+                                      <div className="text-slate-600 pl-2.5">
+                                        {formatLogAction(log, t)}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           )}
 

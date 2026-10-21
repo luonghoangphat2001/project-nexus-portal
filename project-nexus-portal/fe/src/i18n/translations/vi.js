@@ -718,7 +718,14 @@ export const vi = {
     "savedTask": "Lưu nhiệm vụ thành công!",
     "savedFeedback": "Lưu phản hồi thành công!",
     "dragGuide": "💡 Mẹo: Bạn có thể kéo thả trực tiếp thẻ công việc giữa các cột để chuyển nhanh trạng thái (Cần làm ⇄ Đang làm ⇄ Hoàn thành).",
-    "dragDropHint": "Kéo thả thẻ vào đây để đổi trạng thái"
+    "dragDropHint": "Kéo thả thẻ vào đây để đổi trạng thái",
+    "logHistory": "Lịch sử cập nhật",
+    "logHistoryCount": "Lịch sử ({count})",
+    "logChangedStatus": "Đổi trạng thái sang",
+    "logCreated": "Tạo công việc",
+    "logUpdated": "Cập nhật thông tin",
+    "logReviewed": "GVHD nhận xét",
+    "logLatest": "Cập nhật gần nhất"
   },
   "reports": {
     "title": "Báo cáo & Tài liệu",

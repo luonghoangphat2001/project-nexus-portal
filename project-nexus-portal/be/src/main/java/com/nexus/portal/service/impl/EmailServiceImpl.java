@@ -70,7 +70,13 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public String getSender() {
-        return fromEmail;
+        if (fromEmail != null && !fromEmail.isBlank() && !fromEmail.equalsIgnoreCase("noreply@nexus.edu.vn")) {
+            return fromEmail.trim();
+        }
+        if (username != null && !username.isBlank()) {
+            return username.trim();
+        }
+        return fromEmail != null && !fromEmail.isBlank() ? fromEmail.trim() : "noreply@nexus.edu.vn";
     }
 
     @Async
@@ -87,14 +93,14 @@ public class EmailServiceImpl implements EmailService {
 
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(to);
+            message.setFrom(getSender());
+            message.setTo(to.trim());
             message.setSubject(subject);
             message.setText(content);
             mailSender.send(message);
             log.info("[EMAIL-SENT] Successfully delivered email to {}", to);
         } catch (Exception e) {
-            log.error("[EMAIL-ERROR] Failed to send email to {}: {}", to, e.getMessage());
+            log.error("[EMAIL-ERROR] Failed to send email to {}: {}", to, e.getMessage(), e);
         }
     }
 
@@ -113,14 +119,18 @@ public class EmailServiceImpl implements EmailService {
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
-            helper.setFrom(fromEmail);
-            helper.setTo(to);
+            try {
+                helper.setFrom(getSender(), "Nexus Portal");
+            } catch (Exception ignored) {
+                helper.setFrom(getSender());
+            }
+            helper.setTo(to.trim());
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
             mailSender.send(mimeMessage);
             log.info("[EMAIL-SENT] Successfully delivered HTML email to {}", to);
         } catch (Exception e) {
-            log.error("[EMAIL-ERROR] Failed to send HTML email to {}: {}", to, e.getMessage());
+            log.error("[EMAIL-ERROR] Failed to send HTML email to {}: {}", to, e.getMessage(), e);
         }
     }
 
@@ -201,14 +211,34 @@ public class EmailServiceImpl implements EmailService {
         }
 
         try {
-            sendNotificationEmail(
-                    testRecipient,
-                    "Kiểm tra kết nối SMTP Email thành công",
-                    "Xin chào,\n\nĐây là email kiểm tra kết nối SMTP từ Cổng Thông Tin Khóa Luận Tốt Nghiệp (Nexus Portal).\nHệ thống đã gửi email thành công qua template HTML!\n\nTrân trọng,\nBan Quản Trị Khoa CNTT."
-            );
+            String title = "Kiểm tra kết nối SMTP Email thành công";
+            String templateName = resolveTemplateName(title);
+            String systemUrl = resolveSystemUrl();
+            String currentYear = String.valueOf(Year.now().getValue());
+
+            String template = loadTemplate(templateName);
+            String html = template
+                    .replace("{{TITLE}}", title)
+                    .replace("{{CONTENT}}", "Xin chào,<br/><br/>Đây là email kiểm tra kết nối SMTP từ Cổng Thông Tin Khóa Luận Tốt Nghiệp (Nexus Portal).<br/>Hệ thống đã kết nối và gửi email thành công qua máy chủ SMTP Gmail!<br/><br/>Trân trọng,<br/>Ban Quản Trị Khoa CNTT.")
+                    .replace("{{RECIPIENT_NAME}}", testRecipient.contains("@") ? testRecipient.substring(0, testRecipient.indexOf('@')) : testRecipient)
+                    .replace("{{SYSTEM_URL}}", systemUrl)
+                    .replace("{{YEAR}}", currentYear);
+
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
+            try {
+                helper.setFrom(getSender(), "Nexus Portal");
+            } catch (Exception ignored) {
+                helper.setFrom(getSender());
+            }
+            helper.setTo(testRecipient.trim());
+            helper.setSubject("[Nexus Portal] " + title);
+            helper.setText(html, true);
+            mailSender.send(mimeMessage);
+            log.info("[EMAIL-TEST-SUCCESS] Delivered test email directly to {}", testRecipient);
             return true;
         } catch (Exception e) {
-            log.error("[EMAIL-TEST-FAILED] SMTP test failed: {}", e.getMessage());
+            log.error("[EMAIL-TEST-FAILED] SMTP test failed: {}", e.getMessage(), e);
             throw new RuntimeException("SMTP Connection failed: " + e.getMessage(), e);
         }
     }

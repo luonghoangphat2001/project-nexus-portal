@@ -26,4 +26,6 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     List<String> findDistinctActions();
 
     long countByStatus(String status);
+
+    List<AuditLog> findByResourceOrderByCreatedAtDesc(String resource);
 }

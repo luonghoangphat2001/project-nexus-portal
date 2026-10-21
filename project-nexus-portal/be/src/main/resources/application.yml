@@ -56,9 +56,9 @@ spring:
 
 app:
   mail:
-    enabled: ${APP_MAIL_ENABLED:false}
-    from: ${APP_MAIL_FROM:noreply@nexus.edu.vn}
-    frontend-url: ${APP_FRONTEND_URL:${FRONTEND_URL:http://localhost:5173}}
+    enabled: ${APP_MAIL_ENABLED:true}
+    from: ${APP_MAIL_FROM:${SPRING_MAIL_USERNAME:lhphat.work@gmail.com}}
+    frontend-url: ${APP_FRONTEND_URL:${FRONTEND_URL:https://nexusportal.playerhub.io.vn}}
   reports:
     max-file-bytes: ${REPORT_MAX_FILE_BYTES:10485760}
   jwt:

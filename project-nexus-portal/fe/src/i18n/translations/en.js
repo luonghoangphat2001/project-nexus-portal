@@ -718,7 +718,14 @@ export const en = {
     "savedTask": "Task saved successfully!",
     "savedFeedback": "Feedback saved successfully!",
     "dragGuide": "💡 Tip: You can drag and drop task cards directly between columns to quickly change status (To Do ⇄ In Progress ⇄ Done).",
-    "dragDropHint": "Drag and drop cards here to change status"
+    "dragDropHint": "Drag and drop cards here to change status",
+    "logHistory": "Activity History",
+    "logHistoryCount": "History ({count})",
+    "logChangedStatus": "Changed status to",
+    "logCreated": "Created task",
+    "logUpdated": "Updated task",
+    "logReviewed": "Advisor reviewed",
+    "logLatest": "Latest update"
   },
   "reports": {
     "title": "Reports & Documents",
