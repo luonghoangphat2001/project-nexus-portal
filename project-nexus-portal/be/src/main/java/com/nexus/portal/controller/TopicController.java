@@ -4,10 +4,9 @@ import com.nexus.portal.dto.request.TopicCreateRequest;
 import com.nexus.portal.dto.response.*;
 import com.nexus.portal.enums.TopicStatus;
 import com.nexus.portal.exception.ResourceNotFoundException;
-import com.nexus.portal.model.RegistrationPeriod;
 import com.nexus.portal.model.User;
-import com.nexus.portal.repository.RegistrationPeriodRepository;
 import com.nexus.portal.repository.UserRepository;
+import com.nexus.portal.service.RegistrationPeriodService;
 import com.nexus.portal.service.TopicService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,14 +32,14 @@ import java.util.stream.Collectors;
 public class TopicController {
 
     private final TopicService topicService;
-    private final RegistrationPeriodRepository registrationPeriodRepository;
+    private final RegistrationPeriodService registrationPeriodService;
     private final UserRepository userRepository;
 
     public TopicController(TopicService topicService,
-                           RegistrationPeriodRepository registrationPeriodRepository,
+                           RegistrationPeriodService registrationPeriodService,
                            UserRepository userRepository) {
         this.topicService = topicService;
-        this.registrationPeriodRepository = registrationPeriodRepository;
+        this.registrationPeriodService = registrationPeriodService;
         this.userRepository = userRepository;
     }
 
@@ -88,8 +87,8 @@ public class TopicController {
 
     @GetMapping("/periods/active")
     @Operation(summary = "Get active periods", description = "Retrieve list of all active registration periods")
-    public ResponseEntity<ApiResponse<List<RegistrationPeriod>>> getActivePeriods() {
-        List<RegistrationPeriod> periods = registrationPeriodRepository.findAll();
+    public ResponseEntity<ApiResponse<List<RegistrationPeriodResponse>>> getActivePeriods() {
+        List<RegistrationPeriodResponse> periods = registrationPeriodService.getAll();
         return ResponseEntity.ok(ApiResponse.success(periods, "Registration periods retrieved"));
     }
 
