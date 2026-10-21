@@ -219,11 +219,39 @@ export function ResultsPage() {
     NINE_TO_TEN: 0,
   };
 
+  const normalizeBandKey = (k) => {
+    switch (k) {
+      case 'BELOW_FIVE':
+      case '0.00-4.99':
+        return 'BELOW_FIVE';
+      case 'FIVE_TO_SIX':
+      case '5.00-5.99':
+        return 'FIVE_TO_SIX';
+      case 'SIX_TO_SEVEN':
+      case '6.00-6.99':
+        return 'SIX_TO_SEVEN';
+      case 'SEVEN_TO_EIGHT':
+      case '7.00-7.99':
+        return 'SEVEN_TO_EIGHT';
+      case 'EIGHT_TO_NINE':
+      case '8.00-8.99':
+        return 'EIGHT_TO_NINE';
+      case 'NINE_TO_TEN':
+      case '9.00-10.00':
+        return 'NINE_TO_TEN';
+      default:
+        return null;
+    }
+  };
+
   report.forEach(r => {
     if (r.scoreDistribution) {
+      const countedBandsInRow = new Set();
       Object.entries(r.scoreDistribution).forEach(([k, v]) => {
-        if (aggregatedBands[k] !== undefined) {
-          aggregatedBands[k] += Number(v) || 0;
+        const normalized = normalizeBandKey(k);
+        if (normalized && !countedBandsInRow.has(normalized)) {
+          aggregatedBands[normalized] += Number(v) || 0;
+          countedBandsInRow.add(normalized);
         }
       });
     }

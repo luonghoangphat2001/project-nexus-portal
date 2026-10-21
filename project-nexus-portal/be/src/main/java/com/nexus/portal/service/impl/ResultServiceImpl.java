@@ -265,10 +265,14 @@ public class ResultServiceImpl implements ResultService {
         long passCount = rows.stream().filter(Result::isPassed).count();
         Map<String, Long> distribution = new LinkedHashMap<>();
         Arrays.stream(ScoreRange.values())
-                .forEach(range -> distribution.put(ScoreRangeClassifier.labelOf(range), 0L));
+                .forEach(range -> {
+                    distribution.put(range.name(), 0L);
+                    distribution.put(ScoreRangeClassifier.labelOf(range), 0L);
+                });
         for (Result result : rows) {
-            String label = ScoreRangeClassifier.labelOf(ScoreRangeClassifier.classify(result.getFinalScore()));
-            distribution.merge(label, 1L, Long::sum);
+            ScoreRange range = ScoreRangeClassifier.classify(result.getFinalScore());
+            distribution.merge(range.name(), 1L, Long::sum);
+            distribution.merge(ScoreRangeClassifier.labelOf(range), 1L, Long::sum);
         }
         return new ResultResponse.Statistics.Row(key.periodId(), key.periodName(), key.departmentId(),
                 key.departmentName(), key.topicId(), key.topicTitle(), rows.size(),

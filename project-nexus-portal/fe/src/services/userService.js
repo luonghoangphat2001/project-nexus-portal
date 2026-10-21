@@ -5,6 +5,10 @@ export const userService = {
     return api.get(`/users?page=${page}&size=${size}&sortBy=${sortBy}&direction=${direction}`);
   },
 
+  getScopedLecturers: () => {
+    return api.get('/users/lecturers');
+  },
+
   getUserById: (id) => {
     return api.get(`/users/${id}`);
   },

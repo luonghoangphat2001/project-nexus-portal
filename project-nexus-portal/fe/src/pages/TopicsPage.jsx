@@ -9,6 +9,7 @@ import {
   GraduationCap,
   RotateCcw,
   CheckCircle,
+  Building,
 } from 'lucide-react';
 import topicService from '../services/topicService';
 import academicService from '../services/academicService';
@@ -32,6 +33,7 @@ export const TopicsPage = () => {
   const { user, hasRole } = useAuth();
   const { t } = useTranslation();
   const isLecturerOrAdmin = hasRole('ROLE_ADMIN') || hasRole('ROLE_TEACHER');
+  const isStudent = hasRole('ROLE_USER') && !hasRole('ROLE_TEACHER') && !hasRole('ROLE_PRINCIPAL') && !hasRole('ROLE_ADMIN');
 
   // Topics list state
   const [topics, setTopics] = useState([]);
@@ -288,13 +290,23 @@ export const TopicsPage = () => {
                     </div>
                   )}
 
-                  {/* Advisors list */}
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center space-x-2 text-xs text-slate-600">
-                    <GraduationCap className="w-4 h-4 text-indigo-500 shrink-0" />
-                    <div className="truncate">
-                      <span className="font-medium text-slate-700">
-                        {topic.advisors?.map((a) => a.lecturerName).join(', ') || t('topics.deptAssigned')}
-                      </span>
+                  {/* Department & Advisors */}
+                  <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5 text-xs text-slate-600">
+                    {topic.department?.name && (
+                      <div className="flex items-center space-x-2">
+                        <Building className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span className="truncate text-slate-600">{topic.department.name}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center space-x-2">
+                      <GraduationCap className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <div className="truncate">
+                        <span className="font-medium text-slate-700">
+                          {topic.advisors && topic.advisors.length > 0
+                            ? topic.advisors.map((a) => a.lecturerName).join(', ')
+                            : t('topics.deptAssigned')}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -336,7 +348,7 @@ export const TopicsPage = () => {
                     >
                       {t('common.details')}
                     </button>
-                    {topic.status === 'OPEN' && (
+                    {isStudent && topic.status === 'OPEN' && (
                       <button
                         type="button"
                         onClick={() => {
@@ -381,7 +393,7 @@ export const TopicsPage = () => {
             >
               {t('common.close')}
             </button>
-            {selectedTopic?.status === 'OPEN' && (
+            {isStudent && selectedTopic?.status === 'OPEN' && (
               <button
                 type="button"
                 onClick={() => setRegisterModalOpen(true)}
@@ -418,22 +430,37 @@ export const TopicsPage = () => {
               </div>
             )}
 
+            {selectedTopic.department && (
+              <div>
+                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('topics.department')}</h4>
+                <p className="text-sm font-medium text-slate-800 mt-1">
+                  {selectedTopic.department.name} {selectedTopic.department.code ? `(${selectedTopic.department.code})` : ''}
+                </p>
+              </div>
+            )}
+
             {/* Advisors section */}
             <div>
               <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('topics.instructor')}</h4>
-              <div className="mt-2 space-y-1.5">
-                {selectedTopic.advisors?.map((adv, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs"
-                  >
-                    <div className="font-semibold text-slate-800">{adv.lecturerName}</div>
-                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-mono text-[10px]">
-                      {adv.advisorRole === 'PRIMARY' ? t('defense.chair') : t('defense.reviewer')}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              {selectedTopic.advisors && selectedTopic.advisors.length > 0 ? (
+                <div className="mt-2 space-y-1.5">
+                  {selectedTopic.advisors.map((adv, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs"
+                    >
+                      <div className="font-semibold text-slate-800">{adv.lecturerName}</div>
+                      <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-mono text-[10px]">
+                        {adv.advisorRole === 'PRIMARY' ? t('defense.chair') : t('defense.reviewer')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500 mt-1.5 italic">
+                  {t('topics.deptAssigned')}
+                </p>
+              )}
             </div>
 
             {/* Targeted Majors */}

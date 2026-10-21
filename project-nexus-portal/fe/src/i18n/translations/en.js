@@ -47,7 +47,8 @@ export const en = {
     "add": "Add New",
     "notUpdated": "Not updated",
     "done": "Done",
-    "selected": "selected"
+    "selected": "selected",
+    "grantedPrivileges": "Granted Privileges"
   },
   "enums": {
     "status": {

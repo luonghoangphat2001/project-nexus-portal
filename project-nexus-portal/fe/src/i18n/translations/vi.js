@@ -47,7 +47,8 @@ export const vi = {
     "add": "Thêm mới",
     "notUpdated": "Chưa cập nhật",
     "done": "Xong",
-    "selected": "đã chọn"
+    "selected": "đã chọn",
+    "grantedPrivileges": "Quyền hạn được cấp"
   },
   "enums": {
     "status": {

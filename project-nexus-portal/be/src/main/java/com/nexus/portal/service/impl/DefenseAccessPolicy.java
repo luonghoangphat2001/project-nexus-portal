@@ -45,8 +45,17 @@ public class DefenseAccessPolicy {
     }
 
     public boolean canManage(User user, Department department) {
-        return hasRole(user, RoleName.ROLE_ADMIN) || (hasRole(user, RoleName.ROLE_PRINCIPAL)
-                && user.getDepartments().stream().anyMatch(d -> Objects.equals(d.getId(), department.getId())));
+        if (hasRole(user, RoleName.ROLE_ADMIN)) {
+            return true;
+        }
+        if (hasRole(user, RoleName.ROLE_PRINCIPAL)) {
+            boolean matchesDept = user.getDepartments().stream()
+                    .anyMatch(d -> Objects.equals(d.getId(), department.getId()));
+            boolean matchesFaculty = department.getFaculty() != null && user.getFaculties().stream()
+                    .anyMatch(f -> Objects.equals(f.getId(), department.getFaculty().getId()));
+            return matchesDept || matchesFaculty;
+        }
+        return false;
     }
 
     public void requireManager(User user, Department department) {
