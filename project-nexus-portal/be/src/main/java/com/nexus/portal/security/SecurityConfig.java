@@ -125,6 +125,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/periods", "/api/periods").hasAnyRole("ADMIN", "PRINCIPAL")
                         .requestMatchers(HttpMethod.PUT, "/periods/**", "/api/periods/**").hasAnyRole("ADMIN", "PRINCIPAL")
                         .requestMatchers(HttpMethod.DELETE, "/periods/**", "/api/periods/**").hasRole("ADMIN")
+                        // Admin Dashboard endpoints role enforcement
+                        .requestMatchers("/dashboard/**", "/api/dashboard/**").hasRole("ADMIN")
                         // Admin system endpoints role enforcement
                         .requestMatchers("/admin/audit-logs/**", "/api/admin/audit-logs/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**", "/api/admin/**").hasAnyRole("ADMIN", "PRINCIPAL")

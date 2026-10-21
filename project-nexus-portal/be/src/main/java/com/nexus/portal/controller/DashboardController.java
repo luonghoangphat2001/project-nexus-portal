@@ -5,6 +5,7 @@ import com.nexus.portal.dto.response.DashboardStatsResponse;
 import com.nexus.portal.service.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ public class DashboardController {
     }
 
     @GetMapping("/stats")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get dashboard analytics overview", description = "Returns system KPIs including total users, active users, active rate, role distribution, and monthly registration trends.")
     public ResponseEntity<ApiResponse<DashboardStatsResponse>> getStats(Authentication authentication) {
         String username = authentication != null ? authentication.getName() : null;
