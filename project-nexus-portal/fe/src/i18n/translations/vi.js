@@ -822,6 +822,7 @@ export const vi = {
     "confirmSubmitLock": "Bạn có chắc muốn nộp và khóa điểm số này không? Sau khi nộp sẽ không thể chỉnh sửa.",
     "saveDraftSuccess": "Lưu bản nháp thành công!",
     "submittedNotice": "Điểm đã được nộp và khóa chính thức",
+    "studentAssessmentLocked": "Sinh viên này đã có phiếu đánh giá được {evaluator} nộp và khóa. Khung chấm điểm đã được ẩn.",
     "noAssignedTeams": "Không có nhóm nào được phân công cho hội đồng này",
     "noAssessments": "Chưa có phiếu chấm điểm nào cho nhóm này"
   },

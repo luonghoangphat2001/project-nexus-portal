@@ -71,6 +71,7 @@ export function AssessmentsPage() {
   );
 
   const ownScore = scores.find((s) => String(s.studentId) === studentId && s.type === type && String(s.evaluatorId) === String(user?.id));
+  const submittedScore = scores.find((s) => String(s.studentId) === studentId && s.type === type && s.status === 'SUBMITTED');
   const canEvaluate = selected && (type === 'REVIEW' ? selected.canReview : selected.canDefense);
 
   useEffect(() => {
@@ -287,10 +288,10 @@ export function AssessmentsPage() {
             <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-5">
               <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">{ownScore?.status === 'SUBMITTED' ? t('assessments.submittedNotice') : t('assessments.yourAssessment')}</h2>
-                  {ownScore?.status !== 'SUBMITTED' && <p className="text-xs text-slate-500 mt-0.5">Nhập điểm số và nhận xét đánh giá chi tiết cho sinh viên</p>}
+                  <h2 className="text-base font-bold text-slate-900">{submittedScore ? t('assessments.submittedNotice') : t('assessments.yourAssessment')}</h2>
+                  {!submittedScore && <p className="text-xs text-slate-500 mt-0.5">Nhập điểm số và nhận xét đánh giá chi tiết cho sinh viên</p>}
                 </div>
-                {ownScore?.status === 'SUBMITTED' && (
+                {submittedScore && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>{t('assessments.submittedNotice')}</span>
@@ -333,13 +334,19 @@ export function AssessmentsPage() {
                 </div>
               </div>
 
-              {ownScore?.status === 'DRAFT' && (
+              {submittedScore ? (
+                <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+                  {ownScore?.status === 'SUBMITTED'
+                    ? t('assessments.submittedNotice')
+                    : t('assessments.studentAssessmentLocked', { evaluator: submittedScore.evaluatorName })}
+                </div>
+              ) : ownScore?.status === 'DRAFT' && (
                 <div role="status" className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
                   <p className="font-semibold">{t('assessments.existingDraft')}</p>
                   <p className="mt-1">{t('assessments.draftScores', { content: ownScore.contentScore, implementation: ownScore.implementationScore, presentation: ownScore.presentationScore })}</p>
                 </div>
               )}
-              {ownScore?.status !== 'SUBMITTED' && canEvaluate && studentId && (
+              {!submittedScore && canEvaluate && studentId && (
                 <AssessmentForm
                   key={`${selectedId}-${studentId}-${type}-${ownScore?.updatedAt || 'new'}`}
                   score={ownScore}
