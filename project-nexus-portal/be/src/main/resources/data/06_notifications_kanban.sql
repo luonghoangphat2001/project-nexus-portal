@@ -3,6 +3,7 @@
 -- ==========================================================
 
 -- 1. System & Faculty Notifications (Left empty: created dynamically in application)
+ALTER TABLE notifications MODIFY COLUMN title VARCHAR(500) NOT NULL;
 DELETE FROM notification_reads WHERE notification_id BETWEEN 1 AND 50;
 DELETE FROM notifications WHERE id BETWEEN 1 AND 50;
 

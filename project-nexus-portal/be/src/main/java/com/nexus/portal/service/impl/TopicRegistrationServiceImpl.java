@@ -119,7 +119,7 @@ public class TopicRegistrationServiceImpl implements TopicRegistrationService {
                     notificationService.sendNotification(
                             tl.getLecturer(),
                             currentUser,
-                            "[VI] Đăng ký đề tài mới: " + topic.getTitle(),
+                            "[VI] Đăng ký đề tài mới: " + topic.getTitle() + " | [EN] New topic registration: " + topic.getTitle(),
                             "[VI] Nhóm \"" + team.getName() + "\" do sinh viên " + currentUser.getFullName()
                                     + " làm trưởng nhóm đã gửi đơn đăng ký đề tài \"" + topic.getTitle() + "\".\n"
                                     + "[EN] Team \"" + team.getName() + "\" led by student " + currentUser.getFullName()
@@ -142,7 +142,7 @@ public class TopicRegistrationServiceImpl implements TopicRegistrationService {
                     notificationService.sendNotification(
                             principal,
                             currentUser,
-                            "[VI] Đăng ký đề tài cần duyệt: " + topic.getTitle(),
+                            "[VI] Đăng ký đề tài cần duyệt: " + topic.getTitle() + " | [EN] Topic registration pending review: " + topic.getTitle(),
                             "[VI] Nhóm \"" + team.getName() + "\" do sinh viên " + currentUser.getFullName()
                                     + " làm trưởng nhóm đã gửi đơn đăng ký đề tài \"" + topic.getTitle() + "\". Vui lòng kiểm tra và duyệt đăng ký.\n"
                                     + "[EN] Team \"" + team.getName() + "\" led by student " + currentUser.getFullName()
@@ -235,14 +235,14 @@ public class TopicRegistrationServiceImpl implements TopicRegistrationService {
                 ? (" Reason: " + request.getFeedback()) : "";
 
         if (request.getStatus() == RegistrationStatus.APPROVED) {
-            String title = "[VI] Đề tài đã được duyệt: " + topic.getTitle();
+            String title = "[VI] Đề tài đã được duyệt: " + topic.getTitle() + " | [EN] Topic registration approved: " + topic.getTitle();
             String content = "[VI] Chúc mừng! Đăng ký đề tài \"" + topic.getTitle() + "\" của nhóm bạn đã được phê duyệt bởi "
                     + reviewer.getFullName() + "." + feedbackMsgVi + "\n"
                     + "[EN] Congratulations! Your team's registration for topic \"" + topic.getTitle() + "\" has been approved by "
                     + reviewer.getFullName() + "." + feedbackMsgEn;
             notificationService.sendNotificationToUsers(recipients, reviewer, title, content);
         } else {
-            String title = "[VI] Đăng ký đề tài bị từ chối: " + topic.getTitle();
+            String title = "[VI] Đăng ký đề tài bị từ chối: " + topic.getTitle() + " | [EN] Topic registration rejected: " + topic.getTitle();
             String content = "[VI] Đăng ký đề tài \"" + topic.getTitle() + "\" của nhóm bạn đã bị từ chối bởi "
                     + reviewer.getFullName() + "." + reasonMsgVi + "\n"
                     + "[EN] Your team's registration for topic \"" + topic.getTitle() + "\" has been rejected by "

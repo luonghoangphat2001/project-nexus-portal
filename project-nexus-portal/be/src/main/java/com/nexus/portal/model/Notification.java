@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 public class Notification extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false, length = 500)
     private String title;
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;

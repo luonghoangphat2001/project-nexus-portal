@@ -383,7 +383,7 @@ CREATE TABLE IF NOT EXISTS team_join_requests (
 -- In-app announcements and per-user read receipts (Module 9)
 CREATE TABLE IF NOT EXISTS notifications (
   id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(150) NOT NULL,
+  title VARCHAR(500) NOT NULL,
   content TEXT NOT NULL,
   faculty_id BIGINT NULL,
   recipient_id BIGINT NULL,
