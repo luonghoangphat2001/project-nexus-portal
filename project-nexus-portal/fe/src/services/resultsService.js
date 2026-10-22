@@ -5,6 +5,16 @@ const resultsService = {
   publishAssignmentResults: async (assignmentId) => (await api.post(`/results/assignments/${assignmentId}/publish`)).data,
   republishAssignmentResults: async (assignmentId, reason) =>
     (await api.post(`/results/assignments/${assignmentId}/republish`, null, { params: reason ? { reason } : {} })).data,
+  adjustPublishedResult: async (assignmentId, studentId, scores, reason) =>
+    (await api.post(`/results/assignments/${assignmentId}/adjust`, null, {
+      params: {
+        studentId,
+        reason,
+        ...(scores.advisorScore != null ? { advisorScore: scores.advisorScore } : {}),
+        ...(scores.reviewScore != null ? { reviewScore: scores.reviewScore } : {}),
+        ...(scores.defenseScore != null ? { defenseScore: scores.defenseScore } : {}),
+      },
+    })).data,
   publishPeriodResults: async (periodId) => (await api.post(`/results/periods/${periodId}/publish`)).data,
   getMyPublishedResults: async () => (await api.get('/results/me')).data,
   getFilterOptions: async () => (await api.get('/results/reports/options')).data,

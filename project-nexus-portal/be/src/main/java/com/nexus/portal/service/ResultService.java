@@ -2,12 +2,16 @@ package com.nexus.portal.service;
 
 import com.nexus.portal.dto.response.ResultResponse;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface ResultService {
     List<ResultResponse.Defense> publishAssignmentResults(Long assignmentId, String identifier);
 
     List<ResultResponse.Defense> republishAssignmentResults(Long assignmentId, String reason, String identifier);
+
+    ResultResponse.Defense adjustPublishedResult(Long assignmentId, Long studentId,
+            BigDecimal advisorScore, BigDecimal reviewScore, BigDecimal defenseScore, String reason, String identifier);
 
     List<ResultResponse.Defense> publishPeriodResults(Long periodId, String identifier);
 
