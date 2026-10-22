@@ -609,18 +609,13 @@ export function ResultsPage() {
                             </div>
                           </td>
                           <td className="py-3 px-4 text-center font-mono">
-                            <div className="font-semibold text-slate-800">{formatScore(grade.advisorScore)}</div>
-                            {grade.advisorName && (
-                              <div className="text-[11px] text-slate-400 font-sans truncate max-w-[120px] mx-auto" title={grade.advisorName}>
-                                {grade.advisorName}
-                              </div>
-                            )}
+                            <span className="font-semibold text-slate-800">{formatScore(grade.advisorScore)}</span>
                           </td>
                           <td className="py-3 px-4 text-center font-mono">
-                            <div className="font-semibold text-slate-800">{formatScore(grade.reviewScore)}</div>
+                            <span className="font-semibold text-slate-800">{formatScore(grade.reviewScore)}</span>
                           </td>
                           <td className="py-3 px-4 text-center font-mono">
-                            <div className="font-semibold text-slate-800">{formatScore(grade.defenseScore)}</div>
+                            <span className="font-semibold text-slate-800">{formatScore(grade.defenseScore)}</span>
                           </td>
                           <td className="py-3 px-4 text-center font-semibold font-mono text-blue-600 text-base">
                             {formatScore(grade.finalScore)}
