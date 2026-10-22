@@ -10,6 +10,15 @@ import com.nexus.portal.service.*;
 import com.nexus.portal.security.JwtTokenProvider;
 import com.nexus.portal.security.UserPrincipal;
 import jakarta.persistence.EntityManager;
+import com.nexus.portal.service.GradeAppealService;
+import com.nexus.portal.service.NotificationService;
+import com.nexus.portal.service.ResultService;
+import com.nexus.portal.dto.request.GradeAppealRequest;
+import com.nexus.portal.dto.request.GradeAppealStatusRequest;
+import com.nexus.portal.dto.response.GradeAppealResponse;
+import com.nexus.portal.dto.response.NotificationResponse;
+import com.nexus.portal.enums.AppealStatus;
+import com.nexus.portal.security.UserPrincipal;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.*;
@@ -50,6 +59,9 @@ class DefenseWorkflowIntegrationTest {
     private final ObjectMapper json;
     private final MutableClock clock;
     private final JwtTokenProvider tokens;
+    private final GradeAppealService gradeAppeals;
+    private final ResultService results;
+    private final NotificationService notifications;
     private Department department, otherDepartment;
     private RegistrationPeriod period;
     private Topic topic;
@@ -57,10 +69,15 @@ class DefenseWorkflowIntegrationTest {
     private User leader, member, outsider, chair, secretary, reviewer, advisor, admin, principal;
 
     DefenseWorkflowIntegrationTest(EntityManager em, ReportService reports, CouncilService councils,
-                                   AssessmentService assessments, MockMvc mvc, ObjectMapper json, MutableClock clock, JwtTokenProvider tokens) {
+                                   AssessmentService assessments, MockMvc mvc, ObjectMapper json, MutableClock clock,
+                                   JwtTokenProvider tokens, GradeAppealService gradeAppeals, ResultService results,
+                                   NotificationService notifications) {
         this.em = em; this.reports = reports; this.councils = councils; this.assessments = assessments;
         this.mvc = mvc; this.json = json; this.clock = clock;
         this.tokens = tokens;
+        this.gradeAppeals = gradeAppeals;
+        this.results = results;
+        this.notifications = notifications;
     }
 
     @BeforeEach
@@ -508,6 +525,61 @@ class DefenseWorkflowIntegrationTest {
         mvc.perform(get("/api/assessments").param("assignmentId", assignmentId.toString()).with(user("leader").roles("USER")))
                 .andExpect(status().isForbidden());
         assertThatThrownBy(() -> assessments.getAssessments(assignmentId, "leader")).isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void studentCanSubmitGradeAppealAndNotificationsAreSentToCouncilPrincipalAndAdvisor() {
+        CouncilResponse council = allocateCouncil();
+        Long assignmentId = council.assignments().get(0).id();
+        clock.set(now().plusDays(2));
+        reports.uploadDocument(registration.getId(), upload(), "leader");
+
+        for (User student : List.of(leader, member)) {
+            for (User evaluator : List.of(chair, secretary, reviewer)) {
+                AssessmentResponse draft = assessments.saveDraft(scoreRequest(assignmentId, student.getId(), AssessmentType.DEFENSE), evaluator.getUsername());
+                assessments.submitAssessment(draft.id(), evaluator.getUsername());
+            }
+            AssessmentResponse review = assessments.saveDraft(scoreRequest(assignmentId, student.getId(), AssessmentType.REVIEW), "reviewer");
+            assessments.submitAssessment(review.id(), "reviewer");
+            AssessmentResponse advisorDraft = assessments.saveDraft(scoreRequest(assignmentId, student.getId(), AssessmentType.ADVISOR), "advisor");
+            assessments.submitAssessment(advisorDraft.id(), "advisor");
+        }
+
+        councils.changeStatus(council.id(), new CouncilStatusRequest(CouncilStatus.COMPLETED), "admin");
+        results.publishAssignmentResults(assignmentId, "admin");
+
+        // Leader submits appeal
+        GradeAppealResponse appeal = gradeAppeals.submitAppeal(assignmentId, new GradeAppealRequest("Em xin phúc khảo điểm phần bảo vệ"), "leader");
+        assertThat(appeal.status()).isEqualTo(AppealStatus.PENDING);
+        assertThat(appeal.reason()).isEqualTo("Em xin phúc khảo điểm phần bảo vệ");
+        assertThat(appeal.studentName()).isEqualTo(leader.getFullName());
+
+        // Duplicate pending appeal is rejected
+        assertThatThrownBy(() -> gradeAppeals.submitAppeal(assignmentId, new GradeAppealRequest("Xin phúc khảo tiếp"), "leader"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Bạn đang có đơn phúc khảo đang chờ xử lý");
+
+        // Outsider cannot submit appeal
+        assertThatThrownBy(() -> gradeAppeals.submitAppeal(assignmentId, new GradeAppealRequest("Phúc khảo"), "outsider"))
+                .isInstanceOf(BadRequestException.class);
+
+        // Leader can see their appeal
+        List<GradeAppealResponse> myAppeals = gradeAppeals.getMyAppeals("leader");
+        assertThat(myAppeals).hasSize(1);
+        assertThat(myAppeals.get(0).id()).isEqualTo(appeal.id());
+
+        // Notifications were created for council members (chair, secretary, reviewer), advisor, etc.
+        List<NotificationResponse> chairNotifs = notifications.getAll(UserPrincipal.create(chair));
+        assertThat(chairNotifs.stream().anyMatch(n -> n.title().contains("Đơn phúc khảo điểm"))).isTrue();
+
+        List<NotificationResponse> advisorNotifs = notifications.getAll(UserPrincipal.create(advisor));
+        assertThat(advisorNotifs.stream().anyMatch(n -> n.title().contains("Đơn phúc khảo điểm"))).isTrue();
+
+        // Admin / Principal can update appeal status
+        GradeAppealResponse updated = gradeAppeals.updateAppealStatus(appeal.id(),
+                new GradeAppealStatusRequest(AppealStatus.APPROVED, "Hội đồng đồng ý xem xét chấm lại"), "admin");
+        assertThat(updated.status()).isEqualTo(AppealStatus.APPROVED);
+        assertThat(updated.responseNote()).isEqualTo("Hội đồng đồng ý xem xét chấm lại");
     }
 
     private CouncilResponse allocateCouncil() {

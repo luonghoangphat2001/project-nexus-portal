@@ -2,15 +2,30 @@ package com.nexus.portal.model;
 
 import com.nexus.portal.service.CalculatedScore;
 import jakarta.persistence.*;
+import org.springframework.data.domain.Persistable;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "published_result_details")
-public class PublishedResultDetails {
+public class PublishedResultDetails implements Persistable<Long> {
     @Id
     @Column(name = "result_id")
     private Long id;
+
+    @Transient
+    private boolean isNewEntity = true;
+
+    @Override
+    public boolean isNew() {
+        return isNewEntity;
+    }
+
+    @PostPersist
+    @PostLoad
+    void markNotNew() {
+        this.isNewEntity = false;
+    }
 
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId

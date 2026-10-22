@@ -107,7 +107,7 @@ export const App = () => {
               </RoleBasedRoute>
             } />
             <Route path="results" element={
-              <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_PRINCIPAL', 'ROLE_USER']}>
+              <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_PRINCIPAL', 'ROLE_TEACHER', 'ROLE_COUNCIL', 'ROLE_USER']}>
                 <ResultsPage />
               </RoleBasedRoute>
             } />

@@ -94,7 +94,7 @@ export const Sidebar = ({ isOpen = true, mobileOpen = false, onCloseMobile }) =>
         ...(isAdmin || isPrincipal || isTeacher || isCouncil
           ? [{ name: t('nav.assessments'), path: '/assessments', icon: CheckSquare }]
           : []),
-        ...(isAdmin || isPrincipal || isStudent
+        ...(isAdmin || isPrincipal || isTeacher || isCouncil || isStudent
           ? [{ name: t('nav.results'), path: '/results', icon: BarChart3 }]
           : []),
       ],

@@ -1,7 +1,11 @@
 -- Populate missing ADVISOR assessments and published_result_details snapshots
 -- Compatible with both local Docker MySQL and production VPS MySQL
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
 
--- 1. Ensure ADVISOR assessments exist for assignment students
+-- 1. Ensure ADVISOR assessments exist for assignment students with clean UTF-8
+DELETE FROM assessments WHERE assessment_type = 'ADVISOR' AND assignment_id BETWEEN 1 AND 4;
+
 INSERT INTO assessments (assignment_id, evaluator_id, student_id, assessment_type, status, content_score, implementation_score, presentation_score, strengths, weaknesses, questions, comment, submitted_at, created_at, updated_at)
 SELECT 1, 3, 5, 'ADVISOR', 'SUBMITTED', 8.50, 8.50, 8.00,
        'Sinh viên nắm vững kiến trúc Cloud-Native, chủ động nghiên cứu các mô hình AI phát hiện lỗ hổng phần mềm.',

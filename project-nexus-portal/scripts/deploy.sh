@@ -50,7 +50,7 @@ if [ "$TARGET_SERVICE" != "frontend" ]; then
     if [ -d "be/src/main/resources/migrations" ]; then
         for sql_file in $(ls be/src/main/resources/migrations/*.sql 2>/dev/null | sort); do
             echo "Executing: $sql_file"
-            docker exec -i nexus_mysql_db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < "$sql_file" || true
+            docker exec -i nexus_mysql_db sh -c 'mysql --default-character-set=utf8mb4 -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < "$sql_file" || true
         done
     fi
 fi
