@@ -4,8 +4,18 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { LanguageSwitcher } from '../components/common/LanguageSwitcher';
 import { formatApiError } from '../utils/errorHandler';
-import { Layers, Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
-import { buttonClass, inputClass } from '../components/common/CommonUi';
+import { Layers, Lock, User, AlertCircle, ArrowRight, BookOpen, ClipboardCheck, GraduationCap, UsersRound } from 'lucide-react';
+import { inputClass } from '../components/common/CommonUi';
+
+const DEMO_ACCOUNTS = [
+  { label: 'Trưởng khoa', username: 'principal', icon: GraduationCap },
+  { label: 'Giáo viên', username: 'teacher', icon: BookOpen },
+  { label: 'Sinh viên chưa có đề tài', username: 'individual_user', icon: User },
+  { label: 'Sinh viên đã có đề tài', username: 'student', icon: ClipboardCheck },
+  { label: 'Hội đồng', username: 'council', icon: UsersRound },
+];
+
+const DEMO_PASSWORD = 'password123';
 
 export const LoginPage = () => {
   const { t, language } = useTranslation();
@@ -22,6 +32,12 @@ export const LoginPage = () => {
   const location = useLocation();
 
   const from = location.state?.from?.pathname || '/';
+
+  const fillDemoAccount = (username) => {
+    setUsernameOrEmail(username);
+    setPassword(DEMO_PASSWORD);
+    setErrorMessage('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -144,6 +160,28 @@ export const LoginPage = () => {
               />
             </div>
           </div>
+
+          {!isRegisterMode && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5" aria-label="Tài khoản mẫu">
+              <div className="flex items-center justify-between mb-2.5">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Tài khoản mẫu</p>
+                <span className="text-[11px] text-slate-400">Bấm để tự điền</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {DEMO_ACCOUNTS.map(({ label, username, icon: Icon }) => (
+                  <button
+                    key={username}
+                    type="button"
+                    onClick={() => fillDemoAccount(username)}
+                    className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-left text-xs font-medium text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 cursor-pointer"
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                    <span className="leading-tight">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"
