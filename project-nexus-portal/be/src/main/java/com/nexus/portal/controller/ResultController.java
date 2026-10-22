@@ -36,7 +36,7 @@ public class ResultController {
     }
 
     @GetMapping("/assignments/{assignmentId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL', 'COUNCIL')")
     public ResponseEntity<ApiResponse<List<ResultResponse.Defense>>> getAssignmentScores(
             @PathVariable Long assignmentId, Authentication auth) {
         return ResponseEntity.ok(ApiResponse.success(
@@ -91,13 +91,13 @@ public class ResultController {
     }
 
     @GetMapping("/reports/options")
-    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL', 'COUNCIL')")
     public ResponseEntity<ApiResponse<ResultResponse.Statistics.Options>> getFilterOptions(Authentication auth) {
         return ResponseEntity.ok(ApiResponse.success(results.getFilterOptions(auth.getName())));
     }
 
     @GetMapping("/reports")
-    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL', 'COUNCIL')")
     public ResponseEntity<ApiResponse<List<ResultResponse.Statistics.Row>>> getStatistics(
             @RequestParam(required = false) Long periodId,
             @RequestParam(required = false) Long departmentId,
@@ -108,7 +108,7 @@ public class ResultController {
     }
 
     @GetMapping(value = "/reports.xlsx", produces = ResultExcelExporter.CONTENT_TYPE)
-    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL', 'COUNCIL')")
     public ResponseEntity<byte[]> exportDetailedReportExcel(
             @RequestParam(required = false) Long periodId,
             @RequestParam(required = false) Long departmentId,

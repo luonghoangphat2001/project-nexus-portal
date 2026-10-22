@@ -302,20 +302,26 @@ public class ResultServiceImpl implements ResultService {
 
     @Override
     public ResultResponse.Statistics.Options getFilterOptions(String identifier) {
-        User manager = access.getUser(identifier);
-        List<Department> scope = getManagedDepartments(manager);
-        List<Long> departmentIds = scope.stream().map(Department::getId).toList();
+        User user = access.getUser(identifier);
+        List<DefenseAssignment> councilScope = getCouncilScope(user);
+        List<Department> scope = councilScope == null ? getManagedDepartments(user)
+                : councilScope.stream().map(a -> a.getRegistration().getTopic().getDepartment()).distinct().toList();
+        Set<Long> departmentIds = scope.stream().map(Department::getId).collect(Collectors.toSet());
         List<ResultResponse.Statistics.Options.Option> departmentOptions = scope.stream()
                 .sorted(Comparator.comparing(Department::getName))
                 .map(department -> new ResultResponse.Statistics.Options.Option(
                         department.getId(), department.getName()))
                 .toList();
-        List<ResultResponse.Statistics.Options.Option> periodOptions = periods.findAll().stream()
+        List<RegistrationPeriod> periodScope = councilScope == null ? periods.findAll()
+                : councilScope.stream().map(a -> a.getRegistration().getTopic().getPeriod()).distinct().toList();
+        List<ResultResponse.Statistics.Options.Option> periodOptions = periodScope.stream()
                 .sorted(Comparator.comparing(RegistrationPeriod::getStartDate).reversed())
                 .map(period -> new ResultResponse.Statistics.Options.Option(period.getId(), period.getName()))
                 .toList();
-        List<ResultResponse.Statistics.Options.TopicOption> topicOptions = departmentIds.isEmpty() ? List.of()
-                : topics.findByDepartmentIdIn(departmentIds).stream()
+        List<Topic> topicScope = councilScope == null
+                ? (departmentIds.isEmpty() ? List.of() : topics.findByDepartmentIdIn(departmentIds))
+                : councilScope.stream().map(a -> a.getRegistration().getTopic()).distinct().toList();
+        List<ResultResponse.Statistics.Options.TopicOption> topicOptions = topicScope.stream()
                 .sorted(Comparator.comparing(Topic::getTitle))
                 .map(topic -> new ResultResponse.Statistics.Options.TopicOption(topic.getId(), topic.getTitle(),
                         topic.getDepartment().getId(), topic.getPeriod().getId()))
@@ -326,17 +332,27 @@ public class ResultServiceImpl implements ResultService {
     @Override
     public List<ResultResponse.Statistics.Row> getStatistics(
             Long periodId, Long departmentId, Long topicId, String identifier) {
-        User manager = access.getUser(identifier);
-        Set<Long> allowedDepartmentIds = getManagedDepartments(manager).stream()
-                .map(Department::getId)
-                .collect(Collectors.toSet());
+        User user = access.getUser(identifier);
+        List<DefenseAssignment> councilScope = getCouncilScope(user);
+        Set<Long> allowedDepartmentIds = (councilScope == null ? getManagedDepartments(user)
+                : councilScope.stream().map(a -> a.getRegistration().getTopic().getDepartment()).distinct().toList()).stream()
+                .map(Department::getId).collect(Collectors.toSet());
+        Set<Long> allowedPeriodIds = (councilScope == null ? periods.findAll()
+                : councilScope.stream().map(a -> a.getRegistration().getTopic().getPeriod()).distinct().toList()).stream()
+                .map(RegistrationPeriod::getId).collect(Collectors.toSet());
+        Set<Long> allowedTopicIds = (councilScope == null ? topics.findByDepartmentIdIn(allowedDepartmentIds)
+                : councilScope.stream().map(a -> a.getRegistration().getTopic()).distinct().toList()).stream()
+                .map(Topic::getId).collect(Collectors.toSet());
         if (departmentId != null && !allowedDepartmentIds.contains(departmentId)) {
             throw new AccessDeniedException("You do not have permission to view academic results for this department");
         }
-        if (periodId != null && !periods.existsById(periodId)) {
+        if (periodId != null && !allowedPeriodIds.contains(periodId)) {
             throw new ResourceNotFoundException("Registration period not found");
         }
-        if (topicId != null) {
+        if (topicId != null && !allowedTopicIds.contains(topicId)) {
+            if (councilScope != null) {
+                throw new AccessDeniedException("You do not have permission to view academic results for this topic");
+            }
             Topic topic = topics.findById(topicId)
                     .orElseThrow(() -> new ResourceNotFoundException("Topic not found"));
             if (!allowedDepartmentIds.contains(topic.getDepartment().getId())) {
@@ -344,8 +360,12 @@ public class ResultServiceImpl implements ResultService {
             }
         }
 
+        List<Result> scopedResults = councilScope == null
+                ? results.findPublishedForReport(allowedDepartmentIds, periodId, departmentId, topicId)
+                : results.findPublishedForReportByAssignmentIds(
+                        councilScope.stream().map(DefenseAssignment::getId).toList(), periodId, departmentId, topicId);
         Map<ReportKey, List<Result>> grouped = new HashMap<>();
-        results.findPublishedForReport(allowedDepartmentIds, periodId, departmentId, topicId)
+        scopedResults
                 .stream()
                 .filter(this::councilHasEnded)
                 .forEach(result -> {
@@ -369,12 +389,15 @@ public class ResultServiceImpl implements ResultService {
     public List<ResultResponse.Statistics.DetailRow> getDetailedReport(
             Long periodId, Long departmentId, Long topicId, String identifier) {
         getStatistics(periodId, departmentId, topicId, identifier);
-        User manager = access.getUser(identifier);
-        Set<Long> allowedDepartmentIds = getManagedDepartments(manager).stream()
-                .map(Department::getId)
-                .collect(Collectors.toSet());
-        List<Result> published = results.findPublishedForReport(
-                allowedDepartmentIds, periodId, departmentId, topicId).stream()
+        User user = access.getUser(identifier);
+        List<DefenseAssignment> councilScope = getCouncilScope(user);
+        Set<Long> allowedDepartmentIds = (councilScope == null ? getManagedDepartments(user)
+                : councilScope.stream().map(a -> a.getRegistration().getTopic().getDepartment()).distinct().toList()).stream()
+                .map(Department::getId).collect(Collectors.toSet());
+        List<Result> published = (councilScope == null
+                ? results.findPublishedForReport(allowedDepartmentIds, periodId, departmentId, topicId)
+                : results.findPublishedForReportByAssignmentIds(
+                        councilScope.stream().map(DefenseAssignment::getId).toList(), periodId, departmentId, topicId)).stream()
                 .filter(this::councilHasEnded)
                 .toList();
         Map<Long, com.nexus.portal.model.PublishedResultDetails> details = resultDetails
@@ -465,6 +488,20 @@ public class ResultServiceImpl implements ResultService {
             throw new AccessDeniedException("You have not been assigned to manage any department");
         }
         return scope;
+    }
+
+    /** Null means manager-scoped reporting; non-null is the authenticated council member's assignment scope. */
+    private List<DefenseAssignment> getCouncilScope(User user) {
+        if (access.hasRole(user, RoleName.ROLE_ADMIN) || access.hasRole(user, RoleName.ROLE_PRINCIPAL)) {
+            return null;
+        }
+        if (!access.hasRole(user, RoleName.ROLE_COUNCIL)) {
+            throw new AccessDeniedException(
+                    "Only administrators, department heads, or council members can view academic results");
+        }
+        return assignments.findByCouncilMemberLecturerId(user.getId()).stream()
+                .filter(a -> a.getCouncil().getStatus() != CouncilStatus.CANCELLED)
+                .toList();
     }
 
     private void requireManager(User user, Department department) {

@@ -115,7 +115,7 @@ export const TopicsPage = () => {
       const [deptRes, majorRes, periodRes] = await Promise.all([
         academicService.getAllDepartments(),
         academicService.getAllMajors(),
-        periodService.getAll().catch(() => []),
+        (isStudent ? topicService.getActivePeriods() : periodService.getAll()).catch(() => []),
       ]);
       setDepartments(deptRes || []);
       setMajors(majorRes || []);

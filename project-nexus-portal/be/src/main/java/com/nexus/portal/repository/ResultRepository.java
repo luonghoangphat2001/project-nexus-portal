@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Collection;
 import java.util.Set;
-import java.util.Set;
 
 public interface ResultRepository extends JpaRepository<Result, Long> {
     boolean existsByAssignmentId(Long assignmentId);
@@ -36,6 +35,28 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             """)
     List<Result> findPublishedForReport(
             @Param("departmentIds") Set<Long> departmentIds,
+            @Param("periodId") Long periodId,
+            @Param("departmentId") Long departmentId,
+            @Param("topicId") Long topicId);
+
+    @EntityGraph(attributePaths = {
+            "assignment.registration.topic",
+            "assignment.registration.topic.department",
+            "assignment.registration.topic.period"
+    })
+    @Query("""
+            select result from Result result
+            join result.assignment assignment
+            join assignment.registration registration
+            join registration.topic topic
+            where result.publishedAt is not null
+              and assignment.id in :assignmentIds
+              and (:periodId is null or topic.period.id = :periodId)
+              and (:departmentId is null or topic.department.id = :departmentId)
+              and (:topicId is null or topic.id = :topicId)
+            """)
+    List<Result> findPublishedForReportByAssignmentIds(
+            @Param("assignmentIds") Collection<Long> assignmentIds,
             @Param("periodId") Long periodId,
             @Param("departmentId") Long departmentId,
             @Param("topicId") Long topicId);

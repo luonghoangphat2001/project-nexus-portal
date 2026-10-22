@@ -71,7 +71,7 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
         User manager = access.getUser(identifier);
         DefenseAssignment assignment = assignments.findById(assignmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Defense assignment not found"));
-        requireManager(manager, assignment.getRegistration().getTopic().getDepartment());
+        requireViewer(manager, assignment);
         requireCouncilEnded(assignment);
         List<Result> published = publishedResults.findByAssignmentIdOrderByStudentIdAsc(assignmentId);
         if (!published.isEmpty()) {
@@ -147,9 +147,12 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
         return calculatedScores;
     }
 
-    private void requireManager(User user, Department department) {
-        if (!access.canManage(user, department)) {
-            throw new AccessDeniedException("You do not have permission to manage results for this department");
+    private void requireViewer(User user, DefenseAssignment assignment) {
+        boolean manager = access.canManage(user, assignment.getRegistration().getTopic().getDepartment());
+        boolean councilMember = access.hasRole(user, com.nexus.portal.enums.RoleName.ROLE_COUNCIL)
+                && access.isCouncilMember(user, assignment.getCouncil());
+        if (!manager && !councilMember) {
+            throw new AccessDeniedException("You do not have permission to view scores for this assignment");
         }
     }
 
