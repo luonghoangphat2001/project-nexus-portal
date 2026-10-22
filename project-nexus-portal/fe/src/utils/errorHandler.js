@@ -10,6 +10,10 @@ const dictionaries = {
  * Pattern-to-i18n-key registry
  */
 const ERROR_KEY_RULES = [
+  {
+    pattern: /gvhd không được tham gia chấm hội đồng/i,
+    key: 'errors.advisorCannotGradeCouncil',
+  },
   // Auth
   {
     pattern: /account is temporarily locked|account temporarily locked|locked for 15 minutes/i,

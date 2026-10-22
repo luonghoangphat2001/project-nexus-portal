@@ -3,8 +3,9 @@ package com.nexus.portal.service.impl;
 import com.nexus.portal.dto.response.ResultResponse;
 import com.nexus.portal.enums.AssessmentStatus;
 import com.nexus.portal.enums.AssessmentType;
+import com.nexus.portal.enums.AdvisorRole;
+import com.nexus.portal.enums.CouncilMemberRole;
 import com.nexus.portal.enums.CouncilStatus;
-import com.nexus.portal.enums.RoleName;
 import com.nexus.portal.exception.BadRequestException;
 import com.nexus.portal.exception.ResourceNotFoundException;
 import com.nexus.portal.model.*;
@@ -77,8 +78,14 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
                 .findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(assignment.getId()).stream()
                 .filter(assessment -> assessment.getStatus() == AssessmentStatus.SUBMITTED)
                 .toList();
-        int expectedDefenseAssessments = assignment.getCouncil().getMembers().size();
-        if (expectedDefenseAssessments == 0) {
+        List<Long> expectedDefenseEvaluatorIds = assignment.getCouncil().getMembers().stream()
+                .filter(member -> !access.isAdvisor(member.getLecturer(), assignment.getRegistration()))
+                .map(member -> member.getLecturer().getId()).sorted().toList();
+        DefenseCouncilMember reviewerMember = assignment.getCouncil().getMembers().stream()
+                .filter(member -> member.getRole() == CouncilMemberRole.REVIEWER)
+                .filter(member -> !access.isAdvisor(member.getLecturer(), assignment.getRegistration()))
+                .findFirst().orElse(null);
+        if (expectedDefenseEvaluatorIds.isEmpty() || reviewerMember == null) {
             throw new BadRequestException("The council has no members");
         }
 
@@ -92,19 +99,27 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
             List<Assessment> studentAssessments = submitted.stream()
                     .filter(assessment -> assessment.getStudent().getId().equals(student.getId()))
                     .toList();
+            List<TopicLecturer> primaryAdvisors = assignment.getRegistration().getTopic().getTopicLecturers().stream()
+                    .filter(lecturer -> lecturer.getAdvisorRole() == AdvisorRole.PRIMARY).toList();
+            Long primaryAdvisorId = primaryAdvisors.size() == 1 ? primaryAdvisors.get(0).getLecturer().getId() : null;
             List<Assessment> reviews = studentAssessments.stream()
                     .filter(assessment -> assessment.getType() == AssessmentType.REVIEW)
                     .toList();
             List<Assessment> advisorAssessments = studentAssessments.stream()
-                    .filter(assessment -> assessment.getType() == AssessmentType.ADVISOR)
+                    .filter(assessment -> assessment.getType() == AssessmentType.ADVISOR
+                            && primaryAdvisorId != null
+                            && assessment.getEvaluator().getId().equals(primaryAdvisorId))
                     .toList();
             List<Assessment> defenses = studentAssessments.stream()
                     .filter(assessment -> assessment.getType() == AssessmentType.DEFENSE)
                     .toList();
-            if (advisorAssessments.size() != 1 || reviews.size() != 1
-                    || defenses.size() != expectedDefenseAssessments) {
+            List<Long> actualDefenseEvaluatorIds = defenses.stream()
+                    .map(assessment -> assessment.getEvaluator().getId()).sorted().toList();
+            if (primaryAdvisorId == null || advisorAssessments.size() != 1
+                    || reviews.size() != 1 || !reviews.get(0).getEvaluator().getId().equals(reviewerMember.getLecturer().getId())
+                    || !actualDefenseEvaluatorIds.equals(expectedDefenseEvaluatorIds)) {
                 throw new BadRequestException(
-                        "Assessments for student " + student.getId() + " are incomplete");
+                        "Advisor, reviewer, or defense assessments for student " + student.getId() + " are incomplete");
             }
             CalculatedScore.AssessmentBreakdown advisor = breakdown(advisorAssessments);
             CalculatedScore.AssessmentBreakdown reviewer = breakdown(reviews);

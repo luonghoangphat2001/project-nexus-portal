@@ -80,11 +80,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+        String message = "GVHD không được tham gia chấm hội đồng".equals(ex.getMessage())
+                ? ex.getMessage()
+                : "Access Denied (403 Forbidden): Your account does not have sufficient role permissions to perform this operation.";
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .success(false)
                 .status(HttpStatus.FORBIDDEN.value())
                 .error("Forbidden")
-                .message("Access Denied (403 Forbidden): Your account does not have sufficient role permissions to perform this operation.")
+                .message(message)
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -209,9 +212,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex, HttpServletRequest request) {
-        String detail = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
         ErrorResponse error = ErrorResponse.builder().success(false).status(HttpStatus.CONFLICT.value())
-                .error("Conflict").message(detail != null ? detail : "This record has a duplicate value or is referenced by other records.")
+                .error("Conflict").message("This record conflicts with existing data. Check for duplicate values or dependent records, then try again.")
                 .path(request.getRequestURI()).timestamp(LocalDateTime.now()).build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }

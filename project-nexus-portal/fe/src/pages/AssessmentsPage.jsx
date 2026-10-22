@@ -71,8 +71,9 @@ export function AssessmentsPage() {
   );
 
   const ownScore = scores.find((s) => String(s.studentId) === studentId && s.type === type && String(s.evaluatorId) === String(user?.id));
-  const submittedScore = scores.find((s) => String(s.studentId) === studentId && s.type === type && s.status === 'SUBMITTED');
-  const canEvaluate = selected && (type === 'REVIEW' ? selected.canReview : selected.canDefense);
+  const submittedScore = scores.find((s) => String(s.studentId) === studentId && s.type === type
+    && String(s.evaluatorId) === String(user?.id) && s.status === 'SUBMITTED');
+  const canEvaluate = selected && ({ ADVISOR: selected.canAdvisor, REVIEW: selected.canReview, DEFENSE: selected.canDefense }[type] || false);
 
   useEffect(() => {
     let active = true;
@@ -81,7 +82,9 @@ export function AssessmentsPage() {
     councilService.getCouncils()
       .then((data) => {
         if (!active) return;
-        const eligible = data.filter((c) => c.canManage || c.members.some((m) => m.lecturerId === user?.id));
+        const eligible = data.filter((c) => c.canManage
+          || c.members.some((m) => m.lecturerId === user?.id)
+          || c.assignments?.some((a) => a.canAdvisor));
         setCouncils(eligible);
 
         // Find initial council and assignment
@@ -143,7 +146,8 @@ export function AssessmentsPage() {
   useEffect(() => {
     const current = councils.flatMap((c) => c.assignments).find((a) => String(a.id) === selectedId);
     setStudentId((id) => current?.registration.students.some((s) => String(s.id) === id) ? id : String(current?.registration.students[0]?.id || ''));
-    if (current?.canReview && !current?.canDefense) setType('REVIEW');
+    if (current?.canAdvisor && !current?.canReview && !current?.canDefense) setType('ADVISOR');
+    else if (current?.canReview && !current?.canDefense) setType('REVIEW');
     else if (!current?.canReview) setType('DEFENSE');
   }, [selectedId, councils]);
 
@@ -284,7 +288,7 @@ export function AssessmentsPage() {
           </div>
 
           {/* Personal Evaluation Scoring Form */}
-          {selected && (selected.canDefense || selected.canReview) && scoresReady && !scoreLoading && (
+          {selected && (selected.canAdvisor || selected.canDefense || selected.canReview) && scoresReady && !scoreLoading && (
             <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-5">
               <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
                 <div>
@@ -328,6 +332,7 @@ export function AssessmentsPage() {
                     value={type}
                     onChange={(e) => { setType(e.target.value); setError(''); }}
                   >
+                    {selected.canAdvisor && <option value="ADVISOR">{t('assessments.advisorAssessment')}</option>}
                     {selected.canDefense && <option value="DEFENSE">{t('assessments.defenseAssessment')}</option>}
                     {selected.canReview && <option value="REVIEW">{t('assessments.reviewAssessment')}</option>}
                   </select>
@@ -427,9 +432,13 @@ export function AssessmentsPage() {
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                               s.type === 'DEFENSE'
                                 ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                                : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                : s.type === 'ADVISOR'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : 'bg-blue-50 text-blue-700 border border-blue-200'
                             }`}>
-                              {s.type === 'DEFENSE' ? t('assessments.defenseAssessment') : t('assessments.reviewAssessment')}
+                              {s.type === 'DEFENSE' ? t('assessments.defenseAssessment')
+                                : s.type === 'ADVISOR' ? t('assessments.advisorAssessment')
+                                  : t('assessments.reviewAssessment')}
                             </span>
                           </td>
 
@@ -549,7 +558,7 @@ export function AssessmentsPage() {
           <Modal
             isOpen={!!viewScoreDetail}
             onClose={() => setViewScoreDetail(null)}
-            title={`Chi tiết phiếu chấm: ${viewScoreDetail?.studentName || ''} (${viewScoreDetail?.type === 'DEFENSE' ? t('assessments.defenseAssessment') : t('assessments.reviewAssessment')})`}
+            title={`Chi tiết phiếu chấm: ${viewScoreDetail?.studentName || ''} (${viewScoreDetail?.type === 'DEFENSE' ? t('assessments.defenseAssessment') : viewScoreDetail?.type === 'ADVISOR' ? t('assessments.advisorAssessment') : t('assessments.reviewAssessment')})`}
           >
             <div className="space-y-4 text-sm">
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-2 gap-3">
