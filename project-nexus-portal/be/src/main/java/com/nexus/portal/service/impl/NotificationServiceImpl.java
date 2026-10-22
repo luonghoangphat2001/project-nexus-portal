@@ -81,8 +81,12 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         Notification notification = new Notification();
-        notification.setTitle(title.trim());
-        notification.setContent(content.trim());
+        String safeTitle = title != null ? title.trim() : "";
+        if (safeTitle.length() > 150) {
+            safeTitle = safeTitle.substring(0, 147) + "...";
+        }
+        notification.setTitle(safeTitle);
+        notification.setContent(content != null ? content.trim() : "");
         notification.setAuthor(resolvedAuthor);
         notification.setRecipient(recipient);
         if (faculty != null) {

@@ -136,7 +136,7 @@ public class ResultServiceImpl implements ResultService {
                     notificationService.sendNotification(
                             r.getStudent(),
                             manager,
-                            "[VI] Điểm bảo vệ khóa luận | [EN] Defense evaluation results: " + topicTitle,
+                            "[VI] Điểm bảo vệ khóa luận: " + topicTitle,
                             "[VI] Kết quả bảo vệ đề tài \"" + topicTitle + "\" đã được công bố. Điểm tổng kết: "
                                     + r.getFinalScore() + " (" + statusVi
                                     + "). Vui lòng vào mục Kết quả bảo vệ để xem chi tiết nhận xét của hội đồng.\n"
@@ -158,7 +158,7 @@ public class ResultServiceImpl implements ResultService {
                         notificationService.sendNotification(
                                 tl.getLecturer(),
                                 manager,
-                                "[VI] Điểm bảo vệ đề tài hướng dẫn | [EN] Defense evaluation results for guided topic: " + topicTitle,
+                                "[VI] Đề tài hướng dẫn đã có điểm bảo vệ: " + topicTitle,
                                 "[VI] Hội đồng đã hoàn tất chấm điểm và công bố kết quả cho đề tài \"" + topicTitle + "\""
                                         + (!teamName.isBlank() ? (" của nhóm \"" + teamName + "\"") : "")
                                         + ". Vui lòng vào mục Kết quả bảo vệ để xem chi tiết bảng điểm.\n"
