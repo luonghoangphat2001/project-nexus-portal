@@ -1049,7 +1049,15 @@ export const en = {
     "modalResetPassTitle": "Reset Password",
     "modalResetPassSub": "Enter a new password for this user account",
     "newPasswordLabel": "New Password",
-    "resetPassBtn": "Reset Password"
+    "resetPassBtn": "Reset Password",
+    "userDetail": "User Details",
+    "viewDetail": "View Details",
+    "teamAndRole": "Team & Position",
+    "teamName": "Team",
+    "roleInTeam": "Role in Team",
+    "topic": "Topic Registration",
+    "noTeam": "Not a member of any team (Individual Student)",
+    "academicInfo": "Academic & Contact Information"
   },
   "rolesPage": {
     "title": "Roles & Permissions Matrix",

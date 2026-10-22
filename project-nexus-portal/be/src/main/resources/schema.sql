@@ -552,3 +552,55 @@ CREATE TABLE IF NOT EXISTS published_result_details (
   CONSTRAINT fk_published_result_details_result FOREIGN KEY (result_id)
     REFERENCES published_results(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================================
+-- 35. System Settings Configuration
+-- ==========================================================
+CREATE TABLE IF NOT EXISTS system_settings (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  category VARCHAR(50),
+  description VARCHAR(255),
+  setting_key VARCHAR(100) NOT NULL UNIQUE,
+  setting_value TEXT NOT NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================================
+-- 36. Security & Compliance Audit Logs
+-- ==========================================================
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT,
+  username VARCHAR(60),
+  action VARCHAR(80) NOT NULL,
+  resource VARCHAR(120),
+  details TEXT,
+  ip_address VARCHAR(45),
+  user_agent VARCHAR(255),
+  status VARCHAR(20) NOT NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  INDEX idx_audit_logs_user (username),
+  INDEX idx_audit_logs_action (action),
+  INDEX idx_audit_logs_status (status),
+  INDEX idx_audit_logs_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================================
+-- 37. Email Delivery Logs
+-- ==========================================================
+CREATE TABLE IF NOT EXISTS email_logs (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  recipient VARCHAR(150) NOT NULL,
+  recipient_name VARCHAR(150),
+  sender VARCHAR(150),
+  subject VARCHAR(500) NOT NULL,
+  template_name VARCHAR(100),
+  status VARCHAR(30) NOT NULL,
+  error_message TEXT,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_email_logs_recipient (recipient),
+  INDEX idx_email_logs_status (status),
+  INDEX idx_email_logs_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

@@ -1049,7 +1049,15 @@ export const vi = {
     "modalResetPassTitle": "Đặt lại mật khẩu",
     "modalResetPassSub": "Nhập mật khẩu mới cho tài khoản người dùng",
     "newPasswordLabel": "Mật khẩu mới",
-    "resetPassBtn": "Cập nhật mật khẩu"
+    "resetPassBtn": "Cập nhật mật khẩu",
+    "userDetail": "Chi tiết người dùng",
+    "viewDetail": "Xem chi tiết",
+    "teamAndRole": "Thông tin nhóm & Chức vụ",
+    "teamName": "Thuộc nhóm",
+    "roleInTeam": "Chức vụ trong nhóm",
+    "topic": "Đề tài tham gia",
+    "noTeam": "Chưa tham gia nhóm nào (Sinh viên tự do)",
+    "academicInfo": "Thông tin học vụ & Liên hệ"
   },
   "rolesPage": {
     "title": "Vai trò & Phân quyền hệ thống",
