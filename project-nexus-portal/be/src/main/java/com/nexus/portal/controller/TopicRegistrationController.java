@@ -68,6 +68,7 @@ public class TopicRegistrationController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Cancel topic registration", description = "Team leader cancels a pending topic registration")
     public ResponseEntity<ApiResponse<Void>> cancelRegistration(
             @Parameter(description = "Registration ID", required = true) @PathVariable Long id,

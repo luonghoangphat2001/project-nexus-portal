@@ -41,6 +41,7 @@ export const TopicsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isLecturerOrAdmin = hasRole('ROLE_ADMIN') || hasRole('ROLE_TEACHER') || hasRole('ROLE_PRINCIPAL');
+  const canManagePeriods = hasRole('ROLE_ADMIN') || hasRole('ROLE_PRINCIPAL');
   const isStudent = hasRole('ROLE_USER') && !hasRole('ROLE_TEACHER') && !hasRole('ROLE_PRINCIPAL') && !hasRole('ROLE_ADMIN');
 
   // Topics list state
@@ -108,14 +109,14 @@ export const TopicsPage = () => {
     if (isStudent) {
       loadStudentRegistrations();
     }
-  }, [isStudent]);
+  }, [isStudent, canManagePeriods]);
 
   const loadAcademicData = async () => {
     try {
       const [deptRes, majorRes, periodRes] = await Promise.all([
         academicService.getAllDepartments(),
         academicService.getAllMajors(),
-        (isStudent ? topicService.getActivePeriods() : periodService.getAll()).catch(() => []),
+        (canManagePeriods ? periodService.getAll() : topicService.getActivePeriods()).catch(() => []),
       ]);
       setDepartments(deptRes || []);
       setMajors(majorRes || []);
@@ -548,7 +549,7 @@ export const TopicsPage = () => {
                       <span className="text-xs px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-medium">
                         {t('enums.registrationStatus.PENDING', 'Chờ duyệt')}
                       </span>
-                    ) : (
+                    ) : isStudent ? (
                       <button
                         type="button"
                         disabled={!isStudent || topic.status !== 'OPEN' || studentHasTopic || myPendingTopicIds.size > 0}
@@ -572,7 +573,7 @@ export const TopicsPage = () => {
                       >
                         {t('topics.register')}
                       </button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -615,7 +616,7 @@ export const TopicsPage = () => {
               <span className="text-xs px-3 py-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-medium">
                 {t('enums.registrationStatus.PENDING', 'Đang chờ duyệt')}
               </span>
-            ) : (
+                    ) : isStudent ? (
               <button
                 type="button"
                 disabled={!isStudent || selectedTopic?.status !== 'OPEN' || studentHasTopic || myPendingTopicIds.size > 0}
@@ -638,7 +639,7 @@ export const TopicsPage = () => {
               >
                 {t('topics.registerTopic')}
               </button>
-            )}
+            ) : null}
           </div>
         }
       >
