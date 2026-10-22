@@ -7,6 +7,8 @@ import java.util.List;
 public interface ResultService {
     List<ResultResponse.Defense> publishAssignmentResults(Long assignmentId, String identifier);
 
+    List<ResultResponse.Defense> republishAssignmentResults(Long assignmentId, String reason, String identifier);
+
     List<ResultResponse.Defense> publishPeriodResults(Long periodId, String identifier);
 
     List<ResultResponse.Defense> getMyPublishedResults(String identifier);

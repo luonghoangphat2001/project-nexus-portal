@@ -173,6 +173,9 @@ export function ResultsPage() {
   const publish = () => activeAssignment
     && runPublish('results.confirmPublish', () => resultsService.publishAssignmentResults(activeAssignment.id));
 
+  const republish = () => activeAssignment
+    && runPublish('results.confirmRepublish', () => resultsService.republishAssignmentResults(activeAssignment.id));
+
   const periodId = activeCouncil?.periodId;
   const pendingPeriodAssignments = useMemo(
     () => completedAssignments.filter(
@@ -596,6 +599,17 @@ export function ResultsPage() {
                       ? t('results.publishedBtn')
                       : t('results.publishBtn')}
                   </button>
+                  {activeAssignment?.resultsPublished && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={republish}
+                      className={buttonClass('secondary')}
+                      title={t('results.republishHint')}
+                    >
+                      {t('results.republishBtn')}
+                    </button>
+                  )}
                 </div>
               )}
             </>

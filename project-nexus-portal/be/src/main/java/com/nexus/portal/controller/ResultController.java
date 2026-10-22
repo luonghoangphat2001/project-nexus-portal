@@ -50,6 +50,16 @@ public class ResultController {
                 results.publishAssignmentResults(assignmentId, auth.getName()), "Results published"));
     }
 
+    @PostMapping("/assignments/{assignmentId}/republish")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
+    public ResponseEntity<ApiResponse<List<ResultResponse.Defense>>> republishAssignmentResults(
+            @PathVariable Long assignmentId,
+            @RequestParam(required = false) String reason,
+            Authentication auth) {
+        return ResponseEntity.ok(ApiResponse.success(
+                results.republishAssignmentResults(assignmentId, reason, auth.getName()), "Results adjusted and republished"));
+    }
+
     @PostMapping("/periods/{periodId}/publish")
     @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
     public ResponseEntity<ApiResponse<List<ResultResponse.Defense>>> publishPeriodResults(
