@@ -41,6 +41,7 @@ spring:
         - classpath:data/06_notifications_kanban.sql
         - classpath:data/07_councils_assessments_results.sql
         - classpath:data/08_audit_settings.sql
+        - classpath:data/09_demo_defense_data.sql
   mail:
     host: ${SPRING_MAIL_HOST:smtp.gmail.com}
     port: ${SPRING_MAIL_PORT:587}

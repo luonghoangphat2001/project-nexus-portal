@@ -65,6 +65,8 @@ Xem [hướng dẫn nghiệp vụ, API, cấu hình và kiểm thử](./docs/MOD
 
 Xem [Functional Test Cases cho module 11–13](./docs/TEST_CASES_MODULES_11_12_13.md) để kiểm tra từng chức năng, quyền truy cập và luồng thực tế trên localhost/MySQL. Script `python scripts/qa_defense_localhost.py` tạo dữ liệu QA riêng và lưu kết quả thực thi; `--setup-only` chuẩn bị dữ liệu cho vòng kiểm thử bằng trình duyệt.
 
+Để thực hành hội đồng, báo cáo và chấm điểm với tài khoản sinh viên/GVHD/hội đồng mẫu, xem [Hướng dẫn dữ liệu demo Module 11–13](./docs/DEMO_DEFENSE_DATA.md). Seed bổ sung ba nhóm đã duyệt trong đợt đang mở, một hội đồng sắp diễn ra và tài khoản sinh viên tự do để thử mời vào nhóm.
+
 Các endpoint ghép theo `API_PREFIX`; `.env.example` hiện dùng `/api`, tương ứng `VITE_API_BASE_URL=http://localhost:8080/api`. Dữ liệu mẫu cần được duyệt đăng ký trước khi thực hành module 11–13. Với DB đã sử dụng, đặt `SQL_INIT_MODE=never` để không chạy lại seed phát triển.
 
 ## 5. Modules 14–16

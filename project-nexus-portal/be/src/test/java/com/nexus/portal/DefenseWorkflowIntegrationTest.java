@@ -403,9 +403,13 @@ class DefenseWorkflowIntegrationTest {
     void submittingReviewLocksScoresDocumentsAndCouncilStructure() {
         CouncilResponse council = allocateCouncil();
         Long assignmentId = council.assignments().get(0).id();
+        assertThat(council.assignments().get(0).canRemove()).isTrue();
         reports.uploadDocument(registration.getId(), upload(), "leader");
         AssessmentRequest request = scoreRequest(assignmentId, leader.getId(), AssessmentType.REVIEW);
         AssessmentResponse draft = assessments.saveDraft(request, "reviewer");
+        CouncilResponse withDraft = councils.getCouncils("admin").stream()
+                .filter(item -> item.id().equals(council.id())).findFirst().orElseThrow();
+        assertThat(withDraft.assignments().get(0).canRemove()).isFalse();
         assertThat(assessments.submitAssessment(draft.id(), "reviewer").status()).isEqualTo(AssessmentStatus.SUBMITTED);
         assertThat(assessments.getAssessments(assignmentId, "chair")).hasSize(1);
         assertThatThrownBy(() -> assessments.saveDraft(request, "reviewer")).isInstanceOf(BadRequestException.class);

@@ -796,6 +796,7 @@ export const en = {
     "assignedTeams": "Teams Assigned for Defense",
     "noAssignedTeams": "No teams assigned to this council yet",
     "removeTeam": "Remove Assignment",
+    "assignmentLocked": "This team has an assessment; only its grading sheet and submitted documents can be viewed.",
     "confirmRemoveAssignment": "Are you sure you want to remove this team assignment?",
     "completeCouncil": "Complete Council",
     "confirmComplete": "Confirm completion of this defense council?",
