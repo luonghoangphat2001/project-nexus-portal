@@ -3,7 +3,6 @@ name: nexus-portal
 services:
   mysql_db:
     image: mysql:8.0
-    container_name: nexus_mysql_db
     restart: unless-stopped
     env_file:
       - ./be/.env
@@ -27,7 +26,6 @@ services:
     build:
       context: ./be
       dockerfile: Dockerfile
-    container_name: nexus_backend_api
     restart: unless-stopped
     depends_on:
       mysql_db:
@@ -60,7 +58,6 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
-    container_name: nexus_frontend_app
     restart: unless-stopped
     depends_on:
       - backend_api

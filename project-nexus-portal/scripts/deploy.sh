@@ -45,12 +45,12 @@ fi
 
 # Apply pending SQL migrations to ensure schema and seed consistency
 if [ "$TARGET_SERVICE" != "frontend" ]; then
-    echo "Applying migrations to nexus_mysql_db..."
+    echo "Applying migrations to mysql_db..."
     sleep 3
     if [ -d "be/src/main/resources/migrations" ]; then
         for sql_file in $(ls be/src/main/resources/migrations/*.sql 2>/dev/null | sort); do
             echo "Executing: $sql_file"
-            docker exec -i nexus_mysql_db sh -c 'mysql --default-character-set=utf8mb4 -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < "$sql_file" || true
+            $DOCKER_COMPOSE_CMD --env-file be/.env -p nexus-portal -f docker-compose.prod.yml exec -T mysql_db sh -c 'mysql --default-character-set=utf8mb4 -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < "$sql_file" || true
         done
     fi
 fi
