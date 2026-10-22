@@ -320,6 +320,23 @@ class ResultPublicationServiceImplTest {
                 () -> service.adjustPublishedResult(9L, 7L, new BigDecimal("9.00"), null, null, "Ly do", "admin"));
     }
 
+    @Test
+    void adjustCreatesSnapshotDetailsForLegacyPublishedResult() {
+        Result published = publishedResult();
+        givenPublishDependencies();
+        when(results.findByAssignmentIdOrderByStudentIdAsc(9L)).thenReturn(List.of(published));
+        when(resultDetails.findById(100L)).thenReturn(Optional.empty());
+        when(results.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(resultDetails.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ResultResponse.Defense adjusted = service.adjustPublishedResult(9L, 7L,
+                null, new BigDecimal("9.00"), null, "Dieu chinh diem phan bien", "admin");
+
+        assertEquals(new BigDecimal("8.00"), adjusted.advisorScore());
+        assertEquals(new BigDecimal("8.80"), adjusted.finalScore());
+        verify(resultDetails).saveAndFlush(any());
+    }
+
     private Result publishedResult() {
         Result result = new Result();
         result.setId(100L);

@@ -221,7 +221,8 @@ public class ResultServiceImpl implements ResultService {
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("No published result found for this student"));
         com.nexus.portal.model.PublishedResultDetails details = resultDetails.findById(result.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Published result details not found"));
+                .orElseGet(() -> com.nexus.portal.model.PublishedResultDetails.forLegacyResult(result,
+                        legacyAdvisorName(assignment), legacyAdvisorScore(result)));
 
         BigDecimal oldAdvisor = average(details.getAdvisorContentScore(), details.getAdvisorImplementationScore(),
                 details.getAdvisorPresentationScore());
@@ -400,6 +401,21 @@ public class ResultServiceImpl implements ResultService {
         if (score != null && (score.compareTo(BigDecimal.ZERO) < 0 || score.compareTo(BigDecimal.TEN) > 0)) {
             throw new BadRequestException("Scores must be between 0 and 10");
         }
+    }
+
+    private String legacyAdvisorName(DefenseAssignment assignment) {
+        return assignment.getRegistration().getTopic().getTopicLecturers().stream()
+                .filter(lecturer -> lecturer.getAdvisorRole() == com.nexus.portal.enums.AdvisorRole.PRIMARY)
+                .map(lecturer -> lecturer.getLecturer().getFullName())
+                .findFirst().orElse("N/A (dữ liệu cũ)");
+    }
+
+    private BigDecimal legacyAdvisorScore(Result result) {
+        BigDecimal derived = result.getFinalScore()
+                .subtract(result.getReviewScore().multiply(new BigDecimal("0.30")))
+                .subtract(result.getDefenseScore().multiply(new BigDecimal("0.50")))
+                .divide(new BigDecimal("0.20"), 2, RoundingMode.HALF_UP);
+        return derived.max(BigDecimal.ZERO).min(BigDecimal.TEN);
     }
 
     private BigDecimal average(BigDecimal content, BigDecimal implementation, BigDecimal presentation) {

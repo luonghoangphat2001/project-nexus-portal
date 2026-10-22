@@ -70,6 +70,23 @@ public class PublishedResultDetails {
         return details;
     }
 
+    public static PublishedResultDetails forLegacyResult(Result result, String advisorName, BigDecimal advisorScore) {
+        PublishedResultDetails details = new PublishedResultDetails();
+        details.id = result.getId();
+        details.result = result;
+        details.advisorName = advisorName;
+        details.advisorContentScore = advisorScore;
+        details.advisorImplementationScore = advisorScore;
+        details.advisorPresentationScore = advisorScore;
+        details.reviewContentScore = result.getReviewScore();
+        details.reviewImplementationScore = result.getReviewScore();
+        details.reviewPresentationScore = result.getReviewScore();
+        details.defenseContentScore = result.getDefenseScore();
+        details.defenseImplementationScore = result.getDefenseScore();
+        details.defensePresentationScore = result.getDefenseScore();
+        return details;
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getAdvisorName() { return advisorName; }
