@@ -45,6 +45,7 @@ export const LoginPage = () => {
     setIsSubmitting(true);
 
     try {
+      let loggedInUser;
       if (isRegisterMode) {
         await register({
           username: usernameOrEmail,
@@ -53,11 +54,14 @@ export const LoginPage = () => {
           fullName,
           roles: ['ROLE_ADMIN'],
         });
-        await login(usernameOrEmail, password);
+        loggedInUser = await login(usernameOrEmail, password);
       } else {
-        await login(usernameOrEmail, password);
+        loggedInUser = await login(usernameOrEmail, password);
       }
-      navigate(from, { replace: true });
+      const openProfileAfterLogin = loggedInUser?.roles?.some((role) =>
+        ['ROLE_USER', 'ROLE_TEACHER', 'ROLE_COUNCIL'].includes(role)
+      );
+      navigate(openProfileAfterLogin ? '/profile' : from, { replace: true });
     } catch (err) {
       setErrorMessage(formatApiError(err, language));
     } finally {
