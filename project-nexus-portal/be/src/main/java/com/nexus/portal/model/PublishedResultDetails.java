@@ -85,4 +85,8 @@ public class PublishedResultDetails {
     public String getAdvisorComment() { return advisorComment; }
     public String getReviewComment() { return reviewComment; }
     public String getDefenseComments() { return defenseComments; }
+
+    public void setAdvisorContentScore(BigDecimal advisorContentScore) { this.advisorContentScore = advisorContentScore; }
+    public void setAdvisorImplementationScore(BigDecimal advisorImplementationScore) { this.advisorImplementationScore = advisorImplementationScore; }
+    public void setAdvisorPresentationScore(BigDecimal advisorPresentationScore) { this.advisorPresentationScore = advisorPresentationScore; }
 }

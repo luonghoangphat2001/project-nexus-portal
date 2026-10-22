@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 
@@ -58,6 +59,21 @@ public class ResultController {
             Authentication auth) {
         return ResponseEntity.ok(ApiResponse.success(
                 results.republishAssignmentResults(assignmentId, reason, auth.getName()), "Results adjusted and republished"));
+    }
+
+    @PostMapping("/assignments/{assignmentId}/adjust")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
+    public ResponseEntity<ApiResponse<ResultResponse.Defense>> adjustPublishedResult(
+            @PathVariable Long assignmentId,
+            @RequestParam Long studentId,
+            @RequestParam(required = false) BigDecimal advisorScore,
+            @RequestParam(required = false) BigDecimal reviewScore,
+            @RequestParam(required = false) BigDecimal defenseScore,
+            @RequestParam String reason,
+            Authentication auth) {
+        return ResponseEntity.ok(ApiResponse.success(
+                results.adjustPublishedResult(assignmentId, studentId, advisorScore, reviewScore, defenseScore,
+                        reason, auth.getName()), "Result adjusted"));
     }
 
     @PostMapping("/periods/{periodId}/publish")

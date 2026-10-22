@@ -201,6 +201,70 @@ public class ResultServiceImpl implements ResultService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
+    public ResultResponse.Defense adjustPublishedResult(Long assignmentId, Long studentId,
+            BigDecimal advisorScore, BigDecimal reviewScore, BigDecimal defenseScore, String reason, String identifier) {
+        User manager = access.getUser(identifier);
+        Long councilId = assignments.findCouncilIdById(assignmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Defense assignment not found"));
+        councils.findLockedById(councilId).orElseThrow(() -> new ResourceNotFoundException("Council not found"));
+        DefenseAssignment assignment = getAssignment(assignmentId);
+        requireManager(manager, assignment.getRegistration().getTopic().getDepartment());
+        if (reason == null || reason.isBlank()) throw new BadRequestException("An adjustment reason is required");
+        if (advisorScore == null && reviewScore == null && defenseScore == null) {
+            throw new BadRequestException("No score changes were provided");
+        }
+        validateScore(advisorScore);
+        validateScore(reviewScore);
+        validateScore(defenseScore);
+        Result result = results.findByAssignmentIdOrderByStudentIdAsc(assignmentId).stream()
+                .filter(value -> value.getStudent().getId().equals(studentId) && value.getPublishedAt() != null)
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("No published result found for this student"));
+        com.nexus.portal.model.PublishedResultDetails details = resultDetails.findById(result.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Published result details not found"));
+
+        BigDecimal oldAdvisor = average(details.getAdvisorContentScore(), details.getAdvisorImplementationScore(),
+                details.getAdvisorPresentationScore());
+        BigDecimal oldReview = result.getReviewScore();
+        BigDecimal oldDefense = result.getDefenseScore();
+        BigDecimal oldFinal = result.getFinalScore();
+        BigDecimal advisor = advisorScore != null ? advisorScore : oldAdvisor;
+        BigDecimal review = reviewScore != null ? reviewScore : oldReview;
+        BigDecimal defense = defenseScore != null ? defenseScore : oldDefense;
+        BigDecimal finalScore = ScoreCalculationServiceImpl.calculateFinalScore(advisor, review, defense);
+
+        if (advisorScore != null) {
+            details.setAdvisorContentScore(advisorScore);
+            details.setAdvisorImplementationScore(advisorScore);
+            details.setAdvisorPresentationScore(advisorScore);
+        }
+        result.setReviewScore(review);
+        result.setDefenseScore(defense);
+        result.setFinalScore(finalScore);
+        result.setPassed(ScoreCalculationServiceImpl.isPassingScore(finalScore));
+        results.saveAndFlush(result);
+        resultDetails.saveAndFlush(details);
+        audit.log(manager.getId(), manager.getUsername(), "ADJUST_RESULT", "results/" + result.getId(),
+                "Adjusted result of student " + studentId + ": advisor " + oldAdvisor + " -> " + advisor
+                        + ", review " + oldReview + " -> " + review + ", defense " + oldDefense + " -> " + defense
+                        + ", final " + oldFinal + " -> " + finalScore + ". Reason: " + reason,
+                null, null, "SUCCESS");
+
+        if (notificationService != null && result.getStudent() != null) {
+            notificationService.sendNotification(
+                    result.getStudent(),
+                    manager,
+                    "[VI] Kết quả khóa luận đã được điều chỉnh | [EN] Thesis result adjusted",
+                    "[VI] Cán bộ vừa điều chỉnh kết quả khóa luận của bạn. Điểm tổng kết mới: " + finalScore
+                            + ". Lý do: " + reason + "\n"
+                            + "[EN] Your thesis result was adjusted by staff. New final score: " + finalScore
+                            + ". Reason: " + reason);
+        }
+        return toResponse(result, details);
+    }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public List<ResultResponse.Defense> publishPeriodResults(Long periodId, String identifier) {
         User manager = access.getUser(identifier);
         if (!periods.existsById(periodId)) {
@@ -330,6 +394,12 @@ public class ResultServiceImpl implements ResultService {
                     detail == null ? null : detail.getReviewComment(),
                     detail == null ? null : detail.getDefenseComments());
         }).toList();
+    }
+
+    private void validateScore(BigDecimal score) {
+        if (score != null && (score.compareTo(BigDecimal.ZERO) < 0 || score.compareTo(BigDecimal.TEN) > 0)) {
+            throw new BadRequestException("Scores must be between 0 and 10");
+        }
     }
 
     private BigDecimal average(BigDecimal content, BigDecimal implementation, BigDecimal presentation) {

@@ -165,6 +165,39 @@ export function ResultsPage() {
   const republish = () => activeAssignment
     && runPublish('results.confirmRepublish', () => resultsService.republishAssignmentResults(activeAssignment.id));
 
+  const promptScore = (key, current) => {
+    const raw = window.prompt(t(key, { current: formatScore(current) }));
+    if (raw === null || raw.trim() === '') return null;
+    const value = Number(raw.trim());
+    if (!Number.isFinite(value) || value < 0 || value > 10) throw new Error(t('results.adjustInvalidScore'));
+    return value;
+  };
+
+  const adjustGrade = async (grade) => {
+    try {
+      const advisorScore = promptScore('results.adjustAdvisorPrompt', grade.advisorScore);
+      const reviewScore = promptScore('results.adjustReviewPrompt', grade.reviewScore);
+      const defenseScore = promptScore('results.adjustDefensePrompt', grade.defenseScore);
+      if (advisorScore == null && reviewScore == null && defenseScore == null) {
+        setError(t('results.adjustNoChange'));
+        return;
+      }
+      const reason = window.prompt(t('results.adjustReasonPrompt'));
+      if (!reason || !reason.trim()) return;
+      setBusy(true);
+      setError('');
+      setNotice('');
+      await resultsService.adjustPublishedResult(activeAssignment.id, grade.studentId,
+        { advisorScore, reviewScore, defenseScore }, reason.trim());
+      setNotice(t('results.adjustSuccess'));
+      setRefresh((n) => n + 1);
+    } catch (e) {
+      setError(e.message || t('common.error'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const periodId = activeCouncil?.periodId;
   const pendingPeriodAssignments = useMemo(
     () => completedAssignments.filter(
@@ -535,6 +568,7 @@ export function ResultsPage() {
                         <th className="py-3 px-4 text-center">{t('results.defenseScore')}</th>
                         <th className="py-3 px-4 text-center font-bold text-slate-900">{t('results.finalScore', 'Điểm tổng kết')}</th>
                         <th className="py-3 px-4 text-center">{t('results.resultCol')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.adjustCol')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -553,6 +587,19 @@ export function ResultsPage() {
                           </td>
                           <td className="py-3 px-4 text-center">
                             <StatusBadge value={grade.passed ? 'PASSED' : 'FAILED'} type="status" />
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            {grade.published && (
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => adjustGrade(grade)}
+                                className={buttonClass.actionRow}
+                                title={t('results.adjustHint')}
+                              >
+                                {t('results.adjustBtn')}
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))}

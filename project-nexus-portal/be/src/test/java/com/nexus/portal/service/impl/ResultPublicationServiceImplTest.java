@@ -3,6 +3,7 @@ package com.nexus.portal.service.impl;
 import com.nexus.portal.dto.response.ResultResponse;
 import com.nexus.portal.enums.*;
 import com.nexus.portal.exception.BadRequestException;
+import com.nexus.portal.exception.ResourceNotFoundException;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.DefenseAssignmentRepository;
 import com.nexus.portal.repository.DefenseCouncilRepository;
@@ -24,12 +25,13 @@ import org.springframework.security.access.AccessDeniedException;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -248,6 +250,88 @@ class ResultPublicationServiceImplTest {
                 .thenThrow(new BadRequestException("Advisor, reviewer, or defense assessments are incomplete"));
 
         assertThrows(BadRequestException.class, () -> service.republishAssignmentResults(9L, null, "admin"));
+    }
+
+    @Test
+    void adjustsPublishedResultWithReasonAndRecomputedFinalScore() {
+        Result published = publishedResult();
+        var details = PublishedResultDetails.from(published, new CalculatedScore(student,
+                breakdown("8.00"), breakdown("8.50"), breakdown("9.00"), new BigDecimal("8.65"), true));
+        givenPublishDependencies();
+        when(results.findByAssignmentIdOrderByStudentIdAsc(9L)).thenReturn(List.of(published));
+        when(resultDetails.findById(100L)).thenReturn(Optional.of(details));
+        when(results.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(resultDetails.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ResultResponse.Defense adjusted = service.adjustPublishedResult(9L, 7L,
+                new BigDecimal("9.00"), null, null, "GVHD cham nham", "admin");
+
+        assertEquals(new BigDecimal("9.00"), adjusted.advisorScore());
+        assertEquals(new BigDecimal("8.85"), adjusted.finalScore());
+        assertTrue(adjusted.passed());
+        verify(audit).log(eq(1L), eq("admin"), eq("ADJUST_RESULT"), eq("results/100"),
+                argThat(message -> message.contains("GVHD cham nham") && message.contains("8.00 -> 9.00")),
+                isNull(), isNull(), eq("SUCCESS"));
+    }
+
+    @Test
+    void rejectsAdjustWithoutReason() {
+        givenPublishDependencies();
+
+        assertThrows(BadRequestException.class,
+                () -> service.adjustPublishedResult(9L, 7L, new BigDecimal("9.00"), null, null, "  ", "admin"));
+        verify(results, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void rejectsAdjustWithoutAnyScoreChange() {
+        givenPublishDependencies();
+
+        assertThrows(BadRequestException.class,
+                () -> service.adjustPublishedResult(9L, 7L, null, null, null, "Ly do hop le", "admin"));
+        verify(results, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void rejectsAdjustWithScoreOutsideAllowedRange() {
+        givenPublishDependencies();
+
+        assertThrows(BadRequestException.class,
+                () -> service.adjustPublishedResult(9L, 7L, new BigDecimal("10.50"), null, null, "Ly do", "admin"));
+        verify(results, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void rejectsAdjustOutsideDepartmentScope() {
+        givenPublishDependencies();
+        when(access.canManage(manager, department)).thenReturn(false);
+
+        assertThrows(AccessDeniedException.class,
+                () -> service.adjustPublishedResult(9L, 7L, new BigDecimal("9.00"), null, null, "Ly do", "admin"));
+        verify(results, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void rejectsAdjustWhenStudentHasNoPublishedResult() {
+        givenPublishDependencies();
+        when(results.findByAssignmentIdOrderByStudentIdAsc(9L)).thenReturn(List.of());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> service.adjustPublishedResult(9L, 7L, new BigDecimal("9.00"), null, null, "Ly do", "admin"));
+    }
+
+    private Result publishedResult() {
+        Result result = new Result();
+        result.setId(100L);
+        result.setAssignment(assignment);
+        result.setStudent(student);
+        result.setReviewScore(new BigDecimal("8.50"));
+        result.setDefenseScore(new BigDecimal("9.00"));
+        result.setFinalScore(new BigDecimal("8.65"));
+        result.setPassed(true);
+        result.setPublishedBy(manager);
+        result.setPublishedAt(LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC));
+        return result;
     }
 
     private CalculatedScore.AssessmentBreakdown breakdown(String score) {
