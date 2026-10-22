@@ -333,37 +333,9 @@ public class ResultServiceImpl implements ResultService {
     public List<ResultResponse.Statistics.Row> getStatistics(
             Long periodId, Long departmentId, Long topicId, String identifier) {
         User user = access.getUser(identifier);
-        List<DefenseAssignment> councilScope = getCouncilScope(user);
-        Set<Long> allowedDepartmentIds = (councilScope == null ? getManagedDepartments(user)
-                : councilScope.stream().map(a -> a.getRegistration().getTopic().getDepartment()).distinct().toList()).stream()
-                .map(Department::getId).collect(Collectors.toSet());
-        Set<Long> allowedPeriodIds = (councilScope == null ? periods.findAll()
-                : councilScope.stream().map(a -> a.getRegistration().getTopic().getPeriod()).distinct().toList()).stream()
-                .map(RegistrationPeriod::getId).collect(Collectors.toSet());
-        Set<Long> allowedTopicIds = (councilScope == null ? topics.findByDepartmentIdIn(allowedDepartmentIds)
-                : councilScope.stream().map(a -> a.getRegistration().getTopic()).distinct().toList()).stream()
-                .map(Topic::getId).collect(Collectors.toSet());
-        if (departmentId != null && !allowedDepartmentIds.contains(departmentId)) {
-            throw new AccessDeniedException("You do not have permission to view academic results for this department");
-        }
-        if (periodId != null && !allowedPeriodIds.contains(periodId)) {
-            throw new ResourceNotFoundException("Registration period not found");
-        }
-        if (topicId != null && !allowedTopicIds.contains(topicId)) {
-            if (councilScope != null) {
-                throw new AccessDeniedException("You do not have permission to view academic results for this topic");
-            }
-            Topic topic = topics.findById(topicId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Topic not found"));
-            if (!allowedDepartmentIds.contains(topic.getDepartment().getId())) {
-                throw new AccessDeniedException("You do not have permission to view academic results for this topic");
-            }
-        }
-
-        List<Result> scopedResults = councilScope == null
-                ? results.findPublishedForReport(allowedDepartmentIds, periodId, departmentId, topicId)
-                : results.findPublishedForReportByAssignmentIds(
-                        councilScope.stream().map(DefenseAssignment::getId).toList(), periodId, departmentId, topicId);
+        ReportScope scope = getReportScope(user);
+        validateReportFilters(scope, periodId, departmentId, topicId);
+        List<Result> scopedResults = findReportResults(scope, periodId, departmentId, topicId);
         Map<ReportKey, List<Result>> grouped = new HashMap<>();
         scopedResults
                 .stream()
@@ -390,14 +362,7 @@ public class ResultServiceImpl implements ResultService {
             Long periodId, Long departmentId, Long topicId, String identifier) {
         getStatistics(periodId, departmentId, topicId, identifier);
         User user = access.getUser(identifier);
-        List<DefenseAssignment> councilScope = getCouncilScope(user);
-        Set<Long> allowedDepartmentIds = (councilScope == null ? getManagedDepartments(user)
-                : councilScope.stream().map(a -> a.getRegistration().getTopic().getDepartment()).distinct().toList()).stream()
-                .map(Department::getId).collect(Collectors.toSet());
-        List<Result> published = (councilScope == null
-                ? results.findPublishedForReport(allowedDepartmentIds, periodId, departmentId, topicId)
-                : results.findPublishedForReportByAssignmentIds(
-                        councilScope.stream().map(DefenseAssignment::getId).toList(), periodId, departmentId, topicId)).stream()
+        List<Result> published = findReportResults(getReportScope(user), periodId, departmentId, topicId).stream()
                 .filter(this::councilHasEnded)
                 .toList();
         Map<Long, com.nexus.portal.model.PublishedResultDetails> details = resultDetails
@@ -475,6 +440,52 @@ public class ResultServiceImpl implements ResultService {
                 passCount, rows.size() - passCount, distribution);
     }
 
+    private ReportScope getReportScope(User user) {
+        List<DefenseAssignment> councilAssignments = getCouncilScope(user);
+        List<Department> departmentsInScope = councilAssignments == null
+                ? getManagedDepartments(user)
+                : councilAssignments.stream().map(a -> a.getRegistration().getTopic().getDepartment()).distinct().toList();
+        return new ReportScope(councilAssignments,
+                departmentsInScope.stream().map(Department::getId).collect(Collectors.toSet()));
+    }
+
+    private void validateReportFilters(ReportScope scope, Long periodId, Long departmentId, Long topicId) {
+        if (departmentId != null && !scope.departmentIds().contains(departmentId)) {
+            throw new AccessDeniedException("You do not have permission to view academic results for this department");
+        }
+        if (scope.councilAssignments() == null) {
+            if (periodId != null && !periods.existsById(periodId)) {
+                throw new ResourceNotFoundException("Registration period not found");
+            }
+            if (topicId != null) {
+                Topic topic = topics.findById(topicId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Topic not found"));
+                if (!scope.departmentIds().contains(topic.getDepartment().getId())) {
+                    throw new AccessDeniedException("You do not have permission to view academic results for this topic");
+                }
+            }
+            return;
+        }
+        Set<Long> periodIds = scope.councilAssignments().stream()
+                .map(a -> a.getRegistration().getTopic().getPeriod().getId()).collect(Collectors.toSet());
+        Set<Long> topicIds = scope.councilAssignments().stream()
+                .map(a -> a.getRegistration().getTopic().getId()).collect(Collectors.toSet());
+        if (periodId != null && !periodIds.contains(periodId)) {
+            throw new AccessDeniedException("You do not have permission to view academic results for this period");
+        }
+        if (topicId != null && !topicIds.contains(topicId)) {
+            throw new AccessDeniedException("You do not have permission to view academic results for this topic");
+        }
+    }
+
+    private List<Result> findReportResults(ReportScope scope, Long periodId, Long departmentId, Long topicId) {
+        return scope.councilAssignments() == null
+                ? results.findPublishedForReport(scope.departmentIds(), periodId, departmentId, topicId)
+                : results.findPublishedForReportByAssignmentIds(
+                        scope.councilAssignments().stream().map(DefenseAssignment::getId).toList(),
+                        periodId, departmentId, topicId);
+    }
+
     private List<Department> getManagedDepartments(User manager) {
         if (!access.hasRole(manager, RoleName.ROLE_ADMIN)
                 && !access.hasRole(manager, RoleName.ROLE_PRINCIPAL)) {
@@ -514,6 +525,8 @@ public class ResultServiceImpl implements ResultService {
         return assignments.findById(assignmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Defense assignment not found"));
     }
+
+    private record ReportScope(List<DefenseAssignment> councilAssignments, Set<Long> departmentIds) {}
 
     private ResultResponse.Defense toResponse(
             Result result, com.nexus.portal.model.PublishedResultDetails details) {
