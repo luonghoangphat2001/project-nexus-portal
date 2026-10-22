@@ -16,21 +16,9 @@ import {
   inputClass,
   selectClass
 } from '../components/common/CommonUi';
+import { formatDateTime } from '../utils/dateUtils';
 
-function formatDate(date) {
-  if (!date) return '—';
-  try {
-    return new Date(date).toLocaleString(undefined, {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return String(date);
-  }
-}
+const formatDate = (date) => formatDateTime(date, '—');
 
 const formatScore = (value) => (value != null ? Number(value).toFixed(2) : '—');
 const selectedFilters = (filters) => Object.fromEntries(

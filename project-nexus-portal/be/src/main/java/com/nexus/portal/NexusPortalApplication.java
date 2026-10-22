@@ -1,6 +1,9 @@
 package com.nexus.portal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -8,15 +11,26 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableAsync;
 
+import java.util.TimeZone;
+
 @SpringBootApplication
 @EnableJpaAuditing
 @EnableAsync
 public class NexusPortalApplication {
 
+    @PostConstruct
+    public void init() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+    }
+
     @Bean
     @Primary
     public ObjectMapper objectMapper() {
-        return new ObjectMapper().findAndRegisterModules();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.setTimeZone(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        return mapper;
     }
 
     public static void main(String[] args) {

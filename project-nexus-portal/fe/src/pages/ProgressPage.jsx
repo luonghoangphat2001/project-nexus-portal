@@ -15,28 +15,7 @@ import {
   inputClass,
   selectClass
 } from '../components/common/CommonUi';
-
-function formatDateTime(date) {
-  if (!date) return '';
-  try {
-    const raw = String(date).trim();
-    const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
-    const hasTz = /Z$|[+-]\d{2}(:\d{2})?$/.test(normalized);
-    const dateObj = new Date(hasTz ? normalized : `${normalized}+07:00`);
-    if (isNaN(dateObj.getTime())) return raw;
-    return new Intl.DateTimeFormat('vi-VN', {
-      timeZone: 'Asia/Ho_Chi_Minh',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).format(dateObj);
-  } catch {
-    return String(date);
-  }
-}
+import { formatDateTime } from '../utils/dateUtils';
 
 function formatLogAction(log, t) {
   if (!log) return '';

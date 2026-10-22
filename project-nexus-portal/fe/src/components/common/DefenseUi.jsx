@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
+import { formatDateTime } from '../../utils/dateUtils';
 
 export const inputClass = 'w-full px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:bg-slate-100';
 
@@ -10,10 +11,7 @@ export const labels = {
   REVIEW: 'Review', DEFENSE: 'Defense Assessment', DRAFT: 'Draft', SUBMITTED: 'Submitted & Locked',
 };
 
-export const formatDate = (value) => value
-  ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' })
-    .format(new Date(/Z$|[+-]\d{2}:\d{2}$/.test(value) ? value : `${value}+07:00`))
-  : 'Not set';
+export const formatDate = (value) => formatDateTime(value, 'Not set');
 
 export function Banner({ error, notice }) {
   return <>

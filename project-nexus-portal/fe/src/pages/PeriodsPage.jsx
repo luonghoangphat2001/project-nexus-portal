@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { periodService } from '../services/periodService';
 import { academicService } from '../services/academicService';
+import { formatDateTime } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
@@ -652,19 +653,19 @@ export function PeriodsPage() {
                       <div className="flex items-center justify-between">
                         <span className="text-slate-500">Mở nhận đăng ký:</span>
                         <span className="font-mono font-medium">
-                          {period.startDate ? period.startDate.replace('T', ' ') : '—'}
+                          {formatDateTime(period.startDate)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-slate-500">Đóng nhận đăng ký:</span>
                         <span className="font-mono font-medium">
-                          {period.endDate ? period.endDate.replace('T', ' ') : '—'}
+                          {formatDateTime(period.endDate)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-slate-500">Hạn chót nộp báo cáo:</span>
                         <span className="font-mono font-bold text-slate-900">
-                          {period.submissionDeadline ? period.submissionDeadline.replace('T', ' ') : '—'}
+                          {formatDateTime(period.submissionDeadline)}
                         </span>
                       </div>
                     </div>
@@ -750,12 +751,12 @@ export function PeriodsPage() {
                       </td>
 
                       <td className="py-3.5 px-4 text-slate-600 font-mono text-xs">
-                        {period.startDate ? period.startDate.replace('T', ' ') : '—'}
-                        <span className="block text-slate-400">→ {period.endDate ? period.endDate.replace('T', ' ') : '—'}</span>
+                        {formatDateTime(period.startDate)}
+                        <span className="block text-slate-400">→ {formatDateTime(period.endDate)}</span>
                       </td>
 
                       <td className="py-3.5 px-4 text-slate-600 font-mono text-xs">
-                        {period.submissionDeadline ? period.submissionDeadline.replace('T', ' ') : '—'}
+                        {formatDateTime(period.submissionDeadline)}
                       </td>
 
                       <td className="py-3.5 px-4">

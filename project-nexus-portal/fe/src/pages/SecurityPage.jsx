@@ -3,6 +3,7 @@ import { auditLogService } from '../services/auditLogService';
 import { userService } from '../services/userService';
 import { emailService } from '../services/emailService';
 import { useTranslation } from '../i18n/LanguageContext';
+import { formatDateTimeFull } from '../utils/dateUtils';
 import {
   ShieldAlert,
   ShieldCheck,
@@ -15,6 +16,7 @@ import {
   FileSpreadsheet,
   Mail,
   Send,
+  Trash2,
 } from 'lucide-react';
 import {
   PageHeader,
@@ -32,6 +34,9 @@ import {
 
 export const SecurityPage = () => {
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState('audit'); // 'audit' | 'email'
+
+  // Audit Logs State
   const [logs, setLogs] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -55,6 +60,16 @@ export const SecurityPage = () => {
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [testEmailMsg, setTestEmailMsg] = useState('');
 
+  // Email Logs State
+  const [emailLogs, setEmailLogs] = useState([]);
+  const [emailTotalElements, setEmailTotalElements] = useState(0);
+  const [emailTotalPages, setEmailTotalPages] = useState(1);
+  const [emailPage, setEmailPage] = useState(0);
+  const [emailSearch, setEmailSearch] = useState('');
+  const [emailStatusFilter, setEmailStatusFilter] = useState('ALL');
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [clearingEmailLogs, setClearingEmailLogs] = useState(false);
+
   const fetchEmailStatus = async () => {
     try {
       const res = await emailService.getEmailStatus();
@@ -62,6 +77,42 @@ export const SecurityPage = () => {
         setEmailStatus(res.data);
       }
     } catch (_) {}
+  };
+
+  const fetchEmailLogs = async (targetPage = emailPage) => {
+    setEmailLoading(true);
+    try {
+      const res = await emailService.getEmailLogs({
+        page: targetPage,
+        size: 20,
+        search: emailSearch ? emailSearch.trim() : undefined,
+        status: emailStatusFilter !== 'ALL' ? emailStatusFilter : undefined,
+      });
+      if (res && res.data) {
+        setEmailLogs(res.data.content || []);
+        setEmailTotalElements(res.data.totalElements || 0);
+        setEmailTotalPages(res.data.totalPages || 1);
+        setEmailPage(targetPage);
+      }
+    } catch (err) {
+      console.error('Error fetching email logs', err);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleClearEmailLogs = async () => {
+    if (!window.confirm(t('security.clearEmailLogsConfirm'))) return;
+    setClearingEmailLogs(true);
+    try {
+      await emailService.clearEmailLogs();
+      showToast(t('security.clearEmailLogsSuccess'));
+      fetchEmailLogs(0);
+    } catch (err) {
+      setError(err.message || 'Lỗi xóa nhật ký email');
+    } finally {
+      setClearingEmailLogs(false);
+    }
   };
 
   const handleSendTestEmail = async (e) => {
@@ -73,6 +124,7 @@ export const SecurityPage = () => {
       const res = await emailService.sendTestEmail(testEmailRecipient);
       setTestEmailMsg(res.message || 'Email thử nghiệm đã được xử lý!');
       showToast('Đã gửi yêu cầu gửi email thử nghiệm thành công.');
+      fetchEmailLogs(0);
     } catch (err) {
       setTestEmailMsg(err.message || 'Lỗi gửi email.');
     } finally {
@@ -341,137 +393,352 @@ export const SecurityPage = () => {
             {testEmailMsg}
           </div>
         )}
+
+        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
+          <span>{t('security.emailLogsSubtitle')}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('email');
+              fetchEmailLogs(0);
+            }}
+            className="font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 cursor-pointer transition-colors"
+          >
+            <Mail className="w-3.5 h-3.5" />
+            <span>{t('security.tabEmailLogs')} ({emailTotalElements}) &rarr;</span>
+          </button>
+        </div>
       </div>
 
-      {/* Filter Card */}
-      <FilterCard
-        onReset={() => {
-          setUsernameFilter('');
-          setActionFilter('ALL');
-          setStatusFilter('ALL');
-        }}
-        onSearch={() => fetchLogs(0)}
-      >
-        <FilterField label={t('common.search') || 'Actor'}>
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
-            <input
-              type="text"
-              placeholder={t('security.searchActorPlaceholder')}
-              value={usernameFilter}
-              onChange={(e) => setUsernameFilter(e.target.value)}
-              className={`${inputClass} pl-9`}
+      {/* Tabs */}
+      <div className="flex items-center gap-2 border-b border-slate-200">
+        <button
+          type="button"
+          onClick={() => setActiveTab('audit')}
+          className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+            activeTab === 'audit'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Activity className="w-4 h-4" />
+          <span>{t('security.tabAuditLogs')}</span>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-normal">
+            {totalElements}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab('email');
+            fetchEmailLogs(0);
+          }}
+          className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+            activeTab === 'email'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Mail className="w-4 h-4" />
+          <span>{t('security.tabEmailLogs')}</span>
+          {emailTotalElements > 0 && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold border border-blue-200">
+              {emailTotalElements}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {activeTab === 'email' ? (
+        <>
+          {/* Email Logs Filter Card */}
+          <FilterCard
+            onReset={() => {
+              setEmailSearch('');
+              setEmailStatusFilter('ALL');
+            }}
+            onSearch={() => fetchEmailLogs(0)}
+          >
+            <FilterField label={t('common.search')}>
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder={t('security.searchEmailPlaceholder')}
+                  value={emailSearch}
+                  onChange={(e) => setEmailSearch(e.target.value)}
+                  className={`${inputClass} pl-9`}
+                />
+              </div>
+            </FilterField>
+
+            <FilterField label={t('security.colStatus')}>
+              <select
+                value={emailStatusFilter}
+                onChange={(e) => setEmailStatusFilter(e.target.value)}
+                className={selectClass}
+              >
+                <option value="ALL">{t('security.allStatuses')}</option>
+                <option value="SENT">SENT (Đã gửi)</option>
+                <option value="MOCK">MOCK (Giả lập)</option>
+                <option value="FAILED">FAILED (Thất bại)</option>
+              </select>
+            </FilterField>
+          </FilterCard>
+
+          {/* Email Logs Table Card */}
+          <TableCard>
+            <TableHeaderBar
+              title={t('security.emailLogsTitle')}
+              count={emailTotalElements}
+              subtitle={t('security.emailLogsSubtitle')}
+              actions={
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => fetchEmailLogs(emailPage)}
+                    className={buttonClass.secondary}
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${emailLoading ? 'animate-spin' : ''}`} />
+                    <span>{t('security.refresh')}</span>
+                  </button>
+                  {emailTotalElements > 0 && (
+                    <button
+                      onClick={handleClearEmailLogs}
+                      disabled={clearingEmailLogs}
+                      className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{clearingEmailLogs ? t('common.loading') : t('security.clearEmailLogs')}</span>
+                    </button>
+                  )}
+                </div>
+              }
             />
-          </div>
-        </FilterField>
 
-        <FilterField label={t('security.colAction') || 'Action'}>
-          <select
-            value={actionFilter}
-            onChange={(e) => setActionFilter(e.target.value)}
-            className={selectClass}
-          >
-            <option value="ALL">{t('security.allActions')}</option>
-            {distinctActions.map((act) => (
-              <option key={act} value={act}>{act}</option>
-            ))}
-          </select>
-        </FilterField>
-
-        <FilterField label={t('security.colStatus') || 'Status'}>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className={selectClass}
-          >
-            <option value="ALL">{t('security.allStatuses')}</option>
-            <option value="SUCCESS">SUCCESS</option>
-            <option value="FAILED">FAILED</option>
-          </select>
-        </FilterField>
-      </FilterCard>
-
-      {/* Audit Logs Table Card */}
-      <TableCard>
-        <TableHeaderBar
-          title={t('security.title')}
-          count={totalElements}
-          subtitle={t('security.subtitle')}
-        />
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm min-w-[650px]">
-            <thead>
-              <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
-                <th className="py-3.5 px-4">{t('security.colTimestamp')}</th>
-                <th className="py-3.5 px-4">{t('security.colActor')}</th>
-                <th className="py-3.5 px-4">{t('security.colAction')}</th>
-                <th className="py-3.5 px-4">{t('security.colResource')}</th>
-                <th className="py-3.5 px-4">{t('security.colDetails')}</th>
-                <th className="py-3.5 px-4">{t('security.colIp')}</th>
-                <th className="py-3.5 px-4 text-center">{t('security.colStatus')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
-                    <span>{t('common.loading')}</span>
-                  </td>
-                </tr>
-              ) : logs.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
-                    {t('security.noLogs')}
-                  </td>
-                </tr>
-              ) : (
-                logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50/70 transition">
-                    <td className="py-3.5 px-4 whitespace-nowrap text-slate-500 font-mono text-xs">
-                      {log.createdAt ? log.createdAt.replace('T', ' ').slice(0, 19) : '—'}
-                    </td>
-
-                    <td className="py-3.5 px-4 font-semibold text-slate-900">
-                      {log.username ? `@${log.username}` : 'SYSTEM'}
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      {getActionBadge(log.action)}
-                    </td>
-
-                    <td className="py-3.5 px-4 font-medium text-slate-700">
-                      {log.resource || '—'}
-                    </td>
-
-                    <td className="py-3.5 px-4 max-w-xs text-slate-600 truncate" title={log.details}>
-                      {log.details || '—'}
-                    </td>
-
-                    <td className="py-3.5 px-4 font-mono text-xs text-slate-500">
-                      {log.ipAddress || '127.0.0.1'}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-center">
-                      <StatusBadge value={log.status === 'SUCCESS' ? 'SUCCESS' : 'FAILED'} type="status" />
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm min-w-[700px]">
+                <thead>
+                  <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
+                    <th className="py-3.5 px-4">{t('security.colTimestamp')}</th>
+                    <th className="py-3.5 px-4">{t('security.colEmailRecipient')}</th>
+                    <th className="py-3.5 px-4">{t('security.colEmailSubject')}</th>
+                    <th className="py-3.5 px-4">{t('security.colEmailTemplate')}</th>
+                    <th className="py-3.5 px-4">{t('security.colEmailSender')}</th>
+                    <th className="py-3.5 px-4 text-center">{t('security.colStatus')}</th>
+                    <th className="py-3.5 px-4">{t('security.colEmailError')}</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {emailLoading ? (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-slate-400">
+                        <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
+                        <span>{t('common.loading')}</span>
+                      </td>
+                    </tr>
+                  ) : emailLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-slate-400">
+                        {t('security.noEmailLogs')}
+                      </td>
+                    </tr>
+                  ) : (
+                    emailLogs.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50/70 transition">
+                        <td className="py-3.5 px-4 whitespace-nowrap text-slate-500 font-mono text-xs">
+                          {formatDateTimeFull(item.createdAt)}
+                        </td>
 
-        {/* Pagination */}
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          totalElements={totalElements}
-          pageSize={size}
-          onPageChange={(p) => fetchLogs(p)}
-        />
-      </TableCard>
+                        <td className="py-3.5 px-4">
+                          <div className="font-semibold text-slate-900">{item.recipientName || '—'}</div>
+                          <div className="font-mono text-xs text-slate-500">{item.recipient}</div>
+                        </td>
+
+                        <td className="py-3.5 px-4 font-medium text-slate-800 max-w-xs truncate" title={item.subject}>
+                          {item.subject}
+                        </td>
+
+                        <td className="py-3.5 px-4">
+                          <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 text-slate-700 border border-slate-200">
+                            {item.templateName || 'plain-text'}
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-4 font-mono text-xs text-slate-500 truncate max-w-[150px]" title={item.sender}>
+                          {item.sender || '—'}
+                        </td>
+
+                        <td className="py-3.5 px-4 text-center">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                              item.status === 'SENT'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : item.status === 'MOCK'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : 'bg-rose-50 text-rose-700 border-rose-200'
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={item.errorMessage || ''}>
+                          {item.errorMessage ? (
+                            <span className="text-rose-600 font-mono">{item.errorMessage}</span>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <Pagination
+              currentPage={emailPage}
+              totalPages={emailTotalPages}
+              totalElements={emailTotalElements}
+              pageSize={20}
+              onPageChange={(p) => fetchEmailLogs(p)}
+            />
+          </TableCard>
+        </>
+      ) : (
+        <>
+          {/* Filter Card */}
+          <FilterCard
+            onReset={() => {
+              setUsernameFilter('');
+              setActionFilter('ALL');
+              setStatusFilter('ALL');
+            }}
+            onSearch={() => fetchLogs(0)}
+          >
+            <FilterField label={t('common.search') || 'Actor'}>
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder={t('security.searchActorPlaceholder')}
+                  value={usernameFilter}
+                  onChange={(e) => setUsernameFilter(e.target.value)}
+                  className={`${inputClass} pl-9`}
+                />
+              </div>
+            </FilterField>
+
+            <FilterField label={t('security.colAction') || 'Action'}>
+              <select
+                value={actionFilter}
+                onChange={(e) => setActionFilter(e.target.value)}
+                className={selectClass}
+              >
+                <option value="ALL">{t('security.allActions')}</option>
+                {distinctActions.map((act) => (
+                  <option key={act} value={act}>{act}</option>
+                ))}
+              </select>
+            </FilterField>
+
+            <FilterField label={t('security.colStatus') || 'Status'}>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className={selectClass}
+              >
+                <option value="ALL">{t('security.allStatuses')}</option>
+                <option value="SUCCESS">SUCCESS</option>
+                <option value="FAILED">FAILED</option>
+              </select>
+            </FilterField>
+          </FilterCard>
+
+          {/* Audit Logs Table Card */}
+          <TableCard>
+            <TableHeaderBar
+              title={t('security.title')}
+              count={totalElements}
+              subtitle={t('security.subtitle')}
+            />
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm min-w-[650px]">
+                <thead>
+                  <tr className="bg-slate-50/70 border-b border-slate-100 font-semibold text-slate-600">
+                    <th className="py-3.5 px-4">{t('security.colTimestamp')}</th>
+                    <th className="py-3.5 px-4">{t('security.colActor')}</th>
+                    <th className="py-3.5 px-4">{t('security.colAction')}</th>
+                    <th className="py-3.5 px-4">{t('security.colResource')}</th>
+                    <th className="py-3.5 px-4">{t('security.colDetails')}</th>
+                    <th className="py-3.5 px-4">{t('security.colIp')}</th>
+                    <th className="py-3.5 px-4 text-center">{t('security.colStatus')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-slate-400">
+                        <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
+                        <span>{t('common.loading')}</span>
+                      </td>
+                    </tr>
+                  ) : logs.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-slate-400">
+                        {t('security.noLogs')}
+                      </td>
+                    </tr>
+                  ) : (
+                    logs.map((log) => (
+                      <tr key={log.id} className="hover:bg-slate-50/70 transition">
+                        <td className="py-3.5 px-4 whitespace-nowrap text-slate-500 font-mono text-xs">
+                          {formatDateTimeFull(log.createdAt)}
+                        </td>
+
+                        <td className="py-3.5 px-4 font-semibold text-slate-900">
+                          {log.username ? `@${log.username}` : 'SYSTEM'}
+                        </td>
+
+                        <td className="py-3.5 px-4">
+                          {getActionBadge(log.action)}
+                        </td>
+
+                        <td className="py-3.5 px-4 font-medium text-slate-700">
+                          {log.resource || '—'}
+                        </td>
+
+                        <td className="py-3.5 px-4 max-w-xs text-slate-600 truncate" title={log.details}>
+                          {log.details || '—'}
+                        </td>
+
+                        <td className="py-3.5 px-4 font-mono text-xs text-slate-500">
+                          {log.ipAddress || '127.0.0.1'}
+                        </td>
+
+                        <td className="py-3.5 px-4 text-center">
+                          <StatusBadge value={log.status === 'SUCCESS' ? 'SUCCESS' : 'FAILED'} type="status" />
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              pageSize={size}
+              onPageChange={(p) => fetchLogs(p)}
+            />
+          </TableCard>
+        </>
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-package com.nexus.portal.controller.base;
+package com.nexus.portal.controller;
 
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;

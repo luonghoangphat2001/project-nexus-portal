@@ -4,7 +4,7 @@ import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
-import { LogOut, User as UserIcon, PanelLeft } from 'lucide-react';
+import { LogOut, User as UserIcon, PanelLeft, Clock } from 'lucide-react';
 
 export const Header = ({ onToggleSidebar }) => {
   const { user, logout } = useAuth();
@@ -12,6 +12,31 @@ export const Header = ({ onToggleSidebar }) => {
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const [vietnamTime, setVietnamTime] = useState(() => {
+    return new Intl.DateTimeFormat('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).format(new Date());
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVietnamTime(
+        new Intl.DateTimeFormat('vi-VN', {
+          timeZone: 'Asia/Ho_Chi_Minh',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        }).format(new Date())
+      );
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Close user dropdown when clicking outside
   useEffect(() => {
@@ -43,8 +68,18 @@ export const Header = ({ onToggleSidebar }) => {
         </button>
       </div>
 
-      {/* Right: Language Switcher, Notifications & User Dropdown */}
+      {/* Right: Vietnam Clock, Language Switcher, Notifications & User Dropdown */}
       <div className="flex items-center space-x-2 sm:space-x-3.5">
+        {/* Live Vietnam Time (GMT+7) */}
+        <div
+          className="hidden sm:inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-600 shadow-2xs select-none"
+          title="Giờ Việt Nam (Asia/Ho_Chi_Minh - UTC+7)"
+        >
+          <Clock className="w-3.5 h-3.5 text-blue-600" />
+          <span>{vietnamTime}</span>
+          <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-1 py-0.5 rounded border border-blue-200/60">VN (UTC+7)</span>
+        </div>
+
         {/* Language Switcher */}
         <LanguageSwitcher variant="circle" />
 

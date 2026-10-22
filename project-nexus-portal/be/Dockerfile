@@ -27,6 +27,8 @@ RUN mkdir -p /app/logs && chown -R appuser:appgroup /app
 
 USER appuser
 
+ENV TZ=Asia/Ho_Chi_Minh
+
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Duser.timezone=Asia/Ho_Chi_Minh", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]

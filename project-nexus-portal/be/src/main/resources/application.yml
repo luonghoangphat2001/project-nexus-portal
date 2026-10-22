@@ -11,10 +11,12 @@ spring:
       max-file-size: ${REPORT_MAX_FILE_BYTES:10485760}B
       max-request-size: ${REPORT_MAX_REQUEST_BYTES:12582912}B
   datasource:
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+  jackson:
+    time-zone: Asia/Ho_Chi_Minh
   jpa:
     hibernate:
       ddl-auto: ${HIBERNATE_DDL_AUTO}

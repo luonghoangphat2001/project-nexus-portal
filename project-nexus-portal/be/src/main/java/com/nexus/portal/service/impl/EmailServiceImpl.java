@@ -1,5 +1,8 @@
 package com.nexus.portal.service.impl;
 
+import com.nexus.portal.dto.response.EmailLogResponse;
+import com.nexus.portal.model.EmailLog;
+import com.nexus.portal.repository.EmailLogRepository;
 import com.nexus.portal.service.EmailService;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
@@ -7,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -15,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.time.Year;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +32,7 @@ public class EmailServiceImpl implements EmailService {
     private static final Logger log = LoggerFactory.getLogger(EmailServiceImpl.class);
 
     private final JavaMailSender mailSender;
+    private final EmailLogRepository emailLogRepository;
     private final Map<String, String> templateCache = new ConcurrentHashMap<>();
 
     @Value("${app.mail.enabled:false}")
@@ -46,8 +53,10 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.mail.frontend-url:${APP_FRONTEND_URL:${FRONTEND_URL:http://localhost:5173}}}")
     private String frontendUrl;
 
-    public EmailServiceImpl(@Autowired(required = false) JavaMailSender mailSender) {
+    public EmailServiceImpl(@Autowired(required = false) JavaMailSender mailSender,
+                            @Autowired(required = false) EmailLogRepository emailLogRepository) {
         this.mailSender = mailSender;
+        this.emailLogRepository = emailLogRepository;
     }
 
     @Override
@@ -81,6 +90,26 @@ public class EmailServiceImpl implements EmailService {
         return fromEmail != null && !fromEmail.isBlank() ? fromEmail.trim() : "noreply@nexus.edu.vn";
     }
 
+    private void recordEmailLog(String to, String recipientName, String subject, String templateName, String status, String errorMessage) {
+        if (emailLogRepository == null || to == null) {
+            return;
+        }
+        try {
+            EmailLog logEntity = new EmailLog(
+                    to.trim(),
+                    recipientName != null ? recipientName.trim() : null,
+                    getSender(),
+                    subject != null ? subject.trim() : "No Subject",
+                    templateName,
+                    status,
+                    errorMessage
+            );
+            emailLogRepository.save(logEntity);
+        } catch (Exception ex) {
+            log.warn("[EMAIL-LOG-RECORD-FAILED] Could not record email log: {}", ex.getMessage());
+        }
+    }
+
     @Async
     @Override
     public void sendEmail(String to, String subject, String content) {
@@ -90,6 +119,7 @@ public class EmailServiceImpl implements EmailService {
 
         if (!enabled || !isConfigured()) {
             log.info("[MOCK-EMAIL] To: {} | Subject: {} | Content: {}", to, subject, content);
+            recordEmailLog(to, null, subject, "plain-text", "MOCK", null);
             return;
         }
 
@@ -101,20 +131,29 @@ public class EmailServiceImpl implements EmailService {
             message.setText(content);
             mailSender.send(message);
             log.info("[EMAIL-SENT] Successfully delivered email to {}", to);
+            recordEmailLog(to, null, subject, "plain-text", "SENT", null);
         } catch (Exception e) {
             log.error("[EMAIL-ERROR] Failed to send email to {}: {}", to, e.getMessage(), e);
+            recordEmailLog(to, null, subject, "plain-text", "FAILED", e.getMessage());
         }
     }
 
     @Async
     @Override
     public void sendHtmlEmail(String to, String subject, String htmlContent) {
+        sendHtmlEmail(to, null, subject, htmlContent, "custom_html");
+    }
+
+    @Async
+    @Override
+    public void sendHtmlEmail(String to, String recipientName, String subject, String htmlContent, String templateName) {
         if (to == null || to.trim().isEmpty()) {
             return;
         }
 
         if (!enabled || !isConfigured()) {
-            log.info("[MOCK-HTML-EMAIL] To: {} | Subject: {} | HTML Size: {} bytes", to, subject, htmlContent.length());
+            log.info("[MOCK-HTML-EMAIL] To: {} | Subject: {} | HTML Size: {} bytes", to, subject, htmlContent != null ? htmlContent.length() : 0);
+            recordEmailLog(to, recipientName, subject, templateName, "MOCK", null);
             return;
         }
 
@@ -131,8 +170,10 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(htmlContent, true);
             mailSender.send(mimeMessage);
             log.info("[EMAIL-SENT] Successfully delivered HTML email to {}", to);
+            recordEmailLog(to, recipientName, subject, templateName, "SENT", null);
         } catch (Exception e) {
             log.error("[EMAIL-ERROR] Failed to send HTML email to {}: {}", to, e.getMessage(), e);
+            recordEmailLog(to, recipientName, subject, templateName, "FAILED", e.getMessage());
         }
     }
 
@@ -175,7 +216,7 @@ public class EmailServiceImpl implements EmailService {
                 .replace("{{SYSTEM_URL}}", systemUrl)
                 .replace("{{YEAR}}", currentYear);
 
-        sendHtmlEmail(to, "[Nexus Portal] " + localizedTitle, html);
+        sendHtmlEmail(to, displayName, "[Nexus Portal] " + localizedTitle, html, templateName);
     }
 
     /**
@@ -337,26 +378,29 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public boolean testConnection(String testRecipient, String lang) {
+        String safeLang = ("en".equalsIgnoreCase(lang)) ? "en" : "vi";
+        String displayName = (testRecipient != null && testRecipient.contains("@"))
+                ? testRecipient.substring(0, testRecipient.indexOf('@'))
+                : (testRecipient != null ? testRecipient : "");
+        String subject = "en".equals(safeLang)
+                ? "[Nexus Portal] SMTP Email Connection Test Successful"
+                : "[Nexus Portal] Kiểm tra kết nối SMTP Email thành công";
+
         if (!isConfigured()) {
             log.info("[MOCK-EMAIL-TEST] Test email requested for {}, but SMTP credentials are not configured yet.", testRecipient);
+            recordEmailLog(testRecipient, displayName, subject, "test-connection", "MOCK", null);
             return true;
         }
 
-        String safeLang = ("en".equalsIgnoreCase(lang)) ? "en" : "vi";
         try {
             String systemUrl = resolveSystemUrl();
             String currentYear = String.valueOf(Year.now().getValue());
-            String displayName = testRecipient.contains("@") ? testRecipient.substring(0, testRecipient.indexOf('@')) : testRecipient;
 
             String template = loadTemplate("test-connection", safeLang);
             String html = template
                     .replace("{{RECIPIENT_NAME}}", displayName)
                     .replace("{{SYSTEM_URL}}", systemUrl)
                     .replace("{{YEAR}}", currentYear);
-
-            String subject = "en".equals(safeLang)
-                    ? "[Nexus Portal] SMTP Email Connection Test Successful"
-                    : "[Nexus Portal] Kiểm tra kết nối SMTP Email thành công";
 
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
@@ -370,10 +414,45 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(html, true);
             mailSender.send(mimeMessage);
             log.info("[EMAIL-TEST-SUCCESS] Delivered test email to {} in language {}", testRecipient, safeLang);
+            recordEmailLog(testRecipient, displayName, subject, "test-connection", "SENT", null);
             return true;
         } catch (Exception e) {
             log.error("[EMAIL-TEST-FAILED] SMTP test failed: {}", e.getMessage(), e);
+            recordEmailLog(testRecipient, displayName, subject, "test-connection", "FAILED", e.getMessage());
             throw new RuntimeException("SMTP Connection failed: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public Page<EmailLogResponse> getEmailLogs(String search, String status, Pageable pageable) {
+        if (emailLogRepository == null) {
+            return Page.empty(pageable);
+        }
+        String cleanSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        String cleanStatus = (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status.trim()))
+                ? status.trim().toUpperCase() : null;
+        return emailLogRepository.findWithFilters(cleanSearch, cleanStatus, pageable)
+                .map(this::mapToLogResponse);
+    }
+
+    @Override
+    public void clearEmailLogs() {
+        if (emailLogRepository != null) {
+            emailLogRepository.deleteAll();
+        }
+    }
+
+    private EmailLogResponse mapToLogResponse(EmailLog logEntity) {
+        return new EmailLogResponse(
+                logEntity.getId(),
+                logEntity.getRecipient(),
+                logEntity.getRecipientName(),
+                logEntity.getSender(),
+                logEntity.getSubject(),
+                logEntity.getTemplateName(),
+                logEntity.getStatus(),
+                logEntity.getErrorMessage(),
+                logEntity.getCreatedAt()
+        );
     }
 }

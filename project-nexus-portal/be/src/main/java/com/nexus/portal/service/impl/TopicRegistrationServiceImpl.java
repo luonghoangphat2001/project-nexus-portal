@@ -187,6 +187,15 @@ public class TopicRegistrationServiceImpl implements TopicRegistrationService {
             throw new IllegalArgumentException("Review decision status must be APPROVED or REJECTED");
         }
 
+        if (request.getStatus() == RegistrationStatus.APPROVED) {
+            if (topic.getStatus() == TopicStatus.ASSIGNED || topic.getStatus() == TopicStatus.IN_PROGRESS || topic.getStatus() == TopicStatus.COMPLETED) {
+                if (registration.getStatus() == RegistrationStatus.APPROVED) {
+                    throw new IllegalStateException("Đơn đăng ký này đã được phê duyệt trước đó.");
+                }
+                throw new IllegalStateException("Đề tài đã được phê duyệt cho một nhóm khác, không thể xét duyệt thêm.");
+            }
+        }
+
         registration.setStatus(request.getStatus());
         registration.setFeedback(request.getFeedback());
         registration.setReviewedAt(LocalDateTime.now());

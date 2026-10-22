@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../services/api';
 import { useTranslation } from '../i18n/LanguageContext';
+import { formatDateTime } from '../utils/dateUtils';
 import { MetricCard, PageHeader, buttonClass } from '../components/common/CommonUi';
 import {
   Users,
@@ -572,7 +573,7 @@ export const DashboardPage = () => {
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-slate-900 text-sm line-clamp-1">{n.title}</span>
                       <span className="text-[11px] text-slate-400 font-mono">
-                        {n.createdAt ? new Date(n.createdAt).toLocaleDateString() : t('dashboard.justNow', 'Vừa xong')}
+                        {n.createdAt ? formatDateTime(n.createdAt) : t('dashboard.justNow', 'Vừa xong')}
                       </span>
                     </div>
                     <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">{n.content}</p>

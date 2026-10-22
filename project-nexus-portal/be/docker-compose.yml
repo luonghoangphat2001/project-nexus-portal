@@ -9,6 +9,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
+      TZ: Asia/Ho_Chi_Minh
+    command: --default-time-zone='+07:00'
     ports:
       - "${DB_PORT}:3306"
     volumes:
@@ -44,6 +46,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN}
+      TZ: Asia/Ho_Chi_Minh
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
     volumes:

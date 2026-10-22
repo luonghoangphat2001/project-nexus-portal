@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import matchmakingService from '../services/matchmakingService';
 import teamService from '../services/teamService';
+import { formatDate, formatDateTime } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
@@ -308,7 +309,7 @@ export const MatchmakingPage = () => {
                       <StatusBadge value={post.postType} type="postType" />
 
                       <span className="text-[11px] text-slate-400 font-mono">
-                        {post.createdAt?.replace('T', ' ').substring(0, 10)}
+                        {formatDate(post.createdAt)}
                       </span>
                     </div>
 
@@ -492,7 +493,7 @@ export const MatchmakingPage = () => {
                     </div>
                     {req.message && <p className="text-sm text-slate-600 mt-1.5 italic">"{req.message}"</p>}
                     <p className="text-xs text-slate-400 font-mono mt-1">
-                      {t('matchmaking.submitted')}: {req.createdAt?.replace('T', ' ').substring(0, 16)}
+                      {t('matchmaking.submitted')}: {formatDateTime(req.createdAt)}
                     </p>
                   </div>
                 </div>

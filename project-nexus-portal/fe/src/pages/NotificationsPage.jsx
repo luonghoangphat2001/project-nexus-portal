@@ -16,6 +16,7 @@ import {
 import { subscribeNotifications } from '../services/notificationStream';
 import { notificationService, localizeNotification } from '../services/notificationService';
 import { academicService } from '../services/academicService';
+import { formatDateTime } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
@@ -332,7 +333,7 @@ export function NotificationsPage() {
                         </span>
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          {item.createdAt ? item.createdAt.replace('T', ' ').slice(0, 16) : '—'}
+                          {formatDateTime(item.createdAt)}
                         </span>
                         <span className="inline-flex items-center gap-1">
                           <Building className="w-3.5 h-3.5 text-slate-400" />

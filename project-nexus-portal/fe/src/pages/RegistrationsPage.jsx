@@ -26,6 +26,7 @@ import topicService from '../services/topicService';
 import academicService from '../services/academicService';
 import userService from '../services/userService';
 import { periodService } from '../services/periodService';
+import { formatDate, formatDateTime } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
@@ -221,6 +222,13 @@ export const RegistrationsPage = () => {
       if (selectedTopicId) {
         fetchTopicRegistrations(selectedTopicId);
       }
+      // Refresh topic lists to keep status in sync
+      const [refreshedTopics, refreshedAdvisorTopics] = await Promise.all([
+        topicService.searchTopics({ size: 100 }).then(res => res.content || []).catch(() => []),
+        canReview ? topicService.getMyLecturerTopics().catch(() => []) : Promise.resolve([]),
+      ]);
+      if (refreshedTopics.length > 0) setAllTopics(refreshedTopics);
+      if (refreshedAdvisorTopics.length > 0) setAdvisorTopics(refreshedAdvisorTopics);
     } catch (err) {
       alert(err.message || 'Failed to submit review');
     } finally {
@@ -424,6 +432,34 @@ export const RegistrationsPage = () => {
     return majors.filter(m => String(m.departmentId) === String(topicFormData.departmentId));
   }, [majors, topicFormData.departmentId]);
 
+  // Helper to check if a topic has been approved/assigned
+  const isTopicApproved = (topic) => {
+    if (!topic) return false;
+    return (
+      topic.status === 'ASSIGNED' ||
+      topic.status === 'IN_PROGRESS' ||
+      topic.status === 'COMPLETED' ||
+      Boolean(topic.assignedTeam)
+    );
+  };
+
+  // Currently selected topic in review tab
+  const currentSelectedTopic = useMemo(() => {
+    const list = canManageTopics ? allTopics : advisorTopics;
+    return list.find((t) => String(t.id) === String(selectedTopicId)) || null;
+  }, [canManageTopics, allTopics, advisorTopics, selectedTopicId]);
+
+  // Check if current selected topic is already approved
+  const isSelectedTopicApproved = useMemo(() => {
+    if (!selectedTopicId) return false;
+    if (isTopicApproved(currentSelectedTopic)) return true;
+    return topicRegistrations.some((r) => r.status === 'APPROVED');
+  }, [selectedTopicId, currentSelectedTopic, topicRegistrations]);
+
+  const approvedRegistration = useMemo(() => {
+    return topicRegistrations.find((r) => r.status === 'APPROVED') || null;
+  }, [topicRegistrations]);
+
   if (loading) {
     return <div className="py-20 text-center text-slate-400 font-medium">{t('common.loading')}</div>;
   }
@@ -543,9 +579,9 @@ export const RegistrationsPage = () => {
                       {period.academicYear} • {t('periods.semesterLabel', { num: period.semester })}
                     </p>
                     <div className="flex items-center space-x-3 mt-2 text-xs text-slate-500 font-mono">
-                      <span>{t('periods.regStarts')}: {period.startDate?.split('T')[0]}</span>
+                      <span>{t('periods.regStarts')}: {formatDate(period.startDate)}</span>
                       <span>•</span>
-                      <span>{t('periods.submissionDeadline')}: {period.submissionDeadline?.split('T')[0]}</span>
+                      <span>{t('periods.submissionDeadline')}: {formatDate(period.submissionDeadline)}</span>
                     </div>
                   </div>
                 </div>
@@ -597,7 +633,7 @@ export const RegistrationsPage = () => {
                       )}
 
                       <div className="flex items-center space-x-3 mt-2 text-xs text-slate-400 font-mono">
-                        <span>{t('registrations.registeredAt')}: {reg.registeredAt?.replace('T', ' ').substring(0, 16)}</span>
+                        <span>{t('registrations.registeredAt')}: {formatDateTime(reg.registeredAt)}</span>
                         {reg.reviewedByLecturerName && <span>• {reg.reviewedByLecturerName}</span>}
                       </div>
                     </div>
@@ -785,19 +821,34 @@ export const RegistrationsPage = () => {
 
                     {/* Action buttons: Edit, Delete, View registrations */}
                     <div className="flex items-center space-x-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedTopicId(String(topic.id));
-                          fetchTopicRegistrations(topic.id);
-                          setActiveTab('review');
-                        }}
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center space-x-1"
-                        title="Xem danh sách đơn đăng ký cho đề tài này"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Xét duyệt</span>
-                      </button>
+                      {(() => {
+                        const approved = isTopicApproved(topic);
+                        return (
+                          <button
+                            type="button"
+                            disabled={approved}
+                            onClick={() => {
+                              if (approved) return;
+                              setSelectedTopicId(String(topic.id));
+                              fetchTopicRegistrations(topic.id);
+                              setActiveTab('review');
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center space-x-1 ${
+                              approved
+                                ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer'
+                            }`}
+                            title={
+                              approved
+                                ? t('registrations.topicAlreadyApproved', 'Đề tài đã được duyệt')
+                                : t('registrations.viewTopicRegsToReview', 'Xem danh sách đơn đăng ký cho đề tài này')
+                            }
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>{t('registrations.review', 'Xét duyệt')}</span>
+                          </button>
+                        );
+                      })()}
 
                       <button
                         type="button"
@@ -856,6 +907,28 @@ export const RegistrationsPage = () => {
             }
           />
 
+          {isSelectedTopicApproved && selectedTopicId && (
+            <div className="p-3.5 px-5 bg-emerald-50/80 border-b border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>
+                  {t(
+                    'registrations.topicAlreadyApprovedBanner',
+                    'Đề tài này đã được phê duyệt chính thức. Không thể xét duyệt thêm nhóm khác.'
+                  )}
+                  {approvedRegistration
+                    ? ` (${t('registrations.team', 'Nhóm')}: ${approvedRegistration.teamName})`
+                    : currentSelectedTopic?.assignedTeam
+                    ? ` (${t('registrations.team', 'Nhóm')}: ${currentSelectedTopic.assignedTeam.name})`
+                    : ''}
+                </span>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold text-[11px]">
+                {t('registrations.statusApproved', 'Đã duyệt')}
+              </span>
+            </div>
+          )}
+
           {loadingRegs ? (
             <div className="p-12 text-center text-slate-400 text-sm font-medium">
               {t('common.loading')}
@@ -870,87 +943,117 @@ export const RegistrationsPage = () => {
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {topicRegistrations.map((reg) => (
-                <div
-                  key={reg.id}
-                  className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-                >
-                  <div className="space-y-1.5 flex-1 min-w-0">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-bold text-slate-800 text-sm">{reg.teamName}</span>
-                      <StatusBadge value={reg.status} />
-                    </div>
-
-                    {reg.message && (
-                      <p className="text-xs text-slate-600 italic leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        "{reg.message}"
-                      </p>
-                    )}
-
-                    {/* Student Team Members List */}
-                    {reg.members && reg.members.length > 0 && (
-                      <div className="mt-2.5 pt-2 border-t border-slate-100">
-                        <span className="text-[11px] font-semibold text-slate-500 block mb-1">
-                          {t('registrations.members', 'Thành viên nhóm:')} ({reg.members.length})
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {reg.members.map((m) => (
-                            <span
-                              key={m.memberRecordId || m.userId}
-                              className={`text-[11px] px-2 py-0.5 rounded-lg border font-medium flex items-center space-x-1 ${
-                                m.roleInTeam === 'LEADER'
-                                  ? 'bg-amber-50 text-amber-800 border-amber-200 font-semibold'
-                                  : 'bg-slate-50 text-slate-700 border-slate-200'
-                              }`}
-                            >
-                              <span>{m.fullName} ({m.studentCode || 'N/A'})</span>
-                              <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-black/5 font-mono">
-                                {m.roleInTeam === 'LEADER' ? t('teams.leader', 'Nhóm trưởng') : t('teams.member', 'Thành viên')}
-                              </span>
-                            </span>
-                          ))}
-                        </div>
+              {topicRegistrations.map((reg) => {
+                const isRegApproved = reg.status === 'APPROVED';
+                const isApproveDisabled = isSelectedTopicApproved || isRegApproved;
+                return (
+                  <div
+                    key={reg.id}
+                    className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+                  >
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-slate-800 text-sm">{reg.teamName}</span>
+                        <StatusBadge value={reg.status} />
                       </div>
-                    )}
 
-                    <div className="text-xs text-slate-400 mt-2 font-mono">
-                      {t('registrations.registeredAt')}: {reg.registeredAt?.replace('T', ' ').substring(0, 16)}
-                      {reg.feedback && (
-                        <div className="text-xs text-slate-600 mt-1">
-                          <strong>Phản hồi trước đó:</strong> {reg.feedback}
+                      {reg.message && (
+                        <p className="text-xs text-slate-600 italic leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                          "{reg.message}"
+                        </p>
+                      )}
+
+                      {/* Student Team Members List */}
+                      {reg.members && reg.members.length > 0 && (
+                        <div className="mt-2.5 pt-2 border-t border-slate-100">
+                          <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                            {t('registrations.members', 'Thành viên nhóm:')} ({reg.members.length})
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {reg.members.map((m) => (
+                              <span
+                                key={m.memberRecordId || m.userId}
+                                className={`text-[11px] px-2 py-0.5 rounded-lg border font-medium flex items-center space-x-1 ${
+                                  m.roleInTeam === 'LEADER'
+                                    ? 'bg-amber-50 text-amber-800 border-amber-200 font-semibold'
+                                    : 'bg-slate-50 text-slate-700 border-slate-200'
+                                }`}
+                              >
+                                <span>{m.fullName} ({m.studentCode || 'N/A'})</span>
+                                <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-black/5 font-mono">
+                                  {m.roleInTeam === 'LEADER' ? t('teams.leader', 'Nhóm trưởng') : t('teams.member', 'Thành viên')}
+                                </span>
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       )}
+
+                      <div className="text-xs text-slate-400 mt-2 font-mono">
+                        {t('registrations.registeredAt')}: {formatDateTime(reg.registeredAt)}
+                        {reg.feedback && (
+                          <div className="text-xs text-slate-600 mt-1">
+                            <strong>Phản hồi trước đó:</strong> {reg.feedback}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 shrink-0">
+                      <button
+                        type="button"
+                        disabled={isApproveDisabled}
+                        onClick={() => {
+                          if (isApproveDisabled) return;
+                          setSelectedReg(reg);
+                          setReviewDecision('APPROVED');
+                          setReviewFeedback(reg.feedback || '');
+                          setReviewModalOpen(true);
+                        }}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold shadow-xs transition-colors flex items-center space-x-1 ${
+                          isApproveDisabled
+                            ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
+                        }`}
+                        title={
+                          isRegApproved
+                            ? t('registrations.alreadyApprovedThisReg', 'Đơn đăng ký này đã được duyệt')
+                            : isSelectedTopicApproved
+                            ? t('registrations.topicAlreadyAssignedToOther', 'Đề tài đã có nhóm được duyệt, không thể xét duyệt thêm')
+                            : t('registrations.approve', 'Duyệt chấp thuận')
+                        }
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        <span>{t('registrations.approve', 'Duyệt chấp thuận')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isRegApproved}
+                        onClick={() => {
+                          if (isRegApproved) return;
+                          setSelectedReg(reg);
+                          setReviewDecision('REJECTED');
+                          setReviewFeedback(reg.feedback || '');
+                          setReviewModalOpen(true);
+                        }}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center space-x-1 ${
+                          isRegApproved
+                            ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
+                            : 'bg-rose-50 hover:bg-rose-100 text-rose-700 cursor-pointer'
+                        }`}
+                        title={
+                          isRegApproved
+                            ? t('registrations.cannotRejectApproved', 'Đơn đăng ký đã duyệt không thể từ chối')
+                            : t('registrations.reject', 'Từ chối')
+                        }
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>{t('registrations.reject', 'Từ chối')}</span>
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center space-x-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedReg(reg);
-                        setReviewDecision('APPROVED');
-                        setReviewFeedback(reg.feedback || '');
-                        setReviewModalOpen(true);
-                      }}
-                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-                    >
-                      {t('registrations.approve', 'Duyệt chấp thuận')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedReg(reg);
-                        setReviewDecision('REJECTED');
-                        setReviewFeedback(reg.feedback || '');
-                        setReviewModalOpen(true);
-                      }}
-                      className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-                    >
-                      {t('registrations.reject', 'Từ chối')}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </TableCard>
@@ -1421,9 +1524,13 @@ export const RegistrationsPage = () => {
               </button>
               <button
                 type="submit"
-                disabled={reviewSubmitting}
+                disabled={reviewSubmitting || (reviewDecision === 'APPROVED' && (isSelectedTopicApproved || selectedReg?.status === 'APPROVED'))}
                 className={`px-4 py-2 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer ${
-                  reviewDecision === 'APPROVED' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'
+                  (reviewDecision === 'APPROVED' && (isSelectedTopicApproved || selectedReg?.status === 'APPROVED'))
+                    ? 'bg-slate-300 cursor-not-allowed'
+                    : reviewDecision === 'APPROVED'
+                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                    : 'bg-rose-600 hover:bg-rose-700'
                 }`}
               >
                 {reviewSubmitting ? t('common.loading') : t('registrations.saveDecision')}
