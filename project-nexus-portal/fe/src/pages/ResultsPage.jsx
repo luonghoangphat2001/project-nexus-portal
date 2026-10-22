@@ -183,9 +183,6 @@ export function ResultsPage() {
   const publish = () => activeAssignment
     && runPublish('results.confirmPublish', () => resultsService.publishAssignmentResults(activeAssignment.id));
 
-  const republish = () => activeAssignment
-    && runPublish('results.confirmRepublish', () => resultsService.republishAssignmentResults(activeAssignment.id));
-
   const promptScore = (key, current) => {
     const raw = window.prompt(t(key, { current: formatScore(current) }));
     if (raw === null || raw.trim() === '') return null;
@@ -204,7 +201,11 @@ export function ResultsPage() {
         return;
       }
       const reason = window.prompt(t('results.adjustReasonPrompt'));
-      if (!reason || !reason.trim()) return;
+      if (reason === null) return;
+      if (!reason.trim()) {
+        setError(t('results.adjustReasonRequired'));
+        return;
+      }
       setBusy(true);
       setError('');
       setNotice('');
@@ -899,7 +900,7 @@ export function ResultsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Bộ lọc 1: Hội đồng chấm */}
                   <div>
-                    <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                    <label className="text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
                       <Award className="w-4 h-4 text-blue-600" />
                       <span>{t('results.filterCouncil', '1. Chọn Hội đồng chấm')}</span>
                     </label>
@@ -928,7 +929,7 @@ export function ResultsPage() {
 
                   {/* Bộ lọc 2: Đề tài & Nhóm sinh viên */}
                   <div>
-                    <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                    <label className="text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
                       <BookOpen className="w-4 h-4 text-indigo-600" />
                       <span>{t('results.filterTopic', '2. Chọn Đề tài & Nhóm sinh viên')}</span>
                     </label>
@@ -1024,9 +1025,9 @@ export function ResultsPage() {
                     <thead>
                       <tr className="bg-slate-50/70 border-b border-slate-200 font-semibold text-slate-600">
                         <th className="py-3 px-4">{t('results.studentCol')}</th>
-                        <th className="py-3 px-4 text-center">{t('results.advisorScore', 'Điểm GVHD (20%)')}</th>
-                        <th className="py-3 px-4 text-center">{t('results.reviewerScore', 'Điểm phản biện (30%)')}</th>
-                        <th className="py-3 px-4 text-center">{t('results.defenseScore', 'Điểm hội đồng (50%)')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.advisorScoreColumn', 'GVHD')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.reviewerScoreColumn', 'Phản biện')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.councilScoreColumn', 'Hội đồng')}</th>
                         <th className="py-3 px-4 text-center font-bold text-slate-900">{t('results.finalScore', 'Điểm tổng kết')}</th>
                         <th className="py-3 px-4 text-center">{t('results.resultCol')}</th>
                         <th className="py-3 px-4 text-center">{t('results.commentsCol', 'Nhận xét & Chi tiết')}</th>
@@ -1043,24 +1044,13 @@ export function ResultsPage() {
                             </div>
                           </td>
                           <td className="py-3 px-4 text-center font-mono">
-                            <div className="font-semibold text-slate-800">{formatScore(grade.advisorScore)}</div>
-                            {grade.advisorName && (
-                              <div className="text-[11px] text-slate-400 font-sans truncate max-w-[120px] mx-auto" title={grade.advisorName}>
-                                {grade.advisorName}
-                              </div>
-                            )}
+                            <span className="font-semibold text-slate-800">{formatScore(grade.advisorScore)}</span>
                           </td>
                           <td className="py-3 px-4 text-center font-mono">
-                            <div className="font-semibold text-slate-800">{formatScore(grade.reviewScore)}</div>
-                            <div className="text-[11px] text-slate-400 font-sans">
-                              {formatScore(grade.reviewContentScore)} / {formatScore(grade.reviewImplementationScore)} / {formatScore(grade.reviewPresentationScore)}
-                            </div>
+                            <span className="font-semibold text-slate-800">{formatScore(grade.reviewScore)}</span>
                           </td>
                           <td className="py-3 px-4 text-center font-mono">
-                            <div className="font-semibold text-slate-800">{formatScore(grade.defenseScore)}</div>
-                            <div className="text-[11px] text-slate-400 font-sans">
-                              {formatScore(grade.defenseContentScore)} / {formatScore(grade.defenseImplementationScore)} / {formatScore(grade.defensePresentationScore)}
-                            </div>
+                            <span className="font-semibold text-slate-800">{formatScore(grade.defenseScore)}</span>
                           </td>
                           <td className="py-3 px-4 text-center font-semibold font-mono text-blue-600 text-base">
                             {formatScore(grade.finalScore)}
@@ -1080,17 +1070,15 @@ export function ResultsPage() {
                             </button>
                           </td>
                           <td className="py-3 px-4 text-center">
-                            {grade.published && (
-                              <button
-                                type="button"
-                                disabled={busy}
-                                onClick={() => adjustGrade(grade)}
-                                className={buttonClass.actionRow}
-                                title={t('results.adjustHint')}
-                              >
-                                {t('results.adjustBtn')}
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              disabled={busy || !grade.published}
+                              onClick={() => adjustGrade(grade)}
+                              className={buttonClass.actionRow}
+                              title={grade.published ? t('results.adjustHint') : t('results.adjustRequirePublish')}
+                            >
+                              {t('results.adjustBtn')}
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -1126,17 +1114,6 @@ export function ResultsPage() {
                       ? t('results.publishedBtn')
                       : t('results.publishBtn')}
                   </button>
-                  {activeAssignment?.resultsPublished && (
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={republish}
-                      className={buttonClass('secondary')}
-                      title={t('results.republishHint')}
-                    >
-                      {t('results.republishBtn')}
-                    </button>
-                  )}
                 </div>
               )}
             </>
