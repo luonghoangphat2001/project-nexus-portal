@@ -181,7 +181,11 @@ export function ResultsPage() {
         return;
       }
       const reason = window.prompt(t('results.adjustReasonPrompt'));
-      if (!reason || !reason.trim()) return;
+      if (reason === null) return;
+      if (!reason.trim()) {
+        setError(t('results.adjustReasonRequired'));
+        return;
+      }
       setBusy(true);
       setError('');
       setNotice('');
@@ -586,9 +590,9 @@ export function ResultsPage() {
                     <thead>
                       <tr className="bg-slate-50/70 border-b border-slate-200 font-semibold text-slate-600">
                         <th className="py-3 px-4">{t('results.studentCol')}</th>
-                        <th className="py-3 px-4 text-center">{t('results.advisorScore', 'Điểm GVHD (20%)')}</th>
-                        <th className="py-3 px-4 text-center">{t('results.reviewerScore', 'Điểm phản biện (30%)')}</th>
-                        <th className="py-3 px-4 text-center">{t('results.defenseScore', 'Điểm hội đồng (50%)')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.advisorScoreColumn', 'GVHD')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.reviewerScoreColumn', 'Phản biện')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.councilScoreColumn', 'Hội đồng')}</th>
                         <th className="py-3 px-4 text-center font-bold text-slate-900">{t('results.finalScore', 'Điểm tổng kết')}</th>
                         <th className="py-3 px-4 text-center">{t('results.resultCol')}</th>
                         <th className="py-3 px-4 text-center">{t('results.commentsCol', 'Nhận xét & Chi tiết')}</th>
