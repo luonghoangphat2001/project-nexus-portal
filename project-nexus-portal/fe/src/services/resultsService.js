@@ -3,6 +3,8 @@ import api from './api';
 const resultsService = {
   getAssignmentScores: async (assignmentId) => (await api.get(`/results/assignments/${assignmentId}`)).data,
   publishAssignmentResults: async (assignmentId) => (await api.post(`/results/assignments/${assignmentId}/publish`)).data,
+  republishAssignmentResults: async (assignmentId, reason) =>
+    (await api.post(`/results/assignments/${assignmentId}/republish`, null, { params: reason ? { reason } : {} })).data,
   publishPeriodResults: async (periodId) => (await api.post(`/results/periods/${periodId}/publish`)).data,
   getMyPublishedResults: async () => (await api.get('/results/me')).data,
   getFilterOptions: async () => (await api.get('/results/reports/options')).data,

@@ -176,6 +176,31 @@ public class ResultServiceImpl implements ResultService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
+    public List<ResultResponse.Defense> republishAssignmentResults(Long assignmentId, String reason, String identifier) {
+        // Module 15: allow staff to correct mistakes after publication. The old snapshot is removed
+        // and the regular publish flow recalculates from the current assessments. If recalculation
+        // fails (e.g. incomplete assessments), the transaction rolls back and the old snapshot stays.
+        User manager = access.getUser(identifier);
+        DefenseAssignment assignment = getAssignment(assignmentId);
+        requireManager(manager, assignment.getRegistration().getTopic().getDepartment());
+        List<Result> existing = results.findByAssignmentIdOrderByStudentIdAsc(assignmentId);
+        if (existing.isEmpty()) {
+            throw new BadRequestException("No published results to adjust; use the regular publish action instead");
+        }
+        resultDetails.deleteAllById(existing.stream().map(Result::getId).toList());
+        results.deleteAll(existing);
+        results.flush();
+        audit.log(manager.getId(), manager.getUsername(), "REPUBLISH_RESULTS",
+                "results/assignments/" + assignmentId,
+                "Re-publishing " + existing.size() + " published results for registration "
+                        + assignment.getRegistration().getId()
+                        + (reason != null && !reason.isBlank() ? ". Reason: " + reason : ""),
+                null, null, "SUCCESS");
+        return publishAssignmentResults(assignmentId, identifier);
+    }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public List<ResultResponse.Defense> publishPeriodResults(Long periodId, String identifier) {
         User manager = access.getUser(identifier);
         if (!periods.existsById(periodId)) {
