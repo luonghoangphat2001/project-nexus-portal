@@ -17,12 +17,15 @@ import com.nexus.portal.repository.TeamMemberRepository;
 import com.nexus.portal.service.CalculatedScore;
 import com.nexus.portal.service.ScoreCalculationService;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.Clock;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,16 +43,27 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
     private final ResultRepository publishedResults;
     private final PublishedResultDetailsRepository publishedDetails;
     private final DefenseAccessPolicy access;
+    private final Clock clock;
 
+    @Autowired
     public ScoreCalculationServiceImpl(AssessmentRepository assessments, DefenseAssignmentRepository assignments,
                                  TeamMemberRepository members, ResultRepository publishedResults,
                                  PublishedResultDetailsRepository publishedDetails, DefenseAccessPolicy access) {
+        this(assessments, assignments, members, publishedResults, publishedDetails, access,
+                Clock.system(ZoneId.of("Asia/Ho_Chi_Minh")));
+    }
+
+    public ScoreCalculationServiceImpl(AssessmentRepository assessments, DefenseAssignmentRepository assignments,
+                                 TeamMemberRepository members, ResultRepository publishedResults,
+                                 PublishedResultDetailsRepository publishedDetails, DefenseAccessPolicy access,
+                                 Clock clock) {
         this.assessments = assessments;
         this.assignments = assignments;
         this.members = members;
         this.publishedResults = publishedResults;
         this.publishedDetails = publishedDetails;
         this.access = access;
+        this.clock = clock;
     }
 
     @Override
@@ -58,6 +72,7 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
         DefenseAssignment assignment = assignments.findById(assignmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Defense assignment not found"));
         requireManager(manager, assignment.getRegistration().getTopic().getDepartment());
+        requireCouncilEnded(assignment);
         List<Result> published = publishedResults.findByAssignmentIdOrderByStudentIdAsc(assignmentId);
         if (!published.isEmpty()) {
             var details = publishedDetails.findByIdIn(published.stream().map(Result::getId).toList()).stream()
@@ -74,6 +89,7 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
         if (assignment.getCouncil().getStatus() != CouncilStatus.COMPLETED) {
             throw new BadRequestException("Scores can only be calculated after the council is completed");
         }
+        requireCouncilEnded(assignment);
         List<Assessment> submitted = assessments
                 .findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(assignment.getId()).stream()
                 .filter(assessment -> assessment.getStatus() == AssessmentStatus.SUBMITTED)
@@ -134,6 +150,13 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
     private void requireManager(User user, Department department) {
         if (!access.canManage(user, department)) {
             throw new AccessDeniedException("You do not have permission to manage results for this department");
+        }
+    }
+
+    private void requireCouncilEnded(DefenseAssignment assignment) {
+        LocalDateTime endsAt = assignment.getCouncil().getEndsAt();
+        if (endsAt != null && LocalDateTime.now(clock).isBefore(endsAt)) {
+            throw new BadRequestException("Scores are unavailable until the scheduled defense has ended");
         }
     }
 

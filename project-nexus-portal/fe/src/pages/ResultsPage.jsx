@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Download, RefreshCw, BarChart2, PieChart as PieChartIcon, TrendingUp, CheckCircle, XCircle, Award, Users, BookOpen, Clock, Building2, CheckCircle2, GraduationCap, MessageSquare, FileText, HelpCircle, Send, AlertCircle, Eye, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import councilService from '../services/councilService';
 import resultsService from '../services/resultsService';
 import appealService from '../services/appealService';
@@ -30,6 +31,7 @@ const selectedFilters = (filters) => Object.fromEntries(
 
 export function ResultsPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const { t } = useTranslation();
   const isStudent = user?.roles?.includes('ROLE_USER') && !user?.roles?.includes('ROLE_ADMIN');
   const [assignments, setAssignments] = useState([]);
@@ -165,7 +167,7 @@ export function ResultsPage() {
     setNotice('');
     try {
       await request();
-      setNotice(t('results.publishSuccess'));
+      toast.success(t('results.publishSuccess'));
       setRefresh((n) => n + 1);
     } catch (e) {
       if (e.message && e.message.includes('There are no completed councils waiting')) {
@@ -208,7 +210,7 @@ export function ResultsPage() {
       setNotice('');
       await resultsService.adjustPublishedResult(activeAssignment.id, grade.studentId,
         { advisorScore, reviewScore, defenseScore }, reason.trim());
-      setNotice(t('results.adjustSuccess'));
+      toast.success(t('results.adjustSuccess'));
       setRefresh((n) => n + 1);
     } catch (e) {
       setError(e.message || t('common.error'));
@@ -687,7 +689,7 @@ export function ResultsPage() {
                   setError('');
                   try {
                     await appealService.submitAppeal(appealingGrade.assignmentId, { reason: appealReason.trim() });
-                    setNotice(t('results.appealSubmitSuccess'));
+                    toast.success(t('results.appealSubmitSuccess'));
                     setAppealingGrade(null);
                     setRefresh((n) => n + 1);
                   } catch (e) {
@@ -1688,7 +1690,7 @@ export function ResultsPage() {
                     status: processingStatus,
                     responseNote: processingNote.trim()
                   });
-                  setNotice('Đã cập nhật trạng thái đơn phúc khảo và gửi thông báo cho sinh viên!');
+                  toast.success('Đã cập nhật trạng thái đơn phúc khảo và gửi thông báo cho sinh viên!');
                   setProcessingAppeal(null);
                   setRefresh((n) => n + 1);
                 } catch (e) {

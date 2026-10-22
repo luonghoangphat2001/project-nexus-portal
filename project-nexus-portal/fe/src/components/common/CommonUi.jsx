@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
+import { useToast } from '../../context/ToastContext';
 import { formatApiError } from '../../utils/errorHandler';
 import {
   Filter,
@@ -744,9 +745,24 @@ export function EmptyState({ message, title, description, icon: Icon = HelpCircl
 /**
  * Notification / Alert Banner
  */
-export function Banner({ error, success, notice }) {
+export function Banner({ error, success, notice, popupSuccess = true }) {
   const { language } = useTranslation();
-  const rawMsg = error || success || notice;
+  const { showToast } = useToast();
+  const lastSuccess = useRef('');
+
+  useEffect(() => {
+    if (!success || !popupSuccess) {
+      lastSuccess.current = '';
+      return;
+    }
+
+    if (success !== lastSuccess.current) {
+      showToast({ type: 'success', title: language === 'vi' ? 'Thành công' : 'Success', message: success });
+      lastSuccess.current = success;
+    }
+  }, [success, popupSuccess, language, showToast]);
+
+  const rawMsg = error || (!popupSuccess && success) || notice;
   if (!rawMsg) return null;
 
   const isError = !!error;

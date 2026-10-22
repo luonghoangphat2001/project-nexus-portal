@@ -26,7 +26,6 @@ import {
   TableCard,
   Modal,
   EmptyState,
-  Banner,
   buttonClass,
   inputClass,
   selectClass,
@@ -44,7 +43,6 @@ export function NotificationsPage() {
   const [facultyFilter, setFacultyFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [connection, setConnection] = useState('reconnecting');
@@ -102,13 +100,11 @@ export function NotificationsPage() {
     };
   }, []);
 
-  async function act(action, message) {
+  async function act(action) {
     setBusy(true);
     setError('');
-    setSuccess('');
     try {
       await action();
-      setSuccess(message);
       await refresh();
       return true;
     } catch (err) {
@@ -129,7 +125,7 @@ export function NotificationsPage() {
       facultyId: form.facultyId ? Number(form.facultyId) : null,
     };
 
-    if (await act(() => notificationService.create(payload), t('notifications.publishSuccess'))) {
+    if (await act(() => notificationService.create(payload))) {
       setForm(null);
     }
   }
@@ -162,7 +158,6 @@ export function NotificationsPage() {
               type="button"
               disabled={busy || loading}
               onClick={() => {
-                setSuccess('');
                 load();
               }}
               className={buttonClass.secondary}
@@ -207,8 +202,6 @@ export function NotificationsPage() {
           </span>
         </div>
       </div>
-
-      <Banner error={error} success={success} />
 
       {/* Filter Card */}
       <FilterCard
@@ -350,7 +343,7 @@ export function NotificationsPage() {
                         type="button"
                         disabled={busy}
                         onClick={() =>
-                          act(() => notificationService.markRead(item.id), t('notifications.markReadSuccess'))
+                          act(() => notificationService.markRead(item.id))
                         }
                         className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 transition-colors cursor-pointer"
                         title={t('notifications.markAsRead')}
@@ -366,7 +359,7 @@ export function NotificationsPage() {
                         disabled={busy}
                         onClick={() => {
                           if (window.confirm(t('notifications.deleteConfirm'))) {
-                            act(() => notificationService.delete(item.id), t('notifications.deletedSuccess'));
+                            act(() => notificationService.delete(item.id));
                           }
                         }}
                         className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 transition-colors cursor-pointer"

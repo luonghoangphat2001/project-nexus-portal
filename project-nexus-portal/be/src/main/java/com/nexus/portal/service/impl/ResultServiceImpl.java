@@ -94,6 +94,9 @@ public class ResultServiceImpl implements ResultService {
         if (council.getStatus() != CouncilStatus.COMPLETED) {
             throw new BadRequestException("Results can only be published after the council is completed");
         }
+        if (council.getEndsAt() != null && LocalDateTime.now(clock).isBefore(council.getEndsAt())) {
+            throw new BadRequestException("Results can only be published after the scheduled defense has ended");
+        }
         if (results.existsByAssignmentId(assignmentId)) {
             throw new BadRequestException("Results have already been published for this assignment.");
         }
@@ -272,6 +275,8 @@ public class ResultServiceImpl implements ResultService {
             throw new ResourceNotFoundException("Registration period not found");
         }
         List<DefenseAssignment> pending = assignments.findUnpublishedCompletedByPeriodId(periodId).stream()
+                .filter(assignment -> assignment.getCouncil().getEndsAt() == null
+                        || !LocalDateTime.now(clock).isBefore(assignment.getCouncil().getEndsAt()))
                 .filter(assignment -> access.canManage(manager,
                         assignment.getRegistration().getTopic().getDepartment()))
                 .toList();
@@ -290,7 +295,9 @@ public class ResultServiceImpl implements ResultService {
             throw new AccessDeniedException("Only students can view their own results");
         }
         return responsesWithDetails(
-                results.findByStudentIdAndPublishedAtIsNotNullOrderByPublishedAtDesc(student.getId()));
+                results.findByStudentIdAndPublishedAtIsNotNullOrderByPublishedAtDesc(student.getId()).stream()
+                        .filter(this::councilHasEnded)
+                        .toList());
     }
 
     @Override
@@ -339,6 +346,8 @@ public class ResultServiceImpl implements ResultService {
 
         Map<ReportKey, List<Result>> grouped = new HashMap<>();
         results.findPublishedForReport(allowedDepartmentIds, periodId, departmentId, topicId)
+                .stream()
+                .filter(this::councilHasEnded)
                 .forEach(result -> {
                     Topic topic = result.getAssignment().getRegistration().getTopic();
                     RegistrationPeriod period = topic.getPeriod();
@@ -365,7 +374,9 @@ public class ResultServiceImpl implements ResultService {
                 .map(Department::getId)
                 .collect(Collectors.toSet());
         List<Result> published = results.findPublishedForReport(
-                allowedDepartmentIds, periodId, departmentId, topicId);
+                allowedDepartmentIds, periodId, departmentId, topicId).stream()
+                .filter(this::councilHasEnded)
+                .toList();
         Map<Long, com.nexus.portal.model.PublishedResultDetails> details = resultDetails
                 .findByIdIn(published.stream().map(Result::getId).toList()).stream()
                 .collect(Collectors.toMap(com.nexus.portal.model.PublishedResultDetails::getId, value -> value));
@@ -413,6 +424,11 @@ public class ResultServiceImpl implements ResultService {
                 .findByIdIn(values.stream().map(Result::getId).toList()).stream()
                 .collect(Collectors.toMap(com.nexus.portal.model.PublishedResultDetails::getId, value -> value));
         return values.stream().map(result -> toResponse(result, snapshots.get(result.getId()))).toList();
+    }
+
+    private boolean councilHasEnded(Result result) {
+        LocalDateTime endsAt = result.getAssignment().getCouncil().getEndsAt();
+        return endsAt == null || !LocalDateTime.now(clock).isBefore(endsAt);
     }
 
     private ResultResponse.Statistics.Row toReportRow(ReportKey key, List<Result> rows) {
