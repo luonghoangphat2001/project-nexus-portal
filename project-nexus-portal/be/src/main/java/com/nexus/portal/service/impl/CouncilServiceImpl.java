@@ -243,12 +243,20 @@ public class CouncilServiceImpl implements CouncilService {
             for (DefenseAssignment a : allocated) {
                 List<Assessment> scores = assessments.findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(a.getId());
                 for (DefenseRegistrationResponse.Student student : access.toResponse(a.getRegistration(), user).students()) {
-                    for (DefenseCouncilMember member : council.getMembers()) {
-                        if (!hasSubmitted(scores, student.id(), member.getLecturer().getId(), AssessmentType.DEFENSE)
-                                || (member.getRole() == CouncilMemberRole.REVIEWER
-                                && !hasSubmitted(scores, student.id(), member.getLecturer().getId(), AssessmentType.REVIEW))) {
+                    DefenseCouncilMember reviewer = council.getMembers().stream()
+                            .filter(member -> member.getRole() == CouncilMemberRole.REVIEWER)
+                            .filter(member -> !access.isAdvisor(member.getLecturer(), a.getRegistration()))
+                            .findFirst().orElse(null);
+                    List<DefenseCouncilMember> eligibleDefenseMembers = council.getMembers().stream()
+                            .filter(member -> !access.isAdvisor(member.getLecturer(), a.getRegistration())).toList();
+                    if (reviewer == null || eligibleDefenseMembers.isEmpty()
+                            || !hasSubmitted(scores, student.id(), reviewer.getLecturer().getId(), AssessmentType.REVIEW)
+                            || eligibleDefenseMembers.stream().anyMatch(member ->
+                            !hasSubmitted(scores, student.id(), member.getLecturer().getId(), AssessmentType.DEFENSE))) {
                             throw new BadRequestException("Required review and defense assessments are missing for one or more students");
-                        }
+                    }
+                    if (!hasSubmittedPrimaryAdvisorAssessment(scores, a.getRegistration(), student.id())) {
+                        throw new BadRequestException("A submitted primary advisor assessment is required for every student before the council can be completed");
                     }
                 }
             }
@@ -260,6 +268,13 @@ public class CouncilServiceImpl implements CouncilService {
     private boolean hasSubmitted(List<Assessment> scores, Long studentId, Long evaluatorId, AssessmentType type) {
         return scores.stream().anyMatch(s -> s.getStudent().getId().equals(studentId)
                 && s.getEvaluator().getId().equals(evaluatorId) && s.getType() == type && s.getStatus() == AssessmentStatus.SUBMITTED);
+    }
+
+    private boolean hasSubmittedPrimaryAdvisorAssessment(List<Assessment> scores, TopicRegistration registration, Long studentId) {
+        List<TopicLecturer> primaryAdvisors = registration.getTopic().getTopicLecturers().stream()
+                .filter(lecturer -> lecturer.getAdvisorRole() == AdvisorRole.PRIMARY).toList();
+        return primaryAdvisors.size() == 1 && hasSubmitted(scores, studentId,
+                primaryAdvisors.get(0).getLecturer().getId(), AssessmentType.ADVISOR);
     }
 
     private DefenseCouncil getLockedCouncil(Long id) {
@@ -286,8 +301,13 @@ public class CouncilServiceImpl implements CouncilService {
                 c.getMembers().stream().map(m -> new CouncilResponse.Member(m.getLecturer().getId(), m.getLecturer().getFullName(), m.getRole())).toList(),
                 visibleAssignments.stream()
                         .map(a -> new CouncilResponse.Assignment(a.getId(), access.toResponse(a.getRegistration(), user),
-                                c.getStatus() == CouncilStatus.SCHEDULED && ownMember.filter(m -> m.getRole() == CouncilMemberRole.REVIEWER).isPresent(),
-                                c.getStatus() == CouncilStatus.SCHEDULED && ownMember.isPresent(),
-                                publishedAssignmentIds.contains(a.getId()))).toList());
+                                c.getStatus() == CouncilStatus.SCHEDULED && ownMember.filter(m -> m.getRole() == CouncilMemberRole.REVIEWER).isPresent()
+                                        && !access.isAdvisor(user, a.getRegistration()),
+                                c.getStatus() == CouncilStatus.SCHEDULED && ownMember.isPresent()
+                                        && !access.isAdvisor(user, a.getRegistration()),
+                                publishedAssignmentIds.contains(a.getId()),
+                                (c.getStatus() == CouncilStatus.SCHEDULED || c.getStatus() == CouncilStatus.COMPLETED)
+                                        && !publishedAssignmentIds.contains(a.getId())
+                                        && access.isPrimaryAdvisor(user, a.getRegistration()))).toList());
     }
 }

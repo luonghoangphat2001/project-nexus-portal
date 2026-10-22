@@ -38,19 +38,20 @@ public class AdminEmailController {
     @PostMapping("/test")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Send a test email using configured SMTP")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> sendTestEmail(@RequestBody Map<String, String> request) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> sendTestEmail(
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "Accept-Language", defaultValue = "vi") String acceptLang) {
         String recipient = request.get("recipient");
         if (recipient == null || recipient.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Recipient email is required", 400));
         }
 
+        String lang = (acceptLang != null && acceptLang.trim().toLowerCase().startsWith("en")) ? "en" : "vi";
         try {
-            boolean success = emailService.testConnection(recipient.trim());
+            boolean success = emailService.testConnection(recipient.trim(), lang);
             return ResponseEntity.ok(ApiResponse.success(
-                    Map.of("success", success, "recipient", recipient),
-                    emailService.isConfigured()
-                            ? "Test email sent successfully to " + recipient
-                            : "Mock email logged (SMTP credentials not yet filled)"
+                    Map.of("success", success, "recipient", recipient, "language", lang),
+                    "OK"
             ));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(ApiResponse.error("Failed to send test email: " + e.getMessage(), 500));

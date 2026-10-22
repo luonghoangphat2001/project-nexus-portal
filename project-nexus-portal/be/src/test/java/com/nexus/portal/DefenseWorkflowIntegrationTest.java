@@ -54,7 +54,7 @@ class DefenseWorkflowIntegrationTest {
     private RegistrationPeriod period;
     private Topic topic;
     private TopicRegistration registration;
-    private User leader, member, outsider, chair, secretary, reviewer, admin, principal;
+    private User leader, member, outsider, chair, secretary, reviewer, advisor, admin, principal;
 
     DefenseWorkflowIntegrationTest(EntityManager em, ReportService reports, CouncilService councils,
                                    AssessmentService assessments, MockMvc mvc, ObjectMapper json, MutableClock clock, JwtTokenProvider tokens) {
@@ -80,6 +80,7 @@ class DefenseWorkflowIntegrationTest {
         chair = createUser("chair", RoleName.ROLE_TEACHER, department);
         secretary = createUser("secretary", RoleName.ROLE_COUNCIL, department);
         reviewer = createUser("reviewer", RoleName.ROLE_TEACHER, department);
+        advisor = createUser("advisor", RoleName.ROLE_TEACHER, department);
         admin = createUser("admin", RoleName.ROLE_ADMIN, department);
         principal = createUser("principal", RoleName.ROLE_PRINCIPAL, otherDepartment);
         Team team = persist(Team.builder().name("Alpha").leader(leader).period(period).faculty(faculty)
@@ -87,6 +88,8 @@ class DefenseWorkflowIntegrationTest {
         persist(TeamMember.builder().team(team).user(leader).roleInTeam(TeamRole.LEADER).build());
         persist(TeamMember.builder().team(team).user(member).roleInTeam(TeamRole.MEMBER).build());
         topic = persist(Topic.builder().title("Nexus Portal").department(department).period(period).build());
+        TopicLecturer primaryAdvisor = persist(new TopicLecturer(topic, advisor, AdvisorRole.PRIMARY));
+        topic.getTopicLecturers().add(primaryAdvisor);
         registration = persist(TopicRegistration.builder().topic(topic).team(team).status(RegistrationStatus.APPROVED).build());
         em.flush();
     }
@@ -299,11 +302,66 @@ class DefenseWorkflowIntegrationTest {
 
     @Test
     void advisorCannotBeReviewerForTheirTopic() {
-        TopicLecturer advisor = new TopicLecturer(topic, reviewer, AdvisorRole.PRIMARY);
-        persist(advisor); topic.getTopicLecturers().add(advisor);
+        TopicLecturer coAdvisor = new TopicLecturer(topic, reviewer, AdvisorRole.CO_ADVISOR);
+        persist(coAdvisor); topic.getTopicLecturers().add(coAdvisor);
         CouncilResponse council = councils.createCouncil(councilRequest("A", "A101", now().plusDays(1), defaultMembers()), "admin");
         assertThatThrownBy(() -> councils.assignRegistration(council.id(), new DefenseAssignmentRequest(registration.getId()), "admin"))
                 .isInstanceOf(BadRequestException.class).hasMessageContaining("advise");
+    }
+
+    @Test
+    void primaryAdvisorCanScoreAdvisorComponentButCannotScoreTheirTeamAsCouncilMember() throws Exception {
+        List<CouncilRequest.Member> members = List.of(
+                new CouncilRequest.Member(advisor.getId(), CouncilMemberRole.CHAIR),
+                new CouncilRequest.Member(secretary.getId(), CouncilMemberRole.SECRETARY),
+                new CouncilRequest.Member(reviewer.getId(), CouncilMemberRole.REVIEWER));
+        CouncilResponse council = councils.createCouncil(councilRequest("Advisor on panel", "A101", now().plusDays(1), members), "admin");
+        CouncilResponse allocated = councils.assignRegistration(council.id(), new DefenseAssignmentRequest(registration.getId()), "admin");
+        Long assignmentId = allocated.assignments().get(0).id();
+
+        CouncilResponse advisorView = councils.getCouncils("advisor").stream()
+                .filter(item -> item.id().equals(council.id())).findFirst().orElseThrow();
+        assertThat(advisorView.assignments().get(0).canAdvisor()).isTrue();
+        assertThat(advisorView.assignments().get(0).canDefense()).isFalse();
+        assertThat(advisorView.assignments().get(0).canReview()).isFalse();
+
+        for (AssessmentType type : List.of(AssessmentType.REVIEW, AssessmentType.DEFENSE)) {
+            mvc.perform(post("/api/assessments").with(user("advisor").roles("TEACHER"))
+                            .contentType("application/json")
+                            .content(json.writeValueAsBytes(scoreRequest(assignmentId, leader.getId(), type))))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.message").value("GVHD không được tham gia chấm hội đồng"));
+        }
+
+        AssessmentResponse draft = assessments.saveDraft(
+                scoreRequest(assignmentId, leader.getId(), AssessmentType.ADVISOR), "advisor");
+        assertThat(draft.type()).isEqualTo(AssessmentType.ADVISOR);
+        assertThat(assessments.getAssessments(assignmentId, "advisor")).containsExactly(draft);
+        reports.uploadDocument(registration.getId(), upload(), "leader");
+        AssessmentResponse reviewerDraft = assessments.saveDraft(
+                scoreRequest(assignmentId, leader.getId(), AssessmentType.REVIEW), "reviewer");
+        assessments.submitAssessment(reviewerDraft.id(), "reviewer");
+        assertThat(assessments.getAssessments(assignmentId, "advisor")).containsExactly(draft);
+        assertThatThrownBy(() -> assessments.saveDraft(
+                scoreRequest(assignmentId, leader.getId(), AssessmentType.ADVISOR), "reviewer"))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void completedUnpublishedLegacyAssignmentAllowsOnlyPrimaryAdvisorBackfill() {
+        CouncilResponse council = allocateCouncil();
+        Long assignmentId = council.assignments().get(0).id();
+        reports.uploadDocument(registration.getId(), upload(), "leader");
+        em.find(DefenseCouncil.class, council.id()).setStatus(CouncilStatus.COMPLETED);
+
+        CouncilResponse advisorView = councils.getCouncils("advisor").stream()
+                .filter(item -> item.id().equals(council.id())).findFirst().orElseThrow();
+        assertThat(advisorView.assignments().get(0).canAdvisor()).isTrue();
+        assertThat(advisorView.assignments().get(0).canDefense()).isFalse();
+
+        AssessmentResponse draft = assessments.saveDraft(
+                scoreRequest(assignmentId, leader.getId(), AssessmentType.ADVISOR), "advisor");
+        assertThat(assessments.submitAssessment(draft.id(), "advisor").status()).isEqualTo(AssessmentStatus.SUBMITTED);
     }
 
     @Test
@@ -380,19 +438,33 @@ class DefenseWorkflowIntegrationTest {
 
     @Test
     void completingCouncilRequiresEveryStudentAndEvaluatorToSubmitAllRequiredSheets() {
-        CouncilResponse council = allocateCouncil();
+        List<CouncilRequest.Member> panel = List.of(
+                new CouncilRequest.Member(advisor.getId(), CouncilMemberRole.CHAIR),
+                new CouncilRequest.Member(secretary.getId(), CouncilMemberRole.SECRETARY),
+                new CouncilRequest.Member(reviewer.getId(), CouncilMemberRole.REVIEWER));
+        CouncilResponse createdCouncil = councils.createCouncil(councilRequest("Advisor excluded from grading", "A101", now().plusDays(1), panel), "admin");
+        CouncilResponse council = councils.assignRegistration(createdCouncil.id(), new DefenseAssignmentRequest(registration.getId()), "admin");
         Long assignmentId = council.assignments().get(0).id();
         reports.uploadDocument(registration.getId(), upload(), "leader");
         clock.set(council.endsAt().plusMinutes(1));
         assertThatThrownBy(() -> councils.changeStatus(council.id(), new CouncilStatusRequest(CouncilStatus.COMPLETED), "admin"))
                 .isInstanceOf(BadRequestException.class).hasMessageContaining("assessments are missing");
         for (User student : List.of(leader, member)) {
-            for (User evaluator : List.of(chair, secretary, reviewer)) {
+            for (User evaluator : List.of(secretary, reviewer)) {
                 AssessmentResponse draft = assessments.saveDraft(scoreRequest(assignmentId, student.getId(), AssessmentType.DEFENSE), evaluator.getUsername());
                 assessments.submitAssessment(draft.id(), evaluator.getUsername());
             }
             AssessmentResponse review = assessments.saveDraft(scoreRequest(assignmentId, student.getId(), AssessmentType.REVIEW), "reviewer");
             assessments.submitAssessment(review.id(), "reviewer");
+        }
+        assertThatThrownBy(() -> councils.changeStatus(council.id(), new CouncilStatusRequest(CouncilStatus.COMPLETED), "admin"))
+                .isInstanceOf(BadRequestException.class).hasMessageContaining("primary advisor assessment is required");
+        assertThatThrownBy(() -> assessments.saveDraft(
+                scoreRequest(assignmentId, leader.getId(), AssessmentType.DEFENSE), "advisor"))
+                .isInstanceOf(AccessDeniedException.class).hasMessage("GVHD không được tham gia chấm hội đồng");
+        for (User student : List.of(leader, member)) {
+            AssessmentResponse advisorDraft = assessments.saveDraft(scoreRequest(assignmentId, student.getId(), AssessmentType.ADVISOR), "advisor");
+            assessments.submitAssessment(advisorDraft.id(), "advisor");
         }
         assertThat(councils.changeStatus(council.id(), new CouncilStatusRequest(CouncilStatus.COMPLETED), "admin").status()).isEqualTo(CouncilStatus.COMPLETED);
         assertThat(assessments.getAssessments(assignmentId, "admin")).hasSize(8);

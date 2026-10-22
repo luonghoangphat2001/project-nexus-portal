@@ -3,7 +3,9 @@ package com.nexus.portal.service.impl;
 import com.nexus.portal.dto.response.ResultResponse;
 import com.nexus.portal.enums.AssessmentStatus;
 import com.nexus.portal.enums.AssessmentType;
+import com.nexus.portal.enums.AdvisorRole;
 import com.nexus.portal.enums.CouncilStatus;
+import com.nexus.portal.enums.CouncilMemberRole;
 import com.nexus.portal.exception.BadRequestException;
 import com.nexus.portal.model.*;
 import com.nexus.portal.repository.AssessmentRepository;
@@ -20,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,6 +69,9 @@ class ScoreCalculationServiceImplTest {
         topic.setTitle("Nexus Project");
         topic.setDepartment(department);
         topic.setPeriod(period);
+        User primaryAdvisor = new User();
+        primaryAdvisor.setId(12L);
+        topic.getTopicLecturers().add(new TopicLecturer(topic, primaryAdvisor, AdvisorRole.PRIMARY));
         Team team = new Team();
         team.setId(5L);
         team.setName("Team Five");
@@ -76,14 +82,17 @@ class ScoreCalculationServiceImplTest {
         council = new DefenseCouncil();
         council.setId(8L);
         council.setStatus(CouncilStatus.COMPLETED);
-        council.setMembers(List.of(new DefenseCouncilMember()));
+        DefenseCouncilMember reviewerMember = new DefenseCouncilMember();
+        reviewerMember.setLecturer(manager);
+        reviewerMember.setRole(CouncilMemberRole.REVIEWER);
+        council.setMembers(List.of(reviewerMember));
         assignment = new DefenseAssignment();
         assignment.setId(9L);
         assignment.setCouncil(council);
         assignment.setRegistration(registration);
 
         submitted = List.of(
-                assessment(AssessmentType.ADVISOR, "8.00", "8.00", "8.00"),
+                assessment(AssessmentType.ADVISOR, "8.00", "8.00", "8.00", primaryAdvisor()),
                 assessment(AssessmentType.REVIEW, "8.00", "8.00", "8.00"),
                 assessment(AssessmentType.DEFENSE, "7.00", "7.50", "8.00"));
     }
@@ -97,6 +106,7 @@ class ScoreCalculationServiceImplTest {
         List<ResultResponse.Defense> result = service.getAssignmentScores(9L, "admin");
 
         assertEquals(1, result.size());
+        assertEquals(new BigDecimal("8.00"), result.get(0).advisorScore());
         assertEquals(new BigDecimal("8.00"), result.get(0).reviewScore());
         assertEquals(new BigDecimal("7.50"), result.get(0).defenseScore());
         assertEquals(new BigDecimal("7.75"), result.get(0).finalScore());
@@ -131,6 +141,20 @@ class ScoreCalculationServiceImplTest {
     }
 
     @Test
+    void calculatesAdvisorComponentOnlyFromTheCurrentlyAssignedPrimaryAdvisor() {
+        User formerAdvisor = new User();
+        formerAdvisor.setId(13L);
+        List<Assessment> scores = new ArrayList<>(submitted);
+        scores.add(assessment(AssessmentType.ADVISOR, "10.00", "10.00", "10.00", formerAdvisor));
+        givenCalculationDependencies(scores);
+
+        CalculatedScore calculated = service.calculateScores(assignment).getFirst();
+
+        assertEquals(new BigDecimal("8.00"), calculated.advisor().score());
+        assertEquals(new BigDecimal("7.75"), calculated.finalScore());
+    }
+
+    @Test
     void refusesToCalculateBeforeCouncilCompletion() {
         council.setStatus(CouncilStatus.SCHEDULED);
 
@@ -149,15 +173,23 @@ class ScoreCalculationServiceImplTest {
     }
 
     private Assessment assessment(AssessmentType type, String content, String implementation, String presentation) {
+        return assessment(type, content, implementation, presentation, manager);
+    }
+
+    private Assessment assessment(AssessmentType type, String content, String implementation, String presentation, User evaluator) {
         Assessment assessment = new Assessment();
         assessment.setType(type);
         assessment.setStatus(AssessmentStatus.SUBMITTED);
         assessment.setStudent(student);
-        assessment.setEvaluator(manager);
+        assessment.setEvaluator(evaluator);
         assessment.setContentScore(new BigDecimal(content));
         assessment.setImplementationScore(new BigDecimal(implementation));
         assessment.setPresentationScore(new BigDecimal(presentation));
         return assessment;
+    }
+
+    private User primaryAdvisor() {
+        return assignment.getRegistration().getTopic().getTopicLecturers().iterator().next().getLecturer();
     }
 
     private void givenCalculationDependencies(List<Assessment> assessmentsForAssignment) {

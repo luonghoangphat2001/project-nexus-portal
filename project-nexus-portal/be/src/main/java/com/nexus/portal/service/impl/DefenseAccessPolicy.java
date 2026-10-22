@@ -70,6 +70,12 @@ public class DefenseAccessPolicy {
                 .anyMatch(l -> Objects.equals(l.getLecturer().getId(), user.getId()));
     }
 
+    public boolean isPrimaryAdvisor(User user, TopicRegistration registration) {
+        return registration.getTopic().getTopicLecturers().stream()
+                .anyMatch(l -> l.getAdvisorRole() == AdvisorRole.PRIMARY
+                        && Objects.equals(l.getLecturer().getId(), user.getId()));
+    }
+
     public boolean isTeamMember(User user, TopicRegistration registration) {
         return members.existsByTeamIdAndUserId(registration.getTeam().getId(), user.getId());
     }

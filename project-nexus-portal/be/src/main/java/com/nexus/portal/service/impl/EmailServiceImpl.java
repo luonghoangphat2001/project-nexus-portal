@@ -18,6 +18,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Year;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class EmailServiceImpl implements EmailService {
@@ -137,19 +139,135 @@ public class EmailServiceImpl implements EmailService {
     @Async
     @Override
     public void sendNotificationEmail(String to, String title, String content) {
-        String templateName = resolveTemplateName(title);
+        sendNotificationEmail(to, null, title, content, "vi");
+    }
+
+    @Async
+    @Override
+    public void sendNotificationEmail(String to, String recipientName, String title, String content) {
+        sendNotificationEmail(to, recipientName, title, content, "vi");
+    }
+
+    @Async
+    @Override
+    public void sendNotificationEmail(String to, String recipientName, String title, String content, String lang) {
+        if (to == null || to.trim().isEmpty()) {
+            return;
+        }
+
+        String safeLang = (lang != null && lang.trim().toLowerCase().startsWith("en")) ? "en" : "vi";
+        String localizedTitle = extractLocalized(title, safeLang);
+        String localizedContent = extractLocalized(content, safeLang);
+
+        String templateName = resolveTemplateName(localizedTitle != null && !localizedTitle.isBlank() ? localizedTitle : title);
         String systemUrl = resolveSystemUrl();
         String currentYear = String.valueOf(Year.now().getValue());
 
-        String template = loadTemplate(templateName);
+        String displayName = (recipientName != null && !recipientName.isBlank())
+                ? recipientName.trim()
+                : (to.contains("@") ? to.substring(0, to.indexOf('@')) : to);
+
+        String template = loadTemplate(templateName, safeLang);
         String html = template
-                .replace("{{TITLE}}", title)
-                .replace("{{CONTENT}}", content.replace("\n", "<br/>"))
-                .replace("{{RECIPIENT_NAME}}", to.contains("@") ? to.substring(0, to.indexOf('@')) : to)
+                .replace("{{TITLE}}", localizedTitle)
+                .replace("{{CONTENT}}", localizedContent.replace("\n", "<br/>"))
+                .replace("{{RECIPIENT_NAME}}", displayName)
                 .replace("{{SYSTEM_URL}}", systemUrl)
                 .replace("{{YEAR}}", currentYear);
 
-        sendHtmlEmail(to, "[Nexus Portal] " + title, html);
+        sendHtmlEmail(to, "[Nexus Portal] " + localizedTitle, html);
+    }
+
+    /**
+     * Extracts localized text (either "vi" or "en") from bilingual formatted text.
+     * Handles formats:
+     * 1. Pipe format: "[VI] <vi_title> | [EN] <en_title>"
+     * 2. Tagged block format: "[VI] <vi_content>\n[EN] <en_content>"
+     */
+    public static String extractLocalized(String text, String lang) {
+        if (text == null || text.isBlank()) {
+            return "";
+        }
+
+        String trimmed = text.trim();
+        boolean isEn = (lang != null && lang.trim().toLowerCase().startsWith("en"));
+
+        // 1. Pipe format: "[VI] ... | [EN] ..."
+        Pattern titlePipePattern = Pattern.compile("^\\[VI\\]\\s*(.*?)\\s*\\|\\s*\\[EN\\]\\s*(.*?)$", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+        Matcher pipeMatcher = titlePipePattern.matcher(trimmed);
+        if (pipeMatcher.matches()) {
+            String selected = isEn ? pipeMatcher.group(2).trim() : pipeMatcher.group(1).trim();
+            if (!selected.isEmpty()) {
+                return selected;
+            }
+        }
+
+        // 2. Tagged block format: "[VI] ... [EN] ..."
+        if (isEn) {
+            Pattern enPattern = Pattern.compile("\\[EN\\]\\s*([\\s\\S]*?)(?=(\\r?\\n\\s*\\[VI\\]|\\[VI\\]|$))", Pattern.CASE_INSENSITIVE);
+            Matcher enMatcher = enPattern.matcher(trimmed);
+            if (enMatcher.find()) {
+                String en = enMatcher.group(1).trim();
+                if (!en.isEmpty()) {
+                    return en;
+                }
+            }
+            if (trimmed.toUpperCase().startsWith("[EN]")) {
+                String stripped = trimmed.substring(4).trim();
+                int viIndex = stripped.toUpperCase().indexOf("[VI]");
+                if (viIndex >= 0) {
+                    stripped = stripped.substring(0, viIndex).trim();
+                }
+                if (!stripped.isEmpty()) {
+                    return stripped;
+                }
+            }
+        } else {
+            Pattern viPattern = Pattern.compile("\\[VI\\]\\s*([\\s\\S]*?)(?=(\\r?\\n\\s*\\[EN\\]|\\[EN\\]|$))", Pattern.CASE_INSENSITIVE);
+            Matcher viMatcher = viPattern.matcher(trimmed);
+            if (viMatcher.find()) {
+                String vi = viMatcher.group(1).trim();
+                if (!vi.isEmpty()) {
+                    return vi;
+                }
+            }
+            if (trimmed.toUpperCase().startsWith("[VI]")) {
+                String stripped = trimmed.substring(4).trim();
+                int enIndex = stripped.toUpperCase().indexOf("[EN]");
+                if (enIndex >= 0) {
+                    stripped = stripped.substring(0, enIndex).trim();
+                }
+                if (!stripped.isEmpty()) {
+                    return stripped;
+                }
+            }
+        }
+
+        // 3. Fallback: If requested EN was not found, try extracting VI; or vice versa
+        if (isEn) {
+            int viIdx = trimmed.toUpperCase().indexOf("[VI]");
+            if (viIdx >= 0) {
+                String fallbackVi = extractLocalized(trimmed, "vi");
+                if (!fallbackVi.isEmpty()) return fallbackVi;
+            }
+        } else {
+            int enIdx = trimmed.toUpperCase().indexOf("[EN]");
+            if (enIdx >= 0) {
+                String before = trimmed.substring(0, enIdx).trim();
+                if (before.toUpperCase().startsWith("[VI]")) {
+                    before = before.substring(4).trim();
+                }
+                if (!before.isEmpty()) {
+                    return before;
+                }
+            }
+        }
+
+        return trimmed.replaceAll("(?i)^\\[(VI|EN)\\]\\s*", "").trim();
+    }
+
+    public static String extractVietnamese(String text) {
+        return extractLocalized(text, "vi");
     }
 
     private String resolveTemplateName(String title) {
@@ -169,18 +287,35 @@ public class EmailServiceImpl implements EmailService {
     }
 
     /**
-     * Loads the email template from classpath:templates/email/{templateName}.html
+     * Loads the email template from classpath:templates/email/{lang}/{templateName}.html
      */
-    private String loadTemplate(String templateName) {
-        return templateCache.computeIfAbsent(templateName, name -> {
+    private String loadTemplate(String templateName, String lang) {
+        String safeLang = ("en".equalsIgnoreCase(lang)) ? "en" : "vi";
+        String cacheKey = safeLang + "/" + templateName;
+        return templateCache.computeIfAbsent(cacheKey, key -> {
             try {
-                ClassPathResource resource = new ClassPathResource("templates/email/" + name + ".html");
+                // 1. Primary: classpath:templates/email/{lang}/{templateName}.html
+                ClassPathResource resource = new ClassPathResource("templates/email/" + key + ".html");
                 if (resource.exists()) {
                     try (InputStream is = resource.getInputStream()) {
                         return new String(is.readAllBytes(), StandardCharsets.UTF_8);
                     }
                 }
-                // Fallback to default template if specific template doesn't exist
+                // 2. Fallback: classpath:templates/email/{templateName}.html
+                ClassPathResource baseRes = new ClassPathResource("templates/email/" + templateName + ".html");
+                if (baseRes.exists()) {
+                    try (InputStream is = baseRes.getInputStream()) {
+                        return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                    }
+                }
+                // 3. Fallback: classpath:templates/email/{lang}/notification-template.html
+                ClassPathResource langDefaultRes = new ClassPathResource("templates/email/" + safeLang + "/notification-template.html");
+                if (langDefaultRes.exists()) {
+                    try (InputStream is = langDefaultRes.getInputStream()) {
+                        return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                    }
+                }
+                // 4. Fallback: classpath:templates/email/notification-template.html
                 ClassPathResource defaultRes = new ClassPathResource("templates/email/notification-template.html");
                 if (defaultRes.exists()) {
                     try (InputStream is = defaultRes.getInputStream()) {
@@ -188,41 +323,40 @@ public class EmailServiceImpl implements EmailService {
                     }
                 }
             } catch (Exception e) {
-                log.warn("[EMAIL-TEMPLATE] Failed to load template {}: {}", name, e.getMessage());
+                log.warn("[EMAIL-TEMPLATE] Failed to load template {}: {}", key, e.getMessage());
             }
 
-            // Built-in emergency fallback if template files are missing
-            return """
-                <!DOCTYPE html><html><body>
-                <h2>{{TITLE}}</h2>
-                <div>{{CONTENT}}</div>
-                <p><a href="{{SYSTEM_URL}}">Mở Nexus Portal</a></p>
-                <hr><small>&copy; {{YEAR}} Nexus Portal</small>
-                </body></html>
-                """;
+            return "";
         });
     }
 
     @Override
     public boolean testConnection(String testRecipient) {
+        return testConnection(testRecipient, "vi");
+    }
+
+    @Override
+    public boolean testConnection(String testRecipient, String lang) {
         if (!isConfigured()) {
             log.info("[MOCK-EMAIL-TEST] Test email requested for {}, but SMTP credentials are not configured yet.", testRecipient);
             return true;
         }
 
+        String safeLang = ("en".equalsIgnoreCase(lang)) ? "en" : "vi";
         try {
-            String title = "Kiểm tra kết nối SMTP Email thành công";
-            String templateName = resolveTemplateName(title);
             String systemUrl = resolveSystemUrl();
             String currentYear = String.valueOf(Year.now().getValue());
+            String displayName = testRecipient.contains("@") ? testRecipient.substring(0, testRecipient.indexOf('@')) : testRecipient;
 
-            String template = loadTemplate(templateName);
+            String template = loadTemplate("test-connection", safeLang);
             String html = template
-                    .replace("{{TITLE}}", title)
-                    .replace("{{CONTENT}}", "Xin chào,<br/><br/>Đây là email kiểm tra kết nối SMTP từ Cổng Thông Tin Khóa Luận Tốt Nghiệp (Nexus Portal).<br/>Hệ thống đã kết nối và gửi email thành công qua máy chủ SMTP Gmail!<br/><br/>Trân trọng,<br/>Ban Quản Trị Khoa CNTT.")
-                    .replace("{{RECIPIENT_NAME}}", testRecipient.contains("@") ? testRecipient.substring(0, testRecipient.indexOf('@')) : testRecipient)
+                    .replace("{{RECIPIENT_NAME}}", displayName)
                     .replace("{{SYSTEM_URL}}", systemUrl)
                     .replace("{{YEAR}}", currentYear);
+
+            String subject = "en".equals(safeLang)
+                    ? "[Nexus Portal] SMTP Email Connection Test Successful"
+                    : "[Nexus Portal] Kiểm tra kết nối SMTP Email thành công";
 
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
@@ -232,10 +366,10 @@ public class EmailServiceImpl implements EmailService {
                 helper.setFrom(getSender());
             }
             helper.setTo(testRecipient.trim());
-            helper.setSubject("[Nexus Portal] " + title);
+            helper.setSubject(subject);
             helper.setText(html, true);
             mailSender.send(mimeMessage);
-            log.info("[EMAIL-TEST-SUCCESS] Delivered test email directly to {}", testRecipient);
+            log.info("[EMAIL-TEST-SUCCESS] Delivered test email to {} in language {}", testRecipient, safeLang);
             return true;
         } catch (Exception e) {
             log.error("[EMAIL-TEST-FAILED] SMTP test failed: {}", e.getMessage(), e);

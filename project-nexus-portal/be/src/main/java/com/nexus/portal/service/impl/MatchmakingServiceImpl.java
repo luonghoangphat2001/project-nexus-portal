@@ -294,7 +294,7 @@ public class MatchmakingServiceImpl implements MatchmakingService {
             notificationService.sendNotification(
                     leader,
                     applicant,
-                    "[VI] Yêu cầu tham gia nhóm mới | [EN] New team join request: " + team.getName(),
+                    "[VI] Yêu cầu tham gia nhóm mới: " + team.getName() + " | [EN] New team join request: " + team.getName(),
                     "[VI] Sinh viên " + applicant.getFullName() + " đã gửi yêu cầu tham gia nhóm \"" + team.getName() + "\"" + msgVi + "\n"
                             + "[EN] Student " + applicant.getFullName() + " has requested to join team \"" + team.getName() + "\"" + msgEn
             );

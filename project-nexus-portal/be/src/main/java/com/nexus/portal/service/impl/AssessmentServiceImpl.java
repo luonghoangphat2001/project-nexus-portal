@@ -23,6 +23,7 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final AssessmentRepository assessments;
     private final DefenseAssignmentRepository assignments;
     private final DefenseCouncilRepository councils;
+    private final ResultRepository results;
     private final TeamMemberRepository members;
     private final ReportDocumentRepository documents;
     private final DefenseAccessPolicy access;
@@ -31,12 +32,13 @@ public class AssessmentServiceImpl implements AssessmentService {
     private NotificationService notificationService;
 
     public AssessmentServiceImpl(AssessmentRepository assessments, DefenseAssignmentRepository assignments,
-                                 DefenseCouncilRepository councils, TeamMemberRepository members,
+                                 DefenseCouncilRepository councils, ResultRepository results, TeamMemberRepository members,
                                  ReportDocumentRepository documents, DefenseAccessPolicy access,
                                  AuditLogService audit, Clock clock) {
         this.assessments = assessments;
         this.assignments = assignments;
         this.councils = councils;
+        this.results = results;
         this.members = members;
         this.documents = documents;
         this.access = access;
@@ -54,11 +56,15 @@ public class AssessmentServiceImpl implements AssessmentService {
         User user = access.getUser(identifier);
         DefenseAssignment assignment = getAssignment(assignmentId);
         boolean manager = access.canManage(user, assignment.getCouncil().getDepartment());
-        if (!manager && !access.isCouncilMember(user, assignment.getCouncil())) {
+        boolean councilMember = access.isCouncilMember(user, assignment.getCouncil());
+        boolean advisor = access.isAdvisor(user, assignment.getRegistration());
+        boolean primaryAdvisor = access.isPrimaryAdvisor(user, assignment.getRegistration());
+        if (!manager && !councilMember && !primaryAdvisor) {
             throw new AccessDeniedException("Only council members and authorized managers can view assessments before scores are published");
         }
         return assessments.findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(assignmentId).stream()
-                .filter(s -> s.getEvaluator().getId().equals(user.getId()) || s.getStatus() == AssessmentStatus.SUBMITTED)
+                .filter(s -> s.getEvaluator().getId().equals(user.getId())
+                        || ((manager || (councilMember && !advisor)) && s.getStatus() == AssessmentStatus.SUBMITTED))
                 .map(s -> toResponse(s, user)).toList();
     }
 
@@ -177,12 +183,28 @@ public class AssessmentServiceImpl implements AssessmentService {
     }
 
     private void requireEvaluator(User user, DefenseAssignment assignment, AssessmentType type) {
+        boolean advisor = access.isAdvisor(user, assignment.getRegistration());
+        if ((type == AssessmentType.REVIEW || type == AssessmentType.DEFENSE) && advisor) {
+            throw new AccessDeniedException("GVHD không được tham gia chấm hội đồng");
+        }
+        if (type == AssessmentType.ADVISOR) {
+            if (!access.isPrimaryAdvisor(user, assignment.getRegistration())) {
+                throw new AccessDeniedException("Only the assigned primary advisor can create advisor assessments");
+            }
+            CouncilStatus status = assignment.getCouncil().getStatus();
+            boolean scheduled = status == CouncilStatus.SCHEDULED;
+            boolean incompleteLegacyResult = status == CouncilStatus.COMPLETED
+                    && !results.existsByAssignmentId(assignment.getId());
+            if (!scheduled && !incompleteLegacyResult) {
+                throw new BadRequestException("The council has been cancelled or its results have already been published");
+            }
+            return;
+        }
         if (assignment.getCouncil().getStatus() != CouncilStatus.SCHEDULED) throw new BadRequestException("The council has been completed or cancelled");
         DefenseCouncilMember member = assignment.getCouncil().getMembers().stream()
                 .filter(m -> m.getLecturer().getId().equals(user.getId())).findFirst()
                 .orElseThrow(() -> new AccessDeniedException("You are not assigned to this council"));
-        if (type == AssessmentType.REVIEW && (member.getRole() != CouncilMemberRole.REVIEWER
-                || access.isAdvisor(user, assignment.getRegistration()))) {
+        if (type == AssessmentType.REVIEW && member.getRole() != CouncilMemberRole.REVIEWER) {
             throw new AccessDeniedException("Only the assigned reviewer can create review assessments");
         }
     }
@@ -204,6 +226,20 @@ public class AssessmentServiceImpl implements AssessmentService {
                 s.getStudent().getId(), s.getStudent().getFullName(), s.getType(), s.getStatus(), s.getContentScore(),
                 s.getImplementationScore(), s.getPresentationScore(), s.getStrengths(), s.getWeaknesses(), s.getQuestions(),
                 s.getComment(), s.getSubmittedAt(), s.getUpdatedAt(), s.getStatus() == AssessmentStatus.DRAFT
-                && s.getEvaluator().getId().equals(user.getId()) && s.getAssignment().getCouncil().getStatus() == CouncilStatus.SCHEDULED);
+                && s.getEvaluator().getId().equals(user.getId()) && canEvaluate(user, s.getAssignment(), s.getType()));
+    }
+
+    private boolean canEvaluate(User user, DefenseAssignment assignment, AssessmentType type) {
+        CouncilStatus status = assignment.getCouncil().getStatus();
+        if (type == AssessmentType.ADVISOR) {
+            return access.isPrimaryAdvisor(user, assignment.getRegistration())
+                    && (status == CouncilStatus.SCHEDULED
+                    || status == CouncilStatus.COMPLETED && !results.existsByAssignmentId(assignment.getId()));
+        }
+        if (status != CouncilStatus.SCHEDULED) return false;
+        if (access.isAdvisor(user, assignment.getRegistration())) return false;
+        return assignment.getCouncil().getMembers().stream()
+                .filter(member -> member.getLecturer().getId().equals(user.getId()))
+                .anyMatch(member -> type != AssessmentType.REVIEW || member.getRole() == CouncilMemberRole.REVIEWER);
     }
 }
