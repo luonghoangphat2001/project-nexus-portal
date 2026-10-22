@@ -62,9 +62,18 @@ public class AssessmentServiceImpl implements AssessmentService {
         if (!manager && !councilMember && !primaryAdvisor) {
             throw new AccessDeniedException("Only council members and authorized managers can view assessments before scores are published");
         }
-        return assessments.findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(assignmentId).stream()
+        List<Assessment> all = assessments.findByAssignmentIdOrderByStudentIdAscEvaluatorIdAsc(assignmentId);
+        boolean hasOwnAssessments = all.stream().anyMatch(s -> s.getEvaluator().getId().equals(user.getId()));
+        boolean canGrade = canEvaluate(user, assignment, AssessmentType.DEFENSE)
+                || canEvaluate(user, assignment, AssessmentType.REVIEW)
+                || canEvaluate(user, assignment, AssessmentType.ADVISOR)
+                || hasOwnAssessments;
+        if (!manager && !canGrade) {
+            throw new AccessDeniedException("You are not assigned to evaluate this topic");
+        }
+        return all.stream()
                 .filter(s -> s.getEvaluator().getId().equals(user.getId())
-                        || ((manager || (councilMember && !advisor)) && s.getStatus() == AssessmentStatus.SUBMITTED))
+                        || (manager && s.getStatus() == AssessmentStatus.SUBMITTED))
                 .map(s -> toResponse(s, user)).toList();
     }
 

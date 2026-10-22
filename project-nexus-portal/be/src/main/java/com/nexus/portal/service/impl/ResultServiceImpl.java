@@ -1,6 +1,7 @@
 package com.nexus.portal.service.impl;
 
 import com.nexus.portal.dto.response.ResultResponse;
+import com.nexus.portal.enums.AdvisorRole;
 import com.nexus.portal.enums.CouncilStatus;
 import com.nexus.portal.enums.RoleName;
 import com.nexus.portal.enums.ScoreRange;
@@ -466,12 +467,23 @@ public class ResultServiceImpl implements ResultService {
         DefenseAssignment assignment = result.getAssignment();
         Topic topic = assignment.getRegistration().getTopic();
         User student = result.getStudent();
+        String advisorName = details != null ? details.getAdvisorName()
+                : (topic != null && topic.getTopicLecturers() != null
+                ? topic.getTopicLecturers().stream()
+                        .filter(tl -> tl.getAdvisorRole() == AdvisorRole.PRIMARY && tl.getLecturer() != null && tl.getLecturer().getFullName() != null)
+                        .map(tl -> tl.getLecturer().getFullName())
+                        .findFirst().orElse("")
+                : "");
+        BigDecimal advisorScore = details != null
+                ? average(details.getAdvisorContentScore(), details.getAdvisorImplementationScore(), details.getAdvisorPresentationScore())
+                : ScoreCalculationServiceImpl.calculateInferredAdvisorScore(result.getFinalScore(), result.getReviewScore(), result.getDefenseScore());
+
         return new ResultResponse.Defense(assignment.getId(), assignment.getRegistration().getId(),
                 topic.getPeriod().getId(), topic.getPeriod().getName(), topic.getDepartment().getId(),
                 topic.getDepartment().getName(), topic.getId(), topic.getTitle(),
                 assignment.getRegistration().getTeam().getName(), student.getId(), student.getFullName(),
                 student.getStudentCode(),
-                details == null ? null : average(details.getAdvisorContentScore(), details.getAdvisorImplementationScore(), details.getAdvisorPresentationScore()),
+                advisorScore,
                 result.getReviewScore(), result.getDefenseScore(),
                 details == null ? null : details.getAdvisorContentScore(),
                 details == null ? null : details.getAdvisorImplementationScore(),
@@ -482,7 +494,7 @@ public class ResultServiceImpl implements ResultService {
                 details == null ? null : details.getDefenseContentScore(),
                 details == null ? null : details.getDefenseImplementationScore(),
                 details == null ? null : details.getDefensePresentationScore(),
-                details == null ? null : details.getAdvisorName(),
+                advisorName,
                 details == null ? null : details.getAdvisorComment(),
                 details == null ? null : details.getReviewComment(),
                 details == null ? null : details.getDefenseComments(),

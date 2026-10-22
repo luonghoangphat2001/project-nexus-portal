@@ -417,7 +417,9 @@ class DefenseWorkflowIntegrationTest {
                 .filter(item -> item.id().equals(council.id())).findFirst().orElseThrow();
         assertThat(withLockedAssessment.assignments().get(0).canRemove()).isFalse();
         assertThat(withLockedAssessment.assignments().get(0).hasLockedAssessment()).isTrue();
-        assertThat(assessments.getAssessments(assignmentId, "chair")).hasSize(1);
+        assertThat(assessments.getAssessments(assignmentId, "chair")).isEmpty();
+        assertThat(assessments.getAssessments(assignmentId, "admin")).hasSize(1);
+        assertThat(assessments.getAssessments(assignmentId, "reviewer")).hasSize(1);
         assertThatThrownBy(() -> assessments.saveDraft(request, "reviewer")).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> assessments.deleteDraft(draft.id(), "reviewer")).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> reports.uploadDocument(registration.getId(), upload(), "leader")).isInstanceOf(BadRequestException.class);
@@ -477,6 +479,9 @@ class DefenseWorkflowIntegrationTest {
             assessments.submitAssessment(advisorDraft.id(), "advisor");
         }
         assertThat(councils.changeStatus(council.id(), new CouncilStatusRequest(CouncilStatus.COMPLETED), "admin").status()).isEqualTo(CouncilStatus.COMPLETED);
+        assertThat(assessments.getAssessments(assignmentId, "secretary")).hasSize(2);
+        assertThat(assessments.getAssessments(assignmentId, "reviewer")).hasSize(4);
+        assertThat(assessments.getAssessments(assignmentId, "advisor")).hasSize(2);
         assertThat(assessments.getAssessments(assignmentId, "admin")).hasSize(8);
     }
 

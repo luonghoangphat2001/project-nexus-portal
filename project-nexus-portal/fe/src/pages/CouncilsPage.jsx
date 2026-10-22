@@ -236,7 +236,7 @@ export function CouncilsPage() {
                         >
                           {t('councils.documentsLink')}
                         </Link>
-                        {(a.canReview || a.canDefense || c.canManage) && (
+                        {(a.canReview || a.canDefense || a.canAdvisor || c.canManage) && (
                           <Link
                             className="self-center text-blue-600 hover:underline font-semibold"
                             to={`/assessments?assignmentId=${a.id}`}

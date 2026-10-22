@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Download, RefreshCw, BarChart2, PieChart as PieChartIcon, TrendingUp, CheckCircle, XCircle, Award, Users, BookOpen, Clock, Building2, CheckCircle2, GraduationCap } from 'lucide-react';
+import { Download, RefreshCw, BarChart2, PieChart as PieChartIcon, TrendingUp, CheckCircle, XCircle, Award, Users, BookOpen, Clock, Building2, CheckCircle2, GraduationCap, MessageSquare, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import councilService from '../services/councilService';
 import resultsService from '../services/resultsService';
@@ -38,6 +38,7 @@ export function ResultsPage() {
   const [options, setOptions] = useState({ periods: [], departments: [], topics: [] });
   const [report, setReport] = useState([]);
   const [filters, setFilters] = useState({ periodId: '', departmentId: '', topicId: '' });
+  const [viewingGradeDetail, setViewingGradeDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [gradesLoading, setGradesLoading] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
@@ -377,9 +378,33 @@ export function ResultsPage() {
                       <td className="py-3.5 px-4 text-center">
                         <StatusBadge value={grade.passed ? 'PASSED' : 'FAILED'} type="status" />
                       </td>
-                      <td className="py-3.5 px-4 whitespace-pre-wrap">{grade.advisorComment || '—'}</td>
-                      <td className="py-3.5 px-4 whitespace-pre-wrap">{grade.reviewComment || '—'}</td>
-                      <td className="py-3.5 px-4 whitespace-pre-wrap">{grade.defenseComments || '—'}</td>
+                      <td className="py-3.5 px-4 min-w-[200px]">
+                        {grade.advisorComment ? (
+                          <div className="p-2.5 bg-blue-50/70 rounded-lg border border-blue-200/80 text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
+                            {grade.advisorComment}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 min-w-[200px]">
+                        {grade.reviewComment ? (
+                          <div className="p-2.5 bg-indigo-50/70 rounded-lg border border-indigo-200/80 text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
+                            {grade.reviewComment}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 min-w-[220px]">
+                        {grade.defenseComments ? (
+                          <div className="p-2.5 bg-purple-50/70 rounded-lg border border-purple-200/80 text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
+                            {grade.defenseComments}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -560,14 +585,16 @@ export function ResultsPage() {
                 <div className="p-8 text-center text-sm text-slate-500">{t('results.noStudentResults')}</div>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-slate-200">
-                  <table className="w-full text-left text-sm border-collapse min-w-[700px]">
+                  <table className="w-full text-left text-sm border-collapse min-w-[850px]">
                     <thead>
                       <tr className="bg-slate-50/70 border-b border-slate-200 font-semibold text-slate-600">
                         <th className="py-3 px-4">{t('results.studentCol')}</th>
-                        <th className="py-3 px-4 text-center">{t('results.reviewerScore', 'Điểm phản biện')}</th>
-                        <th className="py-3 px-4 text-center">{t('results.defenseScore')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.advisorScore', 'Điểm GVHD (20%)')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.reviewerScore', 'Điểm phản biện (30%)')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.defenseScore', 'Điểm hội đồng (50%)')}</th>
                         <th className="py-3 px-4 text-center font-bold text-slate-900">{t('results.finalScore', 'Điểm tổng kết')}</th>
                         <th className="py-3 px-4 text-center">{t('results.resultCol')}</th>
+                        <th className="py-3 px-4 text-center">{t('results.commentsCol', 'Nhận xét & Chi tiết')}</th>
                         <th className="py-3 px-4 text-center">{t('results.adjustCol')}</th>
                       </tr>
                     </thead>
@@ -580,13 +607,42 @@ export function ResultsPage() {
                               {grade.studentCode || grade.studentId}
                             </div>
                           </td>
-                          <td className="py-3 px-4 text-center font-mono">{formatScore(grade.reviewScore)}</td>
-                          <td className="py-3 px-4 text-center font-mono">{formatScore(grade.defenseScore)}</td>
+                          <td className="py-3 px-4 text-center font-mono">
+                            <div className="font-semibold text-slate-800">{formatScore(grade.advisorScore)}</div>
+                            {grade.advisorName && (
+                              <div className="text-[11px] text-slate-400 font-sans truncate max-w-[120px] mx-auto" title={grade.advisorName}>
+                                {grade.advisorName}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-center font-mono">
+                            <div className="font-semibold text-slate-800">{formatScore(grade.reviewScore)}</div>
+                            <div className="text-[11px] text-slate-400 font-sans">
+                              {formatScore(grade.reviewContentScore)} / {formatScore(grade.reviewImplementationScore)} / {formatScore(grade.reviewPresentationScore)}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-center font-mono">
+                            <div className="font-semibold text-slate-800">{formatScore(grade.defenseScore)}</div>
+                            <div className="text-[11px] text-slate-400 font-sans">
+                              {formatScore(grade.defenseContentScore)} / {formatScore(grade.defenseImplementationScore)} / {formatScore(grade.defensePresentationScore)}
+                            </div>
+                          </td>
                           <td className="py-3 px-4 text-center font-semibold font-mono text-blue-600 text-base">
                             {formatScore(grade.finalScore)}
                           </td>
                           <td className="py-3 px-4 text-center">
                             <StatusBadge value={grade.passed ? 'PASSED' : 'FAILED'} type="status" />
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <button
+                              type="button"
+                              onClick={() => setViewingGradeDetail(grade)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition border border-indigo-200/60 shadow-2xs"
+                              title={t('results.viewComments')}
+                            >
+                              <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>{t('results.viewComments', 'Xem nhận xét')}</span>
+                            </button>
                           </td>
                           <td className="py-3 px-4 text-center">
                             {grade.published && (
@@ -955,6 +1011,132 @@ export function ResultsPage() {
           </div>
         )}
       </TableCard>
+
+      {/* Modal Chi tiết Nhận xét & Điểm thành phần */}
+      {viewingGradeDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200/80 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-xs z-10">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  {t('results.commentsDetailTitle', 'Chi tiết Điểm & Nhận xét Đánh giá')}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {formatStudentTeamMember(viewingGradeDetail.studentName)} ({viewingGradeDetail.studentCode || viewingGradeDetail.studentId})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewingGradeDetail(null)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4 text-sm">
+              {/* Nhận xét GVHD */}
+              <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-200/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-blue-900 flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-blue-600" />
+                    <span>{t('results.advisorAssessment', '1. Giảng viên hướng dẫn')}</span>
+                    {viewingGradeDetail.advisorName && (
+                      <span className="text-xs font-normal text-blue-700">({viewingGradeDetail.advisorName})</span>
+                    )}
+                  </div>
+                  <span className="font-mono font-bold text-blue-700 text-sm">
+                    {formatScore(viewingGradeDetail.advisorScore)} / 10
+                  </span>
+                </div>
+                {(viewingGradeDetail.advisorContentScore != null || viewingGradeDetail.advisorImplementationScore != null || viewingGradeDetail.advisorPresentationScore != null) && (
+                  <div className="text-xs text-blue-600/80 font-mono flex flex-wrap gap-4 pt-0.5">
+                    <span>Nội dung: {formatScore(viewingGradeDetail.advisorContentScore)}</span>
+                    <span>Triển khai: {formatScore(viewingGradeDetail.advisorImplementationScore)}</span>
+                    <span>Trình bày: {formatScore(viewingGradeDetail.advisorPresentationScore)}</span>
+                  </div>
+                )}
+                <div className="pt-1.5 text-xs text-slate-700 whitespace-pre-wrap bg-white/80 p-3 rounded-lg border border-blue-100 leading-relaxed">
+                  <div className="font-semibold text-slate-600 mb-1">{t('results.advisorCommentCol', 'Nhận xét GVHD')}:</div>
+                  {viewingGradeDetail.advisorComment || <span className="italic text-slate-400">{t('results.noComment', 'Chưa có nhận xét')}</span>}
+                </div>
+              </div>
+
+              {/* Nhận xét Cán bộ Phản biện */}
+              <div className="p-4 rounded-xl bg-indigo-50/50 border border-indigo-200/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-indigo-900 flex items-center gap-2">
+                    <Award className="w-4 h-4 text-indigo-600" />
+                    <span>{t('results.reviewerAssessment', '2. Cán bộ phản biện')}</span>
+                  </div>
+                  <span className="font-mono font-bold text-indigo-700 text-sm">
+                    {formatScore(viewingGradeDetail.reviewScore)} / 10
+                  </span>
+                </div>
+                {(viewingGradeDetail.reviewContentScore != null || viewingGradeDetail.reviewImplementationScore != null || viewingGradeDetail.reviewPresentationScore != null) && (
+                  <div className="text-xs text-indigo-600/80 font-mono flex flex-wrap gap-4 pt-0.5">
+                    <span>Nội dung: {formatScore(viewingGradeDetail.reviewContentScore)}</span>
+                    <span>Triển khai: {formatScore(viewingGradeDetail.reviewImplementationScore)}</span>
+                    <span>Trình bày: {formatScore(viewingGradeDetail.reviewPresentationScore)}</span>
+                  </div>
+                )}
+                <div className="pt-1.5 text-xs text-slate-700 whitespace-pre-wrap bg-white/80 p-3 rounded-lg border border-indigo-100 leading-relaxed">
+                  <div className="font-semibold text-slate-600 mb-1">{t('results.reviewerCommentCol', 'Nhận xét phản biện')}:</div>
+                  {viewingGradeDetail.reviewComment || <span className="italic text-slate-400">{t('results.noComment', 'Chưa có nhận xét')}</span>}
+                </div>
+              </div>
+
+              {/* Nhận xét Hội đồng */}
+              <div className="p-4 rounded-xl bg-purple-50/50 border border-purple-200/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-purple-900 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-purple-600" />
+                    <span>{t('results.councilAssessment', '3. Hội đồng bảo vệ')}</span>
+                  </div>
+                  <span className="font-mono font-bold text-purple-700 text-sm">
+                    {formatScore(viewingGradeDetail.defenseScore)} / 10
+                  </span>
+                </div>
+                {(viewingGradeDetail.defenseContentScore != null || viewingGradeDetail.defenseImplementationScore != null || viewingGradeDetail.defensePresentationScore != null) && (
+                  <div className="text-xs text-purple-600/80 font-mono flex flex-wrap gap-4 pt-0.5">
+                    <span>Nội dung: {formatScore(viewingGradeDetail.defenseContentScore)}</span>
+                    <span>Triển khai: {formatScore(viewingGradeDetail.defenseImplementationScore)}</span>
+                    <span>Trình bày: {formatScore(viewingGradeDetail.defensePresentationScore)}</span>
+                  </div>
+                )}
+                <div className="pt-1.5 text-xs text-slate-700 whitespace-pre-wrap bg-white/80 p-3 rounded-lg border border-purple-100 leading-relaxed">
+                  <div className="font-semibold text-slate-600 mb-1">{t('results.councilCommentCol', 'Nhận xét hội đồng')}:</div>
+                  {viewingGradeDetail.defenseComments || <span className="italic text-slate-400">{t('results.noComment', 'Chưa có nhận xét')}</span>}
+                </div>
+              </div>
+
+              {/* Summary Bar */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs text-slate-500">{t('results.finalScore', 'Điểm tổng kết')}:</span>
+                  <div className="text-lg font-bold font-mono text-blue-600">{formatScore(viewingGradeDetail.finalScore)}</div>
+                </div>
+                <div>
+                  <StatusBadge value={viewingGradeDetail.passed ? 'PASSED' : 'FAILED'} type="status" />
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3.5 border-t border-slate-100 flex justify-end bg-slate-50/60 rounded-b-2xl">
+              <button
+                type="button"
+                onClick={() => setViewingGradeDetail(null)}
+                className={buttonClass('secondary')}
+              >
+                {t('common.close', 'Đóng')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

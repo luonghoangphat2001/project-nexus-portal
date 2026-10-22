@@ -199,11 +199,22 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
         DefenseAssignment assignment = result.getAssignment();
         Topic topic = assignment.getRegistration().getTopic();
         User student = result.getStudent();
+        String advisorName = details != null ? details.getAdvisorName()
+                : (topic != null && topic.getTopicLecturers() != null
+                ? topic.getTopicLecturers().stream()
+                        .filter(tl -> tl.getAdvisorRole() == AdvisorRole.PRIMARY && tl.getLecturer() != null && tl.getLecturer().getFullName() != null)
+                        .map(tl -> tl.getLecturer().getFullName())
+                        .findFirst().orElse("")
+                : "");
+        BigDecimal advisorScore = details != null
+                ? average(details.getAdvisorContentScore(), details.getAdvisorImplementationScore(), details.getAdvisorPresentationScore())
+                : calculateInferredAdvisorScore(result.getFinalScore(), result.getReviewScore(), result.getDefenseScore());
+
         return new ResultResponse.Defense(assignment.getId(), assignment.getRegistration().getId(),
                 topic.getPeriod().getId(), topic.getPeriod().getName(), topic.getDepartment().getId(),
                 topic.getDepartment().getName(), topic.getId(), topic.getTitle(),
                 assignment.getRegistration().getTeam().getName(), student.getId(), student.getFullName(), student.getStudentCode(),
-                details == null ? null : average(details.getAdvisorContentScore(), details.getAdvisorImplementationScore(), details.getAdvisorPresentationScore()),
+                advisorScore,
                 result.getReviewScore(), result.getDefenseScore(),
                 details == null ? null : details.getAdvisorContentScore(),
                 details == null ? null : details.getAdvisorImplementationScore(),
@@ -214,11 +225,19 @@ public class ScoreCalculationServiceImpl implements ScoreCalculationService {
                 details == null ? null : details.getDefenseContentScore(),
                 details == null ? null : details.getDefenseImplementationScore(),
                 details == null ? null : details.getDefensePresentationScore(),
-                details == null ? null : details.getAdvisorName(),
+                advisorName,
                 details == null ? null : details.getAdvisorComment(),
                 details == null ? null : details.getReviewComment(),
                 details == null ? null : details.getDefenseComments(),
                 result.getFinalScore(), result.isPassed(), true, result.getPublishedAt());
+    }
+
+    public static BigDecimal calculateInferredAdvisorScore(BigDecimal finalScore, BigDecimal reviewScore, BigDecimal defenseScore) {
+        if (finalScore == null || reviewScore == null || defenseScore == null) return null;
+        BigDecimal reviewPart = reviewScore.multiply(new BigDecimal("0.30"));
+        BigDecimal defensePart = defenseScore.multiply(new BigDecimal("0.50"));
+        return finalScore.subtract(reviewPart).subtract(defensePart)
+                .divide(new BigDecimal("0.20"), 2, RoundingMode.HALF_UP);
     }
 
     private BigDecimal average(BigDecimal first, BigDecimal second, BigDecimal third) {

@@ -51,7 +51,11 @@ export function AssessmentsPage() {
 
   const councilAssignments = useMemo(() => {
     if (!selectedCouncil) return [];
-    return (selectedCouncil.assignments || []).map((a) => ({ ...a, council: selectedCouncil }));
+    const all = selectedCouncil.assignments || [];
+    const filtered = selectedCouncil.canManage
+      ? all
+      : all.filter((a) => a.canAdvisor || a.canDefense || a.canReview);
+    return filtered.map((a) => ({ ...a, council: selectedCouncil }));
   }, [selectedCouncil]);
 
   const selected = useMemo(
@@ -64,6 +68,11 @@ export function AssessmentsPage() {
     && String(s.evaluatorId) === String(user?.id) && s.status === 'SUBMITTED');
   const canEvaluate = selected && ({ ADVISOR: selected.canAdvisor, REVIEW: selected.canReview, DEFENSE: selected.canDefense }[type] || false);
 
+  const visibleScores = useMemo(() => {
+    if (selectedCouncil?.canManage) return scores;
+    return scores.filter((s) => String(s.evaluatorId) === String(user?.id));
+  }, [scores, selectedCouncil, user?.id]);
+
   useEffect(() => {
     let active = true;
     setLoading(true);
@@ -71,9 +80,15 @@ export function AssessmentsPage() {
     councilService.getCouncils()
       .then((data) => {
         if (!active) return;
-        const eligible = data.filter((c) => c.canManage
-          || c.members.some((m) => m.lecturerId === user?.id)
-          || c.assignments?.some((a) => a.canAdvisor));
+        const eligible = data
+          .map((c) => {
+            if (c.canManage) return c;
+            const myAssignments = (c.assignments || []).filter(
+              (a) => a.canAdvisor || a.canDefense || a.canReview
+            );
+            return { ...c, assignments: myAssignments };
+          })
+          .filter((c) => c.canManage || (c.assignments && c.assignments.length > 0));
         setCouncils(eligible);
 
         // Find initial council and assignment
@@ -366,9 +381,9 @@ export function AssessmentsPage() {
           {/* Evaluation Scoresheet Records Table */}
           <TableCard>
             <TableHeaderBar
-              title={t('assessments.evaluationsList')}
-              subtitle={t('assessments.evaluationsSub')}
-              count={scores.length}
+              title={selectedCouncil?.canManage ? t('assessments.evaluationsList') : t('assessments.myEvaluationsList', 'Danh sách phiếu chấm điểm của tôi')}
+              subtitle={selectedCouncil?.canManage ? t('assessments.evaluationsSub') : t('assessments.myEvaluationsSub', 'Các phiếu đánh giá và cho điểm do bạn thực hiện cho đề tài này')}
+              count={visibleScores.length}
             />
 
             {scoreLoading ? (
@@ -379,7 +394,7 @@ export function AssessmentsPage() {
               <div className="p-12 text-center text-sm text-rose-500">
                 {t('common.error')}
               </div>
-            ) : scores.length === 0 ? (
+            ) : visibleScores.length === 0 ? (
               <div className="p-12 text-center text-sm text-slate-500">
                 {t('assessments.noAssessments')}
               </div>
@@ -401,7 +416,7 @@ export function AssessmentsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {scores.map((s) => {
+                    {visibleScores.map((s) => {
                       const avg = (
                         (Number(s.contentScore || 0) +
                          Number(s.implementationScore || 0) +
