@@ -65,8 +65,14 @@ VALUES
   (42, 'student_k22_01', 'khang.kv@nexus.edu.vn', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'Khuat Van Khang (Leader - Team NextGen K22)', '22110001', 2, 1, '0901000042', 'https://ui-avatars.com/api/?name=Khuat+Van+Khang&background=0ea5e9&color=fff', 1, NOW(6), NOW(6)),
   (43, 'student_k22_02', 'truong.nv@nexus.edu.vn', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'Nguyen Van Truong (Member - Team NextGen K22)', '22110002', 2, 1, '0901000043', 'https://ui-avatars.com/api/?name=Nguyen+Van+Truong&background=38bdf8&color=fff', 1, NOW(6), NOW(6)),
   (44, 'student_k22_03', 'son.nt@nexus.edu.vn', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'Nguyen Thai Son (Solo K22 Student)', '22110003', 2, 3, '0901000044', 'https://ui-avatars.com/api/?name=Nguyen+Thai+Son&background=7dd3fc&color=fff', 1, NOW(6), NOW(6)),
-  (45, 'student_k22_04', 'tai.pt@nexus.edu.vn', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'Phan Tuan Tai (Solo K22 Student)', '22110004', 2, 2, '0901000045', 'https://ui-avatars.com/api/?name=Phan+Tuan+Tai&background=bae6fd&color=fff', 1, NOW(6), NOW(6))
+  (45, 'student_k22_04', 'tai.pt@nexus.edu.vn', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'Phan Tuan Tai (Solo K22 Student)', '22110004', 2, 2, '0901000045', 'https://ui-avatars.com/api/?name=Phan+Tuan+Tai&background=bae6fd&color=fff', 1, NOW(6), NOW(6)),
+
+  -- New Users with Real Test Emails
+  (47, 'hoangpn2004', 'hoangpn2004@gmail.com', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'Pham Nhat Hoang (Student Leader K22)', '22119901', 2, 1, '0901000047', 'https://ui-avatars.com/api/?name=Pham+Nhat+Hoang&background=3b82f6&color=fff', 1, NOW(6), NOW(6)),
+  (48, 'phamnhathoang', '1st.phamnhathoang@gmail.com', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'MSc. Pham Nhat Hoang (Advisor Lecturer)', 'LECT99', NULL, 1, '0901000048', 'https://ui-avatars.com/api/?name=Pham+Nhat+Hoang&background=10b981&color=fff', 1, NOW(6), NOW(6)),
+  (49, 'hcmute_25810188', '25810188@student.hcmute.edu.vn', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'HCMUTE Student (25810188)', '25810188', 1, 1, '0901000049', 'https://ui-avatars.com/api/?name=HCMUTE+Student&background=6366f1&color=fff', 1, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE 
+  email = VALUES(email),
   password = VALUES(password),
   is_active = VALUES(is_active),
   full_name = VALUES(full_name),
@@ -78,7 +84,7 @@ ON DUPLICATE KEY UPDATE
   updated_at = NOW(6);
 
 -- 2. Associate users with their respective roles
-DELETE FROM user_roles WHERE user_id BETWEEN 1 AND 45;
+DELETE FROM user_roles WHERE user_id BETWEEN 1 AND 50;
 
 -- Admins (ROLE_ADMIN = 1)
 INSERT IGNORE INTO user_roles (user_id, role_id)
@@ -90,7 +96,7 @@ SELECT u.id, 2 FROM users u WHERE u.username IN ('principal', 'dean_fee', 'head_
 
 -- Teachers (ROLE_TEACHER = 3)
 INSERT IGNORE INTO user_roles (user_id, role_id)
-SELECT u.id, 3 FROM users u WHERE u.username IN ('teacher', 'teacher2', 'teacher3', 'teacher4', 'teacher5', 'teacher6');
+SELECT u.id, 3 FROM users u WHERE u.username IN ('teacher', 'teacher2', 'teacher3', 'teacher4', 'teacher5', 'teacher6', 'phamnhathoang');
 
 -- Council Members (ROLE_COUNCIL = 4)
 INSERT IGNORE INTO user_roles (user_id, role_id)
@@ -104,17 +110,18 @@ SELECT u.id, 5 FROM users u WHERE u.username IN (
   'student_k21_06', 'student_k21_07', 'student_k21_08', 'student_k21_09', 'student_k21_10',
   'student_k21_11', 'student_k21_12', 'student_k21_13', 'student_k21_14', 'student_k21_15',
   'student_k21_16', 'student_k21_17', 'student_k21_18', 'student_k21_19', 'student_k21_20',
-  'student_k22_01', 'student_k22_02', 'student_k22_03', 'student_k22_04'
+  'student_k22_01', 'student_k22_02', 'student_k22_03', 'student_k22_04',
+  'hoangpn2004', 'hcmute_25810188'
 );
 
 -- 3. Associate users with academic faculties
-DELETE FROM user_faculties WHERE user_id BETWEEN 1 AND 45;
+DELETE FROM user_faculties WHERE user_id BETWEEN 1 AND 50;
 
 -- Faculty of IT (id=1): superadmin, principal, FIT teachers, councils, and FIT students
 INSERT IGNORE INTO user_faculties (user_id, faculty_id)
 SELECT id, 1 FROM users WHERE id IN (
   1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-  22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42, 43, 44, 45
+  22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49
 );
 
 -- Faculty of Electrical and Electronics (id=2): dean_fee and FEE students
@@ -126,12 +133,13 @@ INSERT IGNORE INTO user_faculties (user_id, faculty_id)
 SELECT id, 3 FROM users WHERE id IN (38, 39);
 
 -- 4. Associate users with academic departments
-DELETE FROM user_departments WHERE user_id BETWEEN 1 AND 45;
+DELETE FROM user_departments WHERE user_id BETWEEN 1 AND 50;
 INSERT IGNORE INTO user_departments (user_id, department_id)
 VALUES 
   -- Software Engineering (id=1)
   (2, 1), (3, 1), (4, 1), (13, 1), (17, 1),
   (5, 1), (6, 1), (7, 1), (8, 1), (22, 1), (23, 1), (24, 1), (42, 1), (43, 1),
+  (47, 1), (48, 1), (49, 1),
 
   -- Computer Networks (id=2)
   (14, 2), (21, 2), (31, 2), (32, 2), (33, 2),
@@ -152,7 +160,7 @@ VALUES
   (38, 7), (39, 7);
 
 -- 5. Associate teachers with majors and cohorts
-DELETE FROM user_majors WHERE user_id BETWEEN 1 AND 45;
+DELETE FROM user_majors WHERE user_id BETWEEN 1 AND 50;
 INSERT IGNORE INTO user_majors (user_id, major_id)
 VALUES 
   (3, 1), (3, 2),   -- Teacher advises SE and IS
@@ -165,9 +173,10 @@ VALUES
   (18, 3), (18, 1), -- Council2 evaluates CS and SE
   (19, 2), (19, 1), -- Council3 evaluates IS and SE
   (20, 3), (20, 4), -- Council4 evaluates CS and Networks
-  (21, 4), (21, 2); -- Council5 evaluates Networks and IS
+  (21, 4), (21, 2), -- Council5 evaluates Networks and IS
+  (48, 1), (48, 2); -- Teacher phamnhathoang advises SE and IS
 
-DELETE FROM user_cohorts WHERE user_id BETWEEN 1 AND 45;
+DELETE FROM user_cohorts WHERE user_id BETWEEN 1 AND 50;
 INSERT IGNORE INTO user_cohorts (user_id, cohort_id)
 VALUES 
   (3, 1), (3, 2),
@@ -175,6 +184,7 @@ VALUES
   (13, 1), (13, 2),
   (14, 1), (14, 2),
   (15, 1), (15, 2),
+  (48, 1), (48, 2),
   (16, 1), (16, 2),
   (17, 1), (17, 2),
   (18, 1), (18, 2),
