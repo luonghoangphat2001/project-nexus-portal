@@ -31,6 +31,9 @@ public class UserServiceImpl implements UserService {
     private final DepartmentRepository departmentRepository;
     private final MajorRepository majorRepository;
     private final CohortRepository cohortRepository;
+    private final TeamMemberRepository teamMemberRepository;
+    private final TopicRegistrationRepository topicRegistrationRepository;
+    private final TopicLecturerRepository topicLecturerRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
 
@@ -42,6 +45,9 @@ public class UserServiceImpl implements UserService {
                            DepartmentRepository departmentRepository,
                            MajorRepository majorRepository,
                            CohortRepository cohortRepository,
+                           TeamMemberRepository teamMemberRepository,
+                           TopicRegistrationRepository topicRegistrationRepository,
+                           TopicLecturerRepository topicLecturerRepository,
                            PasswordEncoder passwordEncoder,
                            AuditLogService auditLogService) {
         this.userRepository = userRepository;
@@ -50,6 +56,9 @@ public class UserServiceImpl implements UserService {
         this.departmentRepository = departmentRepository;
         this.majorRepository = majorRepository;
         this.cohortRepository = cohortRepository;
+        this.teamMemberRepository = teamMemberRepository;
+        this.topicRegistrationRepository = topicRegistrationRepository;
+        this.topicLecturerRepository = topicLecturerRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
     }
@@ -332,14 +341,61 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserResponse mapToUserResponse(User user) {
+        String studentCode = user.getStudentCode();
+        String phone = user.getPhone();
+        String majorName = user.getMajor() != null ? user.getMajor().getName() : null;
+        String cohortName = user.getCohort() != null ? user.getCohort().getName() : null;
+        String facultyName = user.getFaculties() != null && !user.getFaculties().isEmpty()
+                ? user.getFaculties().iterator().next().getName() : null;
+        String departmentName = user.getDepartments() != null && !user.getDepartments().isEmpty()
+                ? user.getDepartments().iterator().next().getName() : null;
+
+        Long teamId = null;
+        String teamName = null;
+        String roleInTeam = null;
+        String topicTitle = null;
+
+        List<TeamMember> teamMemberships = teamMemberRepository.findByUserId(user.getId());
+        if (!teamMemberships.isEmpty()) {
+            TeamMember tm = teamMemberships.get(0);
+            if (tm.getTeam() != null) {
+                teamId = tm.getTeam().getId();
+                teamName = tm.getTeam().getName();
+                roleInTeam = tm.getRoleInTeam() != null ? tm.getRoleInTeam().name() : null;
+                List<TopicRegistration> regs = topicRegistrationRepository.findByTeamId(tm.getTeam().getId());
+                if (!regs.isEmpty() && regs.get(0).getTopic() != null) {
+                    topicTitle = regs.get(0).getTopic().getTitle();
+                }
+            }
+        } else {
+            List<TopicLecturer> lecturerTopics = topicLecturerRepository.findByLecturerId(user.getId());
+            if (!lecturerTopics.isEmpty()) {
+                roleInTeam = lecturerTopics.get(0).getAdvisorRole() != null ? lecturerTopics.get(0).getAdvisorRole().name() : "ADVISOR";
+                topicTitle = lecturerTopics.stream()
+                        .map(tl -> tl.getTopic() != null ? tl.getTopic().getTitle() : "")
+                        .filter(s -> !s.isBlank())
+                        .collect(Collectors.joining("; "));
+            }
+        }
+
         return UserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
+                .studentCode(studentCode)
+                .phone(phone)
                 .avatarUrl(user.getAvatarUrl())
                 .active(user.isActive())
                 .roles(user.getRoles().stream().map(r -> r.getName().name()).collect(Collectors.toSet()))
+                .majorName(majorName)
+                .cohortName(cohortName)
+                .facultyName(facultyName)
+                .departmentName(departmentName)
+                .teamId(teamId)
+                .teamName(teamName)
+                .roleInTeam(roleInTeam)
+                .topicTitle(topicTitle)
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();

@@ -7,6 +7,7 @@ import assessmentService from '../services/assessmentService';
 import { AssessmentForm } from '../components/common/AssessmentForm';
 import { useTranslation } from '../i18n/LanguageContext';
 import { formatApiError } from '../utils/errorHandler';
+import { formatStudentTeamMember } from '../utils/userFormatters';
 import {
   PageHeader,
   FilterCard,
@@ -304,7 +305,7 @@ export function AssessmentsPage() {
                   >
                     {selected.registration.students.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.fullName} ({s.studentCode || s.id})
+                        {formatStudentTeamMember(s, { isLeader: false })} ({s.studentCode || s.id})
                       </option>
                     ))}
                   </select>

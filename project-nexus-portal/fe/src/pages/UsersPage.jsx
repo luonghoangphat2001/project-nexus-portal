@@ -20,7 +20,14 @@ import {
   X,
   Trash2,
   Phone,
+  Eye,
+  Crown,
+  BookOpen,
+  GraduationCap,
+  Building,
 } from 'lucide-react';
+import { formatStudentTeamMember, formatLecturerName } from '../utils/userFormatters';
+import { formatDateTime } from '../utils/dateUtils';
 import {
   PageHeader,
   FilterCard,
@@ -53,7 +60,23 @@ export const UsersPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [viewingUser, setViewingUser] = useState(null);
+
+  const handleOpenDetailModal = async (u) => {
+    setViewingUser(u);
+    setShowDetailModal(true);
+    try {
+      const res = await userService.getUserById(u.id);
+      const detail = res.data || res;
+      if (detail && detail.id) {
+        setViewingUser(detail);
+      }
+    } catch (_) {
+      // fallback to row data
+    }
+  };
 
   // Form states
   const [newUser, setNewUser] = useState({
@@ -413,7 +436,7 @@ export const UsersPage = () => {
                 <th className="py-3.5 px-4">{t('users.colEmailPhone')}</th>
                 <th className="py-3.5 px-4">{t('users.colRoles')}</th>
                 <th className="py-3.5 px-4">{t('users.colStatus')}</th>
-                {isAdmin && <th className="py-3.5 px-4 text-right">{t('users.colActions')}</th>}
+                <th className="py-3.5 px-4 text-right">{t('users.colActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
@@ -433,7 +456,7 @@ export const UsersPage = () => {
               ) : (
                 filteredUsers.map((u) => (
                   <tr key={u.id} className="hover:bg-slate-50/70 transition">
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 cursor-pointer" onClick={() => handleOpenDetailModal(u)}>
                       <div className="flex items-center gap-3">
                         <img
                           src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || u.username)}&background=2563eb&color=fff`}
@@ -441,8 +464,27 @@ export const UsersPage = () => {
                           className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200"
                         />
                         <div>
-                          <p className="font-semibold text-slate-900">{u.fullName || u.username}</p>
-                          <p className="text-xs text-slate-400 font-mono">@{u.username}</p>
+                          <p className="font-semibold text-slate-900 hover:text-blue-600 transition flex items-center gap-1.5">
+                            <span>{formatStudentTeamMember(u.fullName || u.username, { isLeader: false })}</span>
+                            {u.roleInTeam === 'LEADER' && (
+                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium inline-flex items-center gap-0.5">
+                                <Crown className="w-3 h-3 text-amber-500" />
+                                <span>Trưởng nhóm</span>
+                              </span>
+                            )}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
+                            <span>@{u.username}</span>
+                            {u.teamName && (
+                              <>
+                                <span>•</span>
+                                <span className="text-indigo-600 font-sans font-medium flex items-center gap-1">
+                                  <Users className="w-3 h-3" />
+                                  {u.teamName}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -480,43 +522,53 @@ export const UsersPage = () => {
                       <StatusBadge value={u.active ? 'ACTIVE' : 'INACTIVE'} />
                     </td>
 
-                    {isAdmin && (
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="inline-flex items-center gap-1.5">
-                          <button
-                            title="Assign Roles"
-                            onClick={() => handleOpenRoleModal(u)}
-                            className={buttonClass.actionRow}
-                          >
-                            <Shield className="w-4 h-4 text-blue-600" />
-                          </button>
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="inline-flex items-center gap-1.5">
+                        <button
+                          title={t('users.viewDetail', 'Xem chi tiết')}
+                          onClick={() => handleOpenDetailModal(u)}
+                          className={buttonClass.actionRow}
+                        >
+                          <Eye className="w-4 h-4 text-slate-600" />
+                        </button>
 
-                          <button
-                            title="Reset Password"
-                            onClick={() => handleOpenResetPasswordModal(u)}
-                            className={buttonClass.actionRow}
-                          >
-                            <Key className="w-4 h-4 text-amber-600" />
-                          </button>
+                        {isAdmin && (
+                          <>
+                            <button
+                              title="Assign Roles"
+                              onClick={() => handleOpenRoleModal(u)}
+                              className={buttonClass.actionRow}
+                            >
+                              <Shield className="w-4 h-4 text-blue-600" />
+                            </button>
 
-                          <button
-                            title={u.active ? t('users.lockedBadge') : t('users.activeBadge')}
-                            onClick={() => handleToggleStatus(u.id, u.active)}
-                            className={buttonClass.actionRow}
-                          >
-                            {u.active ? <UserX className="w-4 h-4 text-rose-600" /> : <UserCheck className="w-4 h-4 text-emerald-600" />}
-                          </button>
+                            <button
+                              title="Reset Password"
+                              onClick={() => handleOpenResetPasswordModal(u)}
+                              className={buttonClass.actionRow}
+                            >
+                              <Key className="w-4 h-4 text-amber-600" />
+                            </button>
 
-                          <button
-                            title="Delete account"
-                            onClick={() => handleDeleteUser(u.id, u.username)}
-                            className={buttonClass.actionRowDanger}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    )}
+                            <button
+                              title={u.active ? t('users.lockedBadge') : t('users.activeBadge')}
+                              onClick={() => handleToggleStatus(u.id, u.active)}
+                              className={buttonClass.actionRow}
+                            >
+                              {u.active ? <UserX className="w-4 h-4 text-rose-600" /> : <UserCheck className="w-4 h-4 text-emerald-600" />}
+                            </button>
+
+                            <button
+                              title="Delete account"
+                              onClick={() => handleDeleteUser(u.id, u.username)}
+                              className={buttonClass.actionRowDanger}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}

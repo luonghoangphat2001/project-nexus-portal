@@ -9,6 +9,7 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { Banner, Button, Empty, Panel, formatDate, inputClass } from '../components/common/DefenseUi';
 import { PageHeader, StatusBadge, buttonClass } from '../components/common/CommonUi';
 import { formatApiError } from '../utils/errorHandler';
+import { formatLecturerName, formatStudentTeamMember } from '../utils/userFormatters';
 
 export function CouncilsPage() {
   const { user } = useAuth();
@@ -189,7 +190,7 @@ export function CouncilsPage() {
                   key={m.lecturerId}
                   className="px-3 py-1.5 rounded-xl text-xs text-slate-700 bg-slate-50 border border-slate-200"
                 >
-                  {m.fullName} · <strong>{t(`enums.councilRole.${m.role}`, m.role)}</strong>
+                  {formatLecturerName(m)} · <strong>{t(`enums.councilRole.${m.role}`, m.role)}</strong>
                 </span>
               ))}
             </div>
@@ -216,12 +217,12 @@ export function CouncilsPage() {
                           {a.registration.advisors && a.registration.advisors.length > 0 && (
                             <span className="flex items-center gap-1 font-medium text-slate-700">
                               <GraduationCap className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                              <span>{t('topics.instructor', 'GVHD')}: {a.registration.advisors.map((adv) => adv.fullName).join(', ')}</span>
+                              <span>{t('topics.instructor', 'GVHD')}: {a.registration.advisors.map((adv) => formatLecturerName(adv)).join(', ')}</span>
                             </span>
                           )}
                           <span className="flex items-center gap-1">
                             <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span>{a.registration.students.map((s) => `${s.fullName} (${s.studentCode || s.id})`).join(', ')}</span>
+                            <span>{a.registration.students.map((s) => formatStudentTeamMember(s)).join(', ')}</span>
                           </span>
                         </div>
                       </div>

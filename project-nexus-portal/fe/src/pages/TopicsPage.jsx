@@ -34,6 +34,7 @@ import {
   selectClass,
   buttonClass,
 } from '../components/common/CommonUi';
+import { formatLecturerName, formatStudentTeamMember } from '../utils/userFormatters';
 
 export const TopicsPage = () => {
   const { user, hasRole } = useAuth();
@@ -468,7 +469,7 @@ export const TopicsPage = () => {
                       <div className="truncate">
                         <span className="font-medium text-slate-700">
                           {topic.advisors && topic.advisors.length > 0
-                            ? topic.advisors.map((a) => a.fullName || a.lecturerName).filter(Boolean).join(', ')
+                            ? topic.advisors.map((a) => formatLecturerName(a)).filter(Boolean).join(', ')
                             : t('topics.deptAssigned')}
                         </span>
                       </div>
@@ -493,7 +494,7 @@ export const TopicsPage = () => {
                         <div className="text-[11px] text-slate-600 leading-snug">
                           <span className="text-slate-400">{t('topics.assignedStudents', 'Sinh viên')}: </span>
                           <span className="font-medium text-slate-700">
-                            {topic.assignedTeam.members.map((m) => m.fullName || m.name).join(', ')}
+                            {topic.assignedTeam.members.map((m) => formatStudentTeamMember(m)).join(', ')}
                           </span>
                         </div>
                       )}
@@ -685,7 +686,7 @@ export const TopicsPage = () => {
                       key={idx}
                       className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs"
                     >
-                      <div className="font-semibold text-slate-800">{adv.fullName || adv.lecturerName}</div>
+                      <div className="font-semibold text-slate-800">{formatLecturerName(adv)}</div>
                       <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-mono text-[10px]">
                         {t(`enums.advisorRole.${adv.role || adv.advisorRole}`, (adv.role || adv.advisorRole) === 'PRIMARY' ? 'Hướng dẫn chính' : 'Đồng hướng dẫn')}
                       </span>
@@ -723,7 +724,7 @@ export const TopicsPage = () => {
                       {selectedTopic.assignedTeam.members.map((m) => (
                         <div key={m.id || m.userId} className="flex items-center justify-between text-xs">
                           <div>
-                            <span className="font-medium text-slate-800">{m.fullName}</span>
+                            <span className="font-medium text-slate-800">{formatStudentTeamMember(m, { isLeader: false })}</span>
                             {m.studentCode && (
                               <span className="text-slate-400 text-[11px] font-mono ml-1.5">({m.studentCode})</span>
                             )}
@@ -801,7 +802,7 @@ export const TopicsPage = () => {
                   <td className="py-3 px-4 font-medium text-slate-500">{t('topics.instructor')}</td>
                   {comparisonData.map((tItem) => (
                     <td key={tItem.id} className="py-3 px-4 text-slate-700">
-                      {tItem.advisors?.map((a) => a.fullName || a.lecturerName).filter(Boolean).join(', ') || 'N/A'}
+                      {tItem.advisors?.map((a) => formatLecturerName(a)).filter(Boolean).join(', ') || 'N/A'}
                     </td>
                   ))}
                 </tr>
@@ -814,7 +815,7 @@ export const TopicsPage = () => {
                           <span className="font-semibold text-emerald-800">{tItem.assignedTeam.name}</span>
                           {tItem.assignedTeam.members && (
                             <div className="text-slate-500 text-[11px] mt-0.5">
-                              {tItem.assignedTeam.members.map((m) => m.fullName).join(', ')}
+                              {tItem.assignedTeam.members.map((m) => formatStudentTeamMember(m)).join(', ')}
                             </div>
                           )}
                         </div>

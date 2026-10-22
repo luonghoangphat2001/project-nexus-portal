@@ -40,6 +40,7 @@ import {
   selectClass,
   buttonClass,
 } from '../components/common/CommonUi';
+import { formatLecturerName, formatStudentTeamMember } from '../utils/userFormatters';
 
 export const RegistrationsPage = () => {
   const { user, hasRole } = useAuth();
@@ -785,7 +786,7 @@ export const RegistrationsPage = () => {
                                   : 'bg-slate-50 text-slate-600 border-slate-200'
                               }`}
                             >
-                              {adv.fullName || adv.lecturerName}
+                              {formatLecturerName(adv)}
                               <span className="text-[9px] opacity-75 ml-1">
                                 ({(adv.advisorRole === 'PRIMARY' || adv.role === 'PRIMARY') ? 'Chính' : 'Đồng HD'})
                               </span>
@@ -979,7 +980,7 @@ export const RegistrationsPage = () => {
                                     : 'bg-slate-50 text-slate-700 border-slate-200'
                                 }`}
                               >
-                                <span>{m.fullName} ({m.studentCode || 'N/A'})</span>
+                                <span>{formatStudentTeamMember(m, { isLeader: false })} ({m.studentCode || 'N/A'})</span>
                                 <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-black/5 font-mono">
                                   {m.roleInTeam === 'LEADER' ? t('teams.leader', 'Nhóm trưởng') : t('teams.member', 'Thành viên')}
                                 </span>
@@ -1153,7 +1154,7 @@ export const RegistrationsPage = () => {
                                   key={m.id || m.userId}
                                   className="px-3 py-1.5 rounded-xl bg-white border border-emerald-200/80 shadow-2xs flex items-center space-x-2 text-xs"
                                 >
-                                  <span className="font-semibold text-slate-800">{m.fullName || m.name}</span>
+                                  <span className="font-semibold text-slate-800">{formatStudentTeamMember(m, { isLeader: false })}</span>
                                   {m.studentCode && (
                                     <span className="text-slate-400 font-mono text-[11px]">({m.studentCode})</span>
                                   )}
@@ -1300,7 +1301,7 @@ export const RegistrationsPage = () => {
                   <option value="">-- {t('registrations.selectPrimaryAdvisor', 'Chọn giảng viên hướng dẫn chính...')} --</option>
                   {lecturers.map((l) => (
                     <option key={l.id} value={l.id}>
-                      {l.fullName} ({l.email})
+                      {formatLecturerName(l)} ({l.email})
                     </option>
                   ))}
                 </select>
@@ -1320,7 +1321,7 @@ export const RegistrationsPage = () => {
                     .filter((l) => String(l.id) !== String(topicFormData.primaryAdvisorId))
                     .map((l) => (
                       <option key={l.id} value={l.id}>
-                        {l.fullName} ({l.email})
+                        {formatLecturerName(l)} ({l.email})
                       </option>
                     ))}
                 </select>

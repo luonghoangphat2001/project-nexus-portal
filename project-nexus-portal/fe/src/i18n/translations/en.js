@@ -1290,6 +1290,8 @@ export const en = {
     "markReadSuccess": "Notification marked as read.",
     "deletedSuccess": "Notification deleted successfully.",
     "markAsRead": "Mark as read",
+    "markAllAsRead": "Mark all as read",
+    "viewAll": "View all notifications",
     "delete": "Delete",
     "deleteConfirm": "Are you sure you want to delete this notification?",
     "read": "Read",

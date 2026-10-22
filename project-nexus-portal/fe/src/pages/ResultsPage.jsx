@@ -17,6 +17,7 @@ import {
   selectClass
 } from '../components/common/CommonUi';
 import { formatDateTime } from '../utils/dateUtils';
+import { formatLecturerName, formatStudentTeamMember } from '../utils/userFormatters';
 
 const formatDate = (date) => formatDateTime(date, '—');
 
@@ -502,7 +503,7 @@ export function ResultsPage() {
                         <span className="text-slate-500 font-normal">{t('topics.instructor', 'GVHD')}:</span>
                         <span className="font-semibold text-slate-800">
                           {activeAssignment.registration?.advisors?.length > 0
-                            ? activeAssignment.registration.advisors.map((adv) => adv.fullName).join(', ')
+                            ? activeAssignment.registration.advisors.map((adv) => formatLecturerName(adv)).join(', ')
                             : t('topics.deptAssigned', 'Bộ môn phân công')}
                         </span>
                       </div>
@@ -511,7 +512,7 @@ export function ResultsPage() {
                           <Users className="w-4 h-4 text-slate-500 shrink-0" />
                           <span className="text-slate-500 font-normal">{t('results.studentCol', 'Sinh viên')}:</span>
                           <span className="font-medium text-slate-800">
-                            {activeAssignment.registration.students.map((s) => `${s.fullName} (${s.studentCode || s.id})`).join(', ')}
+                            {activeAssignment.registration.students.map((s) => formatStudentTeamMember(s)).join(', ')}
                           </span>
                         </div>
                       )}
@@ -540,7 +541,7 @@ export function ResultsPage() {
                       {grades.map((grade) => (
                         <tr key={grade.studentId} className="hover:bg-slate-50/60 transition">
                           <td className="py-3 px-4 font-semibold text-slate-900">
-                            <div>{grade.studentName}</div>
+                            <div>{formatStudentTeamMember(grade.studentName, { isLeader: false })}</div>
                             <div className="text-xs font-mono text-slate-400 font-normal">
                               {grade.studentCode || grade.studentId}
                             </div>

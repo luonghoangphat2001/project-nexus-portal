@@ -199,6 +199,8 @@ public class AuthServiceImpl implements AuthService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
+                .studentCode(user.getStudentCode())
+                .phone(user.getPhone())
                 .avatarUrl(user.getAvatarUrl())
                 .active(user.isActive())
                 .roles(user.getRoles().stream().map(r -> r.getName().name()).collect(Collectors.toSet()))

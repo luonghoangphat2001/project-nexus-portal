@@ -12,6 +12,7 @@ import teamService from '../services/teamService';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { formatApiError } from '../utils/errorHandler';
+import { formatStudentTeamMember } from '../utils/userFormatters';
 import {
   PageHeader,
   TableCard,
@@ -244,7 +245,7 @@ export const TeamsPage = () => {
                       </div>
                       <div>
                         <div className="flex items-center space-x-2">
-                          <span className="font-semibold text-slate-900 text-sm">{m.fullName || m.username}</span>
+                          <span className="font-semibold text-slate-900 text-sm">{formatStudentTeamMember(m.fullName || m.username, { isLeader: false })}</span>
                           {isMemberLeader && (
                             <span className="flex items-center space-x-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
                               <Crown className="w-3.5 h-3.5 text-amber-500" />

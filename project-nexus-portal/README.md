@@ -67,6 +67,18 @@ Xem [Functional Test Cases cho module 11–13](./docs/TEST_CASES_MODULES_11_12_1
 
 Các endpoint ghép theo `API_PREFIX`; `.env.example` hiện dùng `/api`, tương ứng `VITE_API_BASE_URL=http://localhost:8080/api`. Dữ liệu mẫu cần được duyệt đăng ký trước khi thực hành module 11–13. Với DB đã sử dụng, đặt `SQL_INIT_MODE=never` để không chạy lại seed phát triển.
 
+## 4.1. Phân công module và bản đồ source
+
+| Thành viên | Module phụ trách | Khu vực source chính |
+| --- | --- | --- |
+| Phạm Nhật Hoàng | 1, 17, 18 | `fe/src/pages/UsersPage.jsx`, `RolesPage.jsx`, `SystemAdminPage.jsx`, `SecurityPage.jsx`; các controller/service auth, role, system và audit trong `be/src/main/java/com/nexus/portal/` |
+| Nhất Long | 2, 3, 9, 10 | `fe/src/pages/PeriodsPage.jsx`, `AcademicPage.jsx`, `NotificationsPage.jsx`, `ProgressPage.jsx`; các controller/service registration period, academic, notification và progress trong `be/src/main/java/com/nexus/portal/` |
+| Lương Hoàng Phát | 4, 5, 6, 7, 8 | `fe/src/pages/TopicsPage.jsx`, `TeamsPage.jsx`, `RegistrationsPage.jsx`, `MatchmakingPage.jsx`; các controller/service topic, team, registration và matchmaking trong `be/src/main/java/com/nexus/portal/` |
+| Tô Minh Khôi | 11, 12, 13 | `fe/src/pages/ReportsPage.jsx`, `CouncilsPage.jsx`, `AssessmentsPage.jsx`; các controller/service report, council và assessment trong `be/src/main/java/com/nexus/portal/` |
+| Thành Phúc | 14, 15, 16 | `fe/src/pages/ResultsPage.jsx`; `ResultController.java` và `ResultServiceImpl.java` trong `be/src/main/java/com/nexus/portal/` |
+
+Chi tiết nghiệp vụ, API và kiểm thử cho Modules 2, 3, 9, 10 xem tại [docs/MODULES_2_3_9_10.md](./docs/MODULES_2_3_9_10.md).
+
 ## 5. Modules 14–16
 
 Score calculation (`/results/assignments/{id}`), result publication (`/results/assignments/{id}/publish`, `/results/periods/{id}/publish`, `/results/me`), and academic reports/statistics (`/results/reports`, `/results/reports.xlsx`) are available in the `/results` interface. These modules consume submitted assessments from Module 13 and process only completed councils.

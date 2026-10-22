@@ -5,9 +5,9 @@
 
 INSERT INTO users (id, username, email, password, full_name, student_code, cohort_id, major_id, phone, avatar_url, is_active, created_at, updated_at)
 VALUES 
-  (47, 'hoangpn2004', 'hoangpn2004@gmail.com', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'Pham Nhat Hoang (Student Leader K22)', '22119901', 2, 1, '0901000047', 'https://ui-avatars.com/api/?name=Pham+Nhat+Hoang&background=3b82f6&color=fff', 1, NOW(6), NOW(6)),
-  (48, 'phamnhathoang', '1st.phamnhathoang@gmail.com', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'MSc. Pham Nhat Hoang (Advisor Lecturer)', 'LECT99', NULL, 1, '0901000048', 'https://ui-avatars.com/api/?name=Pham+Nhat+Hoang&background=10b981&color=fff', 1, NOW(6), NOW(6)),
-  (49, 'hcmute_25810188', '25810188@student.hcmute.edu.vn', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'HCMUTE Student (25810188)', '25810188', 1, 1, '0901000049', 'https://ui-avatars.com/api/?name=HCMUTE+Student&background=6366f1&color=fff', 1, NOW(6), NOW(6))
+  (47, 'hoangpn2004', 'hoangpn2004@gmail.com', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'Pham Nhat Hoang', '22119901', 2, 1, '0901000047', 'https://ui-avatars.com/api/?name=Pham+Nhat+Hoang&background=3b82f6&color=fff', 1, NOW(6), NOW(6)),
+  (48, 'phamnhathoang', '1st.phamnhathoang@gmail.com', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'MSc. Pham Nhat Hoang', 'LECT99', NULL, 1, '0901000048', 'https://ui-avatars.com/api/?name=Pham+Nhat+Hoang&background=10b981&color=fff', 1, NOW(6), NOW(6)),
+  (49, 'hcmute_25810188', '25810188@student.hcmute.edu.vn', '$2a$10$mqOEWL36ye2QnsBKHuZYxecktptwsNxJ0e2ooJrCNdIuklI/mgvyS', 'HCMUTE Student', '25810188', 1, 1, '0901000049', 'https://ui-avatars.com/api/?name=HCMUTE+Student&background=6366f1&color=fff', 1, NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE 
   email = VALUES(email),
   password = VALUES(password),

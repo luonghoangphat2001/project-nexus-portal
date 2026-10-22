@@ -2,6 +2,17 @@
 
 These modules use the existing Java 17 / Spring Boot backend and React frontend. All added source code, validation messages and UI labels are in English. Academic years, semesters, faculties and cohorts follow the project's existing capstone data model. Demo data is for coursework and does not represent official university rules.
 
+## Ownership and source map
+
+| Module | Owner | Frontend | Backend |
+| --- | --- | --- | --- |
+| 2 — Registration periods | Nhất Long | `fe/src/pages/PeriodsPage.jsx`, `fe/src/services/periodService.js` | `be/src/main/java/com/nexus/portal/controller/RegistrationPeriodController.java`, `service/impl/RegistrationPeriodServiceImpl.java`, `model/RegistrationPeriod.java` |
+| 3 — Faculty, department and major | Nhất Long | `fe/src/pages/AcademicPage.jsx`, `fe/src/services/academicService.js` | `be/src/main/java/com/nexus/portal/controller/AcademicController.java`, `service/impl/AcademicServiceImpl.java` |
+| 9 — Notifications | Nhất Long | `fe/src/pages/NotificationsPage.jsx`, `fe/src/components/layout/NotificationBell.jsx`, `fe/src/services/notificationService.js`, `notificationStream.js` | `be/src/main/java/com/nexus/portal/controller/NotificationController.java`, `NotificationStreamController.java`, `service/impl/NotificationServiceImpl.java`, `SseNotificationDelivery.java` |
+| 10 — Thesis progress | Nhất Long | `fe/src/pages/ProgressPage.jsx`, `fe/src/services/progressService.js` | `be/src/main/java/com/nexus/portal/controller/ProgressController.java`, `service/impl/ProgressServiceImpl.java`, `model/ProgressTask.java` |
+
+The complete team assignment is recorded in the project report: Phạm Nhật Hoàng (Modules 1, 17, 18); Nhất Long (Modules 2, 3, 9, 10); Lương Hoàng Phát (Modules 4–8); Tô Minh Khôi (Modules 11–13); Thành Phúc (Modules 14–16).
+
 ## Pages
 
 | Module | Page | Features |

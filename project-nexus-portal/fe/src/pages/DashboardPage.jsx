@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../services/api';
 import { useTranslation } from '../i18n/LanguageContext';
+import { localizeNotification } from '../services/notificationService';
 import { formatDateTime } from '../utils/dateUtils';
 import { MetricCard, PageHeader, buttonClass } from '../components/common/CommonUi';
 import {
@@ -18,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export const DashboardPage = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -571,12 +572,16 @@ export const DashboardPage = () => {
                 notifications.map((n) => (
                   <div key={n.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-900 text-sm line-clamp-1">{n.title}</span>
+                      <span className="font-semibold text-slate-900 text-sm line-clamp-1">
+                        {localizeNotification(n.title, language)}
+                      </span>
                       <span className="text-[11px] text-slate-400 font-mono">
                         {n.createdAt ? formatDateTime(n.createdAt) : t('dashboard.justNow', 'Vừa xong')}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">{n.content}</p>
+                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                      {localizeNotification(n.content, language)}
+                    </p>
                     <div className="text-[11px] text-blue-600 font-medium pt-1">
                       {t('dashboard.by', 'Bởi')}: {n.authorName}
                     </div>

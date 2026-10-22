@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Field, inputClass, labels } from './DefenseUi';
+import { formatLecturerName } from '../../utils/userFormatters';
 
 export function CouncilForm({ council, options, busy, onSave, onCancel, onChange }) {
   const [form, setForm] = useState(() => ({
@@ -36,7 +37,7 @@ export function CouncilForm({ council, options, busy, onSave, onCancel, onChange
       <div className="space-y-3">{form.members.map((m, index) => <div key={index} className="grid items-end gap-3 sm:grid-cols-[1fr_180px_auto]">
         <Field label={`Lecturer ${index + 1}`}><select required className={inputClass} value={m.lecturerId} onChange={(e) => updateMember(index, 'lecturerId', e.target.value)}>
           <option value="">Select a lecturer</option>{lecturers.map((l) => <option key={l.id} value={l.id}
-            disabled={form.members.some((other, i) => i !== index && Number(other.lecturerId) === l.id)}>{l.fullName}</option>)}
+            disabled={form.members.some((other, i) => i !== index && Number(other.lecturerId) === l.id)}>{formatLecturerName(l)}</option>)}
         </select></Field>
         <Field label="Role"><select className={inputClass} value={m.role} onChange={(e) => updateMember(index, 'role', e.target.value)}>
           {['CHAIR', 'SECRETARY', 'REVIEWER', 'MEMBER'].map((role) => <option key={role} value={role}>{labels[role]}</option>)}

@@ -16,6 +16,10 @@ public record DefenseRegistrationResponse(Long id, Long topicId, String topicTit
                 periodId, periodName, submissionDeadline, canSubmit, canManage, students, List.of());
     }
 
-    public record Student(Long id, String fullName, String studentCode) {}
+    public record Student(Long id, String fullName, String studentCode, Boolean isLeader) {
+        public Student(Long id, String fullName, String studentCode) {
+            this(id, fullName, studentCode, false);
+        }
+    }
     public record Advisor(Long id, String fullName, String email, String role) {}
 }

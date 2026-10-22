@@ -128,7 +128,11 @@ public class DefenseAccessPolicy {
                 topic.getDepartment().getName(), topic.getPeriod().getId(), topic.getPeriod().getName(),
                 topic.getPeriod().getSubmissionDeadline(), canSubmit(user, r), canManage(user, topic.getDepartment()),
                 members.findByTeamId(r.getTeam().getId()).stream().map(m -> new DefenseRegistrationResponse.Student(
-                        m.getUser().getId(), m.getUser().getFullName(), m.getUser().getStudentCode())).toList(),
+                        m.getUser().getId(),
+                        m.getUser().getFullName(),
+                        m.getUser().getStudentCode(),
+                        Objects.equals(r.getTeam().getLeader() != null ? r.getTeam().getLeader().getId() : null, m.getUser().getId())
+                )).toList(),
                 advisorList);
     }
 }

@@ -1290,6 +1290,8 @@ export const vi = {
     "markReadSuccess": "Đã đánh dấu thông báo là đã đọc.",
     "deletedSuccess": "Đã xóa thông báo thành công.",
     "markAsRead": "Đánh dấu đã đọc",
+    "markAllAsRead": "Đã đọc tất cả",
+    "viewAll": "Xem tất cả thông báo",
     "delete": "Xóa",
     "deleteConfirm": "Bạn có chắc chắn muốn xóa thông báo này?",
     "read": "Đã đọc",
