@@ -245,7 +245,8 @@ export function CouncilsPage() {
                         {c.canManage && c.status !== 'COMPLETED' && (
                           <Button
                             danger
-                            disabled={busy}
+                            disabled={busy || !a.canRemove}
+                            title={a.canRemove ? undefined : t('councils.assignmentLocked')}
                             onClick={() => {
                               if (window.confirm(`${t('councils.confirmRemoveAssignment')} (${a.registration.teamName})`)) {
                                 action(() => councilService.removeAssignment(c.id, a.id), t('common.success'));
