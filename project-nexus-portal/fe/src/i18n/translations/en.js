@@ -908,6 +908,7 @@ export const en = {
     "adjustCol": "Adjust",
     "adjustBtn": "Adjust",
     "adjustHint": "Adjust published component scores (reason is required for the audit log)",
+    "adjustRequirePublish": "Only available after the results are officially published",
     "adjustAdvisorPrompt": "New advisor score (0-10), current {current} — leave blank to keep:",
     "adjustReviewPrompt": "New reviewer score (0-10), current {current} — leave blank to keep:",
     "adjustDefensePrompt": "New council score (0-10), current {current} — leave blank to keep:",

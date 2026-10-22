@@ -908,6 +908,7 @@ export const vi = {
     "adjustCol": "Điều chỉnh",
     "adjustBtn": "Sửa điểm",
     "adjustHint": "Điều chỉnh điểm thành phần đã công bố (bắt buộc ghi lý do vào audit)",
+    "adjustRequirePublish": "Chỉ sửa được sau khi điểm đã công bố chính thức",
     "adjustAdvisorPrompt": "Điểm GVHD mới (0-10), hiện tại {current} — bỏ trống = giữ nguyên:",
     "adjustReviewPrompt": "Điểm phản biện mới (0-10), hiện tại {current} — bỏ trống = giữ nguyên:",
     "adjustDefensePrompt": "Điểm hội đồng mới (0-10), hiện tại {current} — bỏ trống = giữ nguyên:",
