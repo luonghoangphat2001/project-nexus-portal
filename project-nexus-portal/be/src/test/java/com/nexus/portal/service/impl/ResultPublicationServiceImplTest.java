@@ -192,6 +192,64 @@ class ResultPublicationServiceImplTest {
         verify(results, never()).saveAllAndFlush(anyList());
     }
 
+    @Test
+    void republishesOldSnapshotWithFreshCalculationAndAuditReason() {
+        Result oldResult = new Result();
+        oldResult.setId(100L);
+        givenPublishDependencies();
+        when(results.findByAssignmentIdOrderByStudentIdAsc(9L)).thenReturn(List.of(oldResult));
+        when(results.existsByAssignmentId(9L)).thenReturn(false);
+        when(scoreCalculation.calculateScores(assignment)).thenReturn(List.of(
+                new CalculatedScore(student, breakdown("9.00"), breakdown("9.00"), breakdown("9.00"),
+                        new BigDecimal("9.00"), true)));
+        when(results.saveAllAndFlush(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(resultDetails.saveAllAndFlush(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<ResultResponse.Defense> republished = service.republishAssignmentResults(9L, "Sai diem phan bien", "admin");
+
+        assertEquals(1, republished.size());
+        assertEquals(new BigDecimal("9.00"), republished.get(0).finalScore());
+        verify(resultDetails).deleteAllById(List.of(100L));
+        verify(results).deleteAll(List.of(oldResult));
+        verify(results).flush();
+        verify(audit).log(1L, "admin", "REPUBLISH_RESULTS", "results/assignments/9",
+                "Re-publishing 1 published results for registration 6. Reason: Sai diem phan bien", null, null, "SUCCESS");
+    }
+
+    @Test
+    void rejectsRepublishWhenAssignmentHasNoPublishedResults() {
+        when(results.findByAssignmentIdOrderByStudentIdAsc(9L)).thenReturn(List.of());
+
+        BadRequestException error = assertThrows(BadRequestException.class,
+                () -> service.republishAssignmentResults(9L, null, "admin"));
+
+        assertEquals("No published results to adjust; use the regular publish action instead", error.getMessage());
+        verify(resultDetails, never()).deleteAllById(anyList());
+        verify(scoreCalculation, never()).calculateScores(any());
+    }
+
+    @Test
+    void refusesRepublishOutsideDepartmentScope() {
+        when(access.canManage(manager, department)).thenReturn(false);
+
+        assertThrows(AccessDeniedException.class,
+                () -> service.republishAssignmentResults(9L, null, "admin"));
+        verify(results, never()).deleteAll(anyList());
+    }
+
+    @Test
+    void republishPropagatesFailureWhenAssessmentsAreIncomplete() {
+        Result oldResult = new Result();
+        oldResult.setId(100L);
+        givenPublishDependencies();
+        when(results.findByAssignmentIdOrderByStudentIdAsc(9L)).thenReturn(List.of(oldResult));
+        when(results.existsByAssignmentId(9L)).thenReturn(false);
+        when(scoreCalculation.calculateScores(assignment))
+                .thenThrow(new BadRequestException("Advisor, reviewer, or defense assessments are incomplete"));
+
+        assertThrows(BadRequestException.class, () -> service.republishAssignmentResults(9L, null, "admin"));
+    }
+
     private CalculatedScore.AssessmentBreakdown breakdown(String score) {
         BigDecimal value = new BigDecimal(score);
         return new CalculatedScore.AssessmentBreakdown(value, value, value, value, "Evaluator", "Comment");
