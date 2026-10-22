@@ -16,6 +16,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import java.util.Collection;
 import java.util.List;
 
@@ -100,10 +104,32 @@ public class NotificationServiceImpl implements NotificationService {
 
         if (emailService != null && recipient.getEmail() != null && !recipient.getEmail().trim().isEmpty()) {
             try {
-                emailService.sendNotificationEmail(recipient.getEmail(), title, content);
+                String lang = resolveCurrentLanguage();
+                emailService.sendNotificationEmail(recipient.getEmail(), recipient.getFullName(), title, content, lang);
             } catch (Exception ignored) {
             }
         }
+    }
+
+    private String resolveCurrentLanguage() {
+        try {
+            RequestAttributes attribs = RequestContextHolder.getRequestAttributes();
+            if (attribs instanceof ServletRequestAttributes servletAttribs) {
+                HttpServletRequest req = servletAttribs.getRequest();
+                String acceptLang = req.getHeader("Accept-Language");
+                if (acceptLang != null) {
+                    acceptLang = acceptLang.trim().toLowerCase();
+                    if (acceptLang.startsWith("en")) {
+                        return "en";
+                    }
+                    if (acceptLang.startsWith("vi")) {
+                        return "vi";
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "vi";
     }
 
     @Override

@@ -204,7 +204,7 @@ public class TeamServiceImpl implements TeamService {
         notificationService.sendNotification(
                 invitee,
                 inviter,
-                "[VI] Lời mời tham gia nhóm | [EN] Team invitation: " + team.getName(),
+                "[VI] Lời mời tham gia nhóm: " + team.getName() + " | [EN] Team invitation: " + team.getName(),
                 "[VI] Bạn nhận được lời mời tham gia nhóm \"" + team.getName() + "\" từ " + inviter.getFullName() + msgVi + "\n"
                         + "[EN] You received an invitation to join team \"" + team.getName() + "\" from " + inviter.getFullName() + msgEn
         );
