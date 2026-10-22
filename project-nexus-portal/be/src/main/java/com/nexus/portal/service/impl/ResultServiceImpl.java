@@ -203,8 +203,6 @@ public class ResultServiceImpl implements ResultService {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public ResultResponse.Defense adjustPublishedResult(Long assignmentId, Long studentId,
             BigDecimal advisorScore, BigDecimal reviewScore, BigDecimal defenseScore, String reason, String identifier) {
-        // Module 15: staff corrects mistakes on a published result. Component overrides are written
-        // into the snapshot, the weighted final score is recomputed, and the reason is audit-logged.
         User manager = access.getUser(identifier);
         Long councilId = assignments.findCouncilIdById(assignmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Defense assignment not found"));
