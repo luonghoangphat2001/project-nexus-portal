@@ -209,8 +209,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex, HttpServletRequest request) {
+        String detail = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
         ErrorResponse error = ErrorResponse.builder().success(false).status(HttpStatus.CONFLICT.value())
-                .error("Conflict").message("This record has a duplicate value or is referenced by other records. Check its code and related data.")
+                .error("Conflict").message(detail != null ? detail : "This record has a duplicate value or is referenced by other records.")
                 .path(request.getRequestURI()).timestamp(LocalDateTime.now()).build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }

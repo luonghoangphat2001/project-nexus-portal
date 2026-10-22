@@ -43,5 +43,17 @@ else
     $DOCKER_COMPOSE_CMD --env-file be/.env -p nexus-portal -f docker-compose.prod.yml up -d --remove-orphans
 fi
 
+# Apply pending SQL migrations to ensure schema and seed consistency
+if [ "$TARGET_SERVICE" != "frontend" ]; then
+    echo "Applying migrations to nexus_mysql_db..."
+    sleep 3
+    if [ -d "be/src/main/resources/migrations" ]; then
+        for sql_file in $(ls be/src/main/resources/migrations/*.sql 2>/dev/null | sort); do
+            echo "Executing: $sql_file"
+            docker exec -i nexus_mysql_db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < "$sql_file" || true
+        done
+    fi
+fi
+
 docker image prune -f
 $DOCKER_COMPOSE_CMD --env-file be/.env -p nexus-portal -f docker-compose.prod.yml ps
