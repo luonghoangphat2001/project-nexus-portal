@@ -404,13 +404,19 @@ class DefenseWorkflowIntegrationTest {
         CouncilResponse council = allocateCouncil();
         Long assignmentId = council.assignments().get(0).id();
         assertThat(council.assignments().get(0).canRemove()).isTrue();
+        assertThat(council.assignments().get(0).hasLockedAssessment()).isFalse();
         reports.uploadDocument(registration.getId(), upload(), "leader");
         AssessmentRequest request = scoreRequest(assignmentId, leader.getId(), AssessmentType.REVIEW);
         AssessmentResponse draft = assessments.saveDraft(request, "reviewer");
         CouncilResponse withDraft = councils.getCouncils("admin").stream()
                 .filter(item -> item.id().equals(council.id())).findFirst().orElseThrow();
         assertThat(withDraft.assignments().get(0).canRemove()).isFalse();
+        assertThat(withDraft.assignments().get(0).hasLockedAssessment()).isFalse();
         assertThat(assessments.submitAssessment(draft.id(), "reviewer").status()).isEqualTo(AssessmentStatus.SUBMITTED);
+        CouncilResponse withLockedAssessment = councils.getCouncils("admin").stream()
+                .filter(item -> item.id().equals(council.id())).findFirst().orElseThrow();
+        assertThat(withLockedAssessment.assignments().get(0).canRemove()).isFalse();
+        assertThat(withLockedAssessment.assignments().get(0).hasLockedAssessment()).isTrue();
         assertThat(assessments.getAssessments(assignmentId, "chair")).hasSize(1);
         assertThatThrownBy(() -> assessments.saveDraft(request, "reviewer")).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> assessments.deleteDraft(draft.id(), "reviewer")).isInstanceOf(BadRequestException.class);

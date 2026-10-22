@@ -242,11 +242,11 @@ export function CouncilsPage() {
                             {t('councils.assessmentsLink')}
                           </Link>
                         )}
-                        {c.canManage && c.status !== 'COMPLETED' && (
+                        {c.canManage && c.status !== 'COMPLETED' && !a.hasLockedAssessment && (
                           <Button
                             danger
                             disabled={busy || !a.canRemove}
-                            title={a.canRemove ? undefined : t('councils.assignmentLocked')}
+                            title={a.canRemove ? undefined : t('councils.assignmentHasDraft')}
                             onClick={() => {
                               if (window.confirm(`${t('councils.confirmRemoveAssignment')} (${a.registration.teamName})`)) {
                                 action(() => councilService.removeAssignment(c.id, a.id), t('common.success'));

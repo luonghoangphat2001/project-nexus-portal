@@ -300,6 +300,10 @@ public class CouncilServiceImpl implements CouncilService {
                 ? Set.of()
                 : assessments.findAssignmentIdsWithAssessments(
                         visibleAssignments.stream().map(DefenseAssignment::getId).toList());
+        Set<Long> assignmentsWithLockedAssessments = visibleAssignments.isEmpty()
+                ? Set.of()
+                : assessments.findAssignmentIdsWithAssessmentsAndStatus(
+                        visibleAssignments.stream().map(DefenseAssignment::getId).toList(), AssessmentStatus.SUBMITTED);
         return new CouncilResponse(c.getId(), c.getName(), c.getDepartment().getId(), c.getDepartment().getName(),
                 c.getPeriod().getId(), c.getPeriod().getName(), c.getRoom(), c.getStartsAt(), c.getEndsAt(), c.getStatus(), manager,
                 c.getMembers().stream().map(m -> new CouncilResponse.Member(m.getLecturer().getId(), m.getLecturer().getFullName(), m.getRole())).toList(),
@@ -313,6 +317,7 @@ public class CouncilServiceImpl implements CouncilService {
                                 (c.getStatus() == CouncilStatus.SCHEDULED || c.getStatus() == CouncilStatus.COMPLETED)
                                         && !publishedAssignmentIds.contains(a.getId())
                                         && access.isPrimaryAdvisor(user, a.getRegistration()),
-                                !assignmentsWithAssessments.contains(a.getId()))).toList());
+                                !assignmentsWithAssessments.contains(a.getId()),
+                                assignmentsWithLockedAssessments.contains(a.getId()))).toList());
     }
 }

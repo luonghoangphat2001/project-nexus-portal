@@ -796,7 +796,7 @@ export const vi = {
     "assignedTeams": "Các nhóm được phân công bảo vệ",
     "noAssignedTeams": "Chưa có nhóm sinh viên nào được phân công vào hội đồng này",
     "removeTeam": "Hủy phân công",
-    "assignmentLocked": "Nhóm đã có phiếu chấm điểm; chỉ có thể xem bảng chấm điểm và hồ sơ đã nộp.",
+    "assignmentHasDraft": "Nhóm đang có phiếu chấm nháp. Hãy nộp hoặc xóa bản nháp trước khi hủy phân công.",
     "confirmRemoveAssignment": "Bạn có chắc chắn muốn hủy phân công nhóm này khỏi hội đồng?",
     "completeCouncil": "Kết thúc hội đồng",
     "confirmComplete": "Xác nhận kết thúc hội đồng và hoàn tất quá trình chấm điểm?",
