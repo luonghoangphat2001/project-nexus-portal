@@ -169,17 +169,19 @@ export function CouncilsPage() {
                   >
                     {t('councils.completeCouncil')}
                   </Button>
-                  <Button
-                    danger
-                    disabled={busy}
-                    onClick={() => {
-                      if (window.confirm(t('councils.confirmCancel'))) {
-                        action(() => councilService.changeStatus(c.id, 'CANCELLED'), t('common.success'));
-                      }
-                    }}
-                  >
-                    {t('councils.cancelCouncil')}
-                  </Button>
+                  {!c.assignments?.some((assignment) => assignment.hasLockedAssessment) && (
+                    <Button
+                      danger
+                      disabled={busy}
+                      onClick={() => {
+                        if (window.confirm(t('councils.confirmCancel'))) {
+                          action(() => councilService.changeStatus(c.id, 'CANCELLED'), t('common.success'));
+                        }
+                      }}
+                    >
+                      {t('councils.cancelCouncil')}
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
