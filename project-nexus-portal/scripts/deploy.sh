@@ -31,6 +31,15 @@ fi
 # Refuse an ambiguous database target before building or recreating containers.
 $DOCKER_COMPOSE_CMD --env-file be/.env -p nexus-portal -f docker-compose.prod.yml config --quiet
 
+# Remove containers created by the former hard-coded container_name setup.
+# Their ports/volumes can otherwise block the project-scoped containers below.
+for legacy_container in nexus_mysql_db nexus_backend_api nexus_frontend_app; do
+    if docker container inspect "$legacy_container" >/dev/null 2>&1; then
+        echo "Removing legacy container: $legacy_container"
+        docker rm -f "$legacy_container"
+    fi
+done
+
 TARGET_SERVICE="${1:-all}"
 if [ "$TARGET_SERVICE" = "backend" ]; then
     $DOCKER_COMPOSE_CMD --env-file be/.env -p nexus-portal -f docker-compose.prod.yml build --no-cache backend_api
